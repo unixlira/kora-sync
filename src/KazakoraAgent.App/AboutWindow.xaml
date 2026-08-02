@@ -5,7 +5,7 @@
         Background="{DynamicResource WindowBackgroundBrush}"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
     <StackPanel Margin="32" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <Image Source="Assets/logo.png" Height="80" Margin="0,0,0,20" />
+        <Image Source="{DynamicResource LogoImageSource}" Height="80" Margin="0,0,0,20" />
         <TextBlock Text="KoraSync" Style="{StaticResource TitleTextStyle}" HorizontalAlignment="Center" FontSize="22" />
         <TextBlock Text="v1.0.0" Style="{StaticResource SecondaryTextStyle}" HorizontalAlignment="Center" Margin="0,4,0,20" />
         <TextBlock Text="Dashboard e agente de impressão da Kazakora" Style="{StaticResource BodyTextStyle}"

@@ -4,7 +4,8 @@
         xmlns:vm="clr-namespace:KazakoraAgent.App.ViewModels"
         Title="KoraSync" Height="820" Width="1360"
         Background="{DynamicResource WindowBackgroundBrush}"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        KeyDown="MainWindow_KeyDown">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
@@ -144,7 +145,7 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Image Source="Assets/logo.png" Height="64" Margin="0,0,12,0" />
+                <Image Source="{DynamicResource LogoImageSource}" Height="64" Margin="0,0,12,0" />
                 <TextBlock Text="KoraSync" Style="{StaticResource TitleTextStyle}" VerticalAlignment="Center" />
             </StackPanel>
 

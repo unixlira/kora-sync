@@ -7,10 +7,40 @@ namespace KazakoraAgent.App;
 
 public partial class MainWindow : Window
 {
+    private WindowState _windowStateBeforeFullScreen;
+    private bool _isFullScreen;
+
     public MainWindow()
     {
         InitializeComponent();
         UpdateThemeIcon();
+    }
+
+    private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.F11)
+        {
+            ToggleFullScreen();
+        }
+    }
+
+    private void ToggleFullScreen()
+    {
+        if (_isFullScreen)
+        {
+            WindowStyle = WindowStyle.SingleBorderWindow;
+            ResizeMode = ResizeMode.CanResize;
+            WindowState = _windowStateBeforeFullScreen;
+        }
+        else
+        {
+            _windowStateBeforeFullScreen = WindowState;
+            WindowStyle = WindowStyle.None;
+            ResizeMode = ResizeMode.NoResize;
+            WindowState = WindowState.Maximized;
+        }
+
+        _isFullScreen = !_isFullScreen;
     }
 
     private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
