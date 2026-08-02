@@ -1,8 +1,10 @@
 # KoraSync — agente de impressão + dashboard nativo (Windows)
 
-Substitui o agente Node.js (`../print-agent/`) por um app único em C#/.NET
-(WPF), self-contained — não precisa de Node, Redis ou PM2 instalados na
-máquina de destino.
+Repositório próprio, separado do Kazakora (Laravel) — fala com a API dele
+por HTTP, mas não é parte do deploy web. Substitui o agente Node.js
+(`print-agent/` no repo do Kazakora) por um app único em C#/.NET (WPF),
+self-contained — não precisa de Node, Redis ou PM2 instalados na máquina
+de destino.
 
 ## Estrutura
 
@@ -19,7 +21,6 @@ máquina de destino.
 ## Rodar em desenvolvimento (Windows, com .NET 8 SDK instalado)
 
 ```
-cd native-agent
 dotnet run --project src/KazakoraAgent.App
 ```
 
@@ -33,14 +34,12 @@ bandeja) e preencha:
 ## Rodar os testes do Core
 
 ```
-cd native-agent
 dotnet test
 ```
 
 ## Publicar como .exe único (self-contained)
 
 ```
-cd native-agent
 dotnet publish src/KazakoraAgent.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
 

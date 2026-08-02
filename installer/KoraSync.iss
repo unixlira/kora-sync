@@ -1,5 +1,5 @@
 ; Instalador do KoraSync (Inno Setup) — gera um único setup.exe.
-; Pré-requisito: publicar o app primeiro (ver README.md na raiz de native-agent):
+; Pré-requisito: publicar o app primeiro (ver README.md na raiz do repo):
 ;   dotnet publish src/KazakoraAgent.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ; Isso cria bin\Release\net8.0-windows\win-x64\publish\KazakoraAgent.App.exe
 ; (um único .exe, sem depender de .NET instalado na máquina de destino).
