@@ -5,51 +5,73 @@ using KazakoraAgent.Core.Printing;
 namespace KazakoraAgent.App.Services;
 
 /// <summary>
-/// Envia o PDF pro spooler do Windows via o verbo "printto" do shell —
-/// delega pro visualizador de PDF padrão instalado (Edge/Acrobat/etc.)
-/// imprimir na impressora indicada, sem UI visível. Essa é a peça mais
-/// arriscada do app inteiro: só existe uma forma real de validar (imprimir
-/// de verdade numa impressora real) e isso só é possível na sua máquina —
-/// não deu pra testar nada disso aqui. Se "printto" não funcionar com o
-/// leitor de PDF instalado, a alternativa testada e confirmada no agente
-/// Node anterior era a lib `pdf-to-printer` (usa PDFtoPrinter.exe /
-/// SumatraPDF por baixo) — pode valer a pena portar a mesma abordagem se
-/// isso aqui não imprimir de primeira.
+/// Envia o PDF pro spooler do Windows via SumatraPDF (bundlado em
+/// Tools/SumatraPDF.exe, mesma ferramenta que a lib `pdf-to-printer` usa
+/// por baixo — abordagem já comprovada funcionando no agente Node
+/// anterior). Foi trocado de um verbo "printto" do shell (que abria o
+/// leitor de PDF padrão do Windows — nesta máquina, o Edge — pra pré-
+/// visualização de impressão e ficava parado esperando alguém clicar,
+/// travando a fila inteira; reproduzido e confirmado ao vivo 2026-08-02
+/// antes dessa troca) pro `-print-to`/`-silent` do Sumatra, que imprime e
+/// sai sozinho, sem abrir UI nenhuma.
 /// </summary>
 public sealed class WindowsPrinter : IPrinter
 {
+    private static readonly TimeSpan PrintTimeout = TimeSpan.FromSeconds(30);
+
     public async Task PrintAsync(byte[] pdfBytes, string printerName, CancellationToken ct = default)
     {
+        var sumatraPath = Path.Combine(AppContext.BaseDirectory, "Tools", "SumatraPDF.exe");
+
+        if (! File.Exists(sumatraPath))
+        {
+            throw new FileNotFoundException($"SumatraPDF.exe não encontrado em \"{sumatraPath}\" — reinstale o KoraSync.", sumatraPath);
+        }
+
         var tempPath = Path.Combine(Path.GetTempPath(), $"korasync-label-{Guid.NewGuid():N}.pdf");
         await File.WriteAllBytesAsync(tempPath, pdfBytes, ct);
 
         try
         {
-            var startInfo = new ProcessStartInfo(tempPath)
+            var startInfo = new ProcessStartInfo(sumatraPath)
             {
-                Verb = "printto",
-                Arguments = $"\"{printerName}\"",
-                UseShellExecute = true,
+                UseShellExecute = false,
                 CreateNoWindow = true,
                 WindowStyle = ProcessWindowStyle.Hidden,
             };
+            startInfo.ArgumentList.Add("-print-to");
+            startInfo.ArgumentList.Add(printerName);
+            startInfo.ArgumentList.Add("-silent");
+            startInfo.ArgumentList.Add(tempPath);
 
             using var process = Process.Start(startInfo)
-                ?? throw new InvalidOperationException("Não foi possível iniciar o processo de impressão (nenhum leitor de PDF associado a .pdf no Windows?).");
+                ?? throw new InvalidOperationException("Não foi possível iniciar o SumatraPDF.");
 
-            await process.WaitForExitAsync(ct);
+            // Timeout próprio além do ct externo — se o Sumatra travar por
+            // qualquer motivo, isso não pode voltar a travar a fila inteira
+            // como o bug anterior (o QueueEngine só processa 1 job por vez
+            // por tick, um Print que nunca retorna trava tudo atrás dele).
+            using var timeoutCts = new CancellationTokenSource(PrintTimeout);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+
+            try
+            {
+                await process.WaitForExitAsync(linkedCts.Token);
+            }
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+            {
+                TryKill(process);
+
+                throw new TimeoutException($"SumatraPDF não terminou em {PrintTimeout.TotalSeconds}s — processo encerrado à força.");
+            }
 
             if (process.ExitCode != 0)
             {
-                throw new InvalidOperationException($"Processo de impressão terminou com código {process.ExitCode}.");
+                throw new InvalidOperationException($"SumatraPDF terminou com código {process.ExitCode} (impressora \"{printerName}\" existe e está ligada?).");
             }
         }
         finally
         {
-            // Best-effort — alguns leitores de PDF seguram o arquivo aberto
-            // por um instante depois do processo "terminar" (ex.: passam
-            // pro processo já em execução do Edge). Não falha a impressão
-            // por causa disso.
             try
             {
                 File.Delete(tempPath);
@@ -57,6 +79,17 @@ public sealed class WindowsPrinter : IPrinter
             catch
             {
             }
+        }
+    }
+
+    private static void TryKill(Process process)
+    {
+        try
+        {
+            process.Kill(entireProcessTree: true);
+        }
+        catch
+        {
         }
     }
 }

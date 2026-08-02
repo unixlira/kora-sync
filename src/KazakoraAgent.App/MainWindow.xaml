@@ -88,7 +88,9 @@
                     </TextBlock>
                     <TextBlock Text="{Binding LastError}" Style="{StaticResource SecondaryTextStyle}"
                                 Foreground="{DynamicResource StatusErrorBrush}" TextWrapping="Wrap" />
-                    <TextBlock Text="{Binding Timestamp, StringFormat='dd/MM HH:mm:ss'}" Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,0" />
+                    <!-- .LocalDateTime — Timestamp vem em UTC (servidor/SQLite local
+                         gravam tudo em UTC), sem isso mostrava hora errada. -->
+                    <TextBlock Text="{Binding Timestamp.LocalDateTime, StringFormat='dd/MM HH:mm:ss'}" Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,0" />
                 </StackPanel>
             </Border>
         </DataTemplate>

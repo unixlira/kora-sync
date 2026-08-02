@@ -32,6 +32,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Content (não Resource) de propósito — precisa existir como arquivo
+         de verdade na pasta de publish pra ser executável via Process.Start,
+         diferente de Resource (embutido no assembly, só serve pra XAML). -->
+    <Content Include="Tools\SumatraPDF.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
   </ItemGroup>
 

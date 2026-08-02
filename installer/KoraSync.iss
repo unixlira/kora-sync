@@ -45,6 +45,10 @@ Name: "startupicon"; Description: "Iniciar o KoraSync junto com o Windows"; Grou
 
 [Files]
 Source: "..\src\KazakoraAgent.App\bin\Release\net8.0-windows\win-x64\publish\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+; SumatraPDF — usado pra imprimir a etiqueta em silêncio (ver
+; WindowsPrinter.cs). Precisa manter a subpasta Tools\, é onde o código
+; procura o executável relativo à própria instalação.
+Source: "..\src\KazakoraAgent.App\bin\Release\net8.0-windows\win-x64\publish\Tools\*"; DestDir: "{app}\Tools"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
