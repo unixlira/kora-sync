@@ -117,6 +117,21 @@ public sealed class SqliteJobStore : IJobStore, IDisposable
         return Task.FromResult(reader.Read() ? Map(reader) : null);
     }
 
+    public Task<int> DeleteOldTerminalJobsAsync(DateTimeOffset olderThan, CancellationToken ct = default)
+    {
+        using var command = _connection.CreateCommand();
+        command.CommandText = """
+            DELETE FROM jobs
+            WHERE status IN ($printed, $failedPermanently)
+              AND COALESCE(printed_at, next_attempt_at) < $olderThan;
+            """;
+        command.Parameters.AddWithValue("$printed", QueuedJobStatus.Printed.ToString());
+        command.Parameters.AddWithValue("$failedPermanently", QueuedJobStatus.FailedPermanently.ToString());
+        command.Parameters.AddWithValue("$olderThan", olderThan.ToString("o"));
+
+        return Task.FromResult(command.ExecuteNonQuery());
+    }
+
     private static QueuedJob Map(SqliteDataReader reader)
     {
         return new QueuedJob

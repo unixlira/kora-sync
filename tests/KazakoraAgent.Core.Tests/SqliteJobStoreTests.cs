@@ -105,4 +105,32 @@ public class SqliteJobStoreTests
 
         Assert.Null(next);
     }
+
+    [Fact]
+    public async Task delete_old_terminal_jobs_removes_only_printed_or_failed_jobs_older_than_the_cutoff()
+    {
+        using var store = MakeStore();
+        var now = DateTimeOffset.UtcNow;
+
+        var oldPrinted = new QueuedJob { ServerJobId = 1, OrderId = 1, Status = QueuedJobStatus.Printed, NextAttemptAt = now, EnqueuedAt = now.AddDays(-40), PrintedAt = now.AddDays(-40) };
+        var recentPrinted = new QueuedJob { ServerJobId = 2, OrderId = 2, Status = QueuedJobStatus.Printed, NextAttemptAt = now, EnqueuedAt = now.AddDays(-1), PrintedAt = now.AddDays(-1) };
+        var oldFailed = new QueuedJob { ServerJobId = 3, OrderId = 3, Status = QueuedJobStatus.FailedPermanently, NextAttemptAt = now.AddDays(-40), EnqueuedAt = now.AddDays(-40) };
+        // Ainda ativo (retentativa aguardando) mesmo que velho — nunca deve ser apagado, não é terminal.
+        var oldButStillWaiting = new QueuedJob { ServerJobId = 4, OrderId = 4, Status = QueuedJobStatus.WaitingRetry, NextAttemptAt = now.AddDays(-40), EnqueuedAt = now.AddDays(-40) };
+
+        await store.UpsertAsync(oldPrinted);
+        await store.UpsertAsync(recentPrinted);
+        await store.UpsertAsync(oldFailed);
+        await store.UpsertAsync(oldButStillWaiting);
+
+        var deletedCount = await store.DeleteOldTerminalJobsAsync(now.AddDays(-30));
+
+        Assert.Equal(2, deletedCount);
+
+        var remainingIds = (await store.GetAllAsync()).Select(j => j.ServerJobId).ToList();
+        Assert.Contains(2, remainingIds);
+        Assert.Contains(4, remainingIds);
+        Assert.DoesNotContain(1, remainingIds);
+        Assert.DoesNotContain(3, remainingIds);
+    }
 }

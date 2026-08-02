@@ -6,8 +6,7 @@ namespace KazakoraAgent.App.Services;
 /// <summary>
 /// Persistida em %AppData%\KoraSync\settings.json — é o que a tela de
 /// Configurações (URL da API, token, impressora, intervalos de polling,
-/// notificações, iniciar com o Windows) lê/grava. Ainda não tem UI própria
-/// nesta fatia; carregada com defaults vazios/sensatos até essa tela existir.
+/// notificações, iniciar com o Windows) lê/grava.
 /// </summary>
 public sealed class AppSettings
 {
@@ -28,6 +27,11 @@ public sealed class AppSettings
     public bool StartWithWindows { get; set; }
 
     public string Theme { get; set; } = "Dark";
+
+    /// Jobs impressos/com falha permanente há mais que isso são apagados do
+    /// banco local automaticamente — o app não deve acumular dado pra
+    /// sempre numa máquina de baixo armazenamento (mini PC dedicado).
+    public int QueueRetentionDays { get; set; } = 30;
 
     private static string FilePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "KoraSync", "settings.json");

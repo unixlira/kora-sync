@@ -2,6 +2,7 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Windows;
+using System.Windows.Threading;
 using KazakoraAgent.App.Services;
 using KazakoraAgent.App.Theming;
 using KazakoraAgent.App.ViewModels;
@@ -18,6 +19,7 @@ public partial class App : System.Windows.Application
     private TrayIconService? _tray;
     private AppSettings? _settings;
     private MainWindow? _mainWindow;
+    private DispatcherTimer? _cleanupTimer;
     private bool _isExiting;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -114,6 +116,29 @@ public partial class App : System.Windows.Application
         mainWindow.Show();
 
         poller.Start();
+
+        // Roda uma vez já na abertura (cobre quem reinicia o app com
+        // frequência) e depois 1x/dia (cobre quem deixa rodando 24/7 sem
+        // nunca reiniciar) — sem isso o banco local cresceria pra sempre.
+        var retention = TimeSpan.FromDays(Math.Max(1, settings.QueueRetentionDays));
+        _ = CleanupOldJobsAsync(_jobStore, retention);
+
+        _cleanupTimer = new DispatcherTimer { Interval = TimeSpan.FromDays(1) };
+        _cleanupTimer.Tick += async (_, _) => await CleanupOldJobsAsync(_jobStore, retention);
+        _cleanupTimer.Start();
+    }
+
+    private static async Task CleanupOldJobsAsync(SqliteJobStore jobStore, TimeSpan retention)
+    {
+        try
+        {
+            await jobStore.DeleteOldTerminalJobsAsync(DateTimeOffset.UtcNow - retention);
+        }
+        catch
+        {
+            // Limpeza é manutenção, não caminho crítico — falhar aqui não
+            // pode derrubar o app nem interromper a fila.
+        }
     }
 
     private void ShowMainWindow()
@@ -146,6 +171,7 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _cleanupTimer?.Stop();
         _poller?.Dispose();
         _jobStore?.Dispose();
         _tray?.Dispose();

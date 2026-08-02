@@ -71,6 +71,21 @@ Depois de publicar (passo acima):
 2. Compile (Build → Compile, ou F9).
 3. O instalador sai em `installer/dist/KoraSyncSetup.exe`.
 
+## Armazenamento local
+
+O app guarda **só o estado operacional da fila** em
+`%AppData%\KoraSync\queue.db` (SQLite) — número do pedido, canal, status,
+tentativas, horários. **Nunca guarda nome de cliente, produto, endereço
+ou valor** — esses dados são buscados na API só na hora de exibir na
+tela, nunca persistidos. PDFs de etiqueta são gravados numa pasta
+temporária só durante o envio pra impressora e apagados logo em seguida.
+
+Pedidos já impressos (ou com falha definitiva) são **apagados
+automaticamente** do banco local depois de `QueueRetentionDays`
+(configurável em Configurações, padrão 30 dias) — o app não acumula
+histórico pra sempre, pensado pra rodar numa máquina com pouco
+armazenamento (mini PC dedicado).
+
 ## O que ainda não foi testado de verdade (precisa de hardware real)
 
 - Impressão física via `WindowsPrinter.cs` (verbo shell `printto`) — se

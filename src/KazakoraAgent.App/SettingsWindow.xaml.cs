@@ -18,6 +18,7 @@ public partial class SettingsWindow : Window
         PrinterNameBox.Text = settings.PrinterName;
         QueuePollSecondsBox.Text = settings.QueuePollSeconds.ToString();
         DashboardPollSecondsBox.Text = settings.DashboardPollSeconds.ToString();
+        QueueRetentionDaysBox.Text = settings.QueueRetentionDays.ToString();
         NotificationsEnabledBox.IsChecked = settings.NotificationsEnabled;
         StartWithWindowsBox.IsChecked = settings.StartWithWindows;
     }
@@ -38,6 +39,11 @@ public partial class SettingsWindow : Window
         if (int.TryParse(DashboardPollSecondsBox.Text, out var dashboardSeconds) && dashboardSeconds > 0)
         {
             _settings.DashboardPollSeconds = dashboardSeconds;
+        }
+
+        if (int.TryParse(QueueRetentionDaysBox.Text, out var retentionDays) && retentionDays > 0)
+        {
+            _settings.QueueRetentionDays = retentionDays;
         }
 
         _settings.Save();

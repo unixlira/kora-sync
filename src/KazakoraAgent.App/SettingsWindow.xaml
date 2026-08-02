@@ -1,7 +1,7 @@
 <Window x:Class="KazakoraAgent.App.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Configurações — KoraSync" Height="560" Width="480"
+        Title="Configurações — KoraSync" Height="620" Width="480"
         Background="{DynamicResource WindowBackgroundBrush}"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
     <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
@@ -32,6 +32,13 @@
             <TextBox x:Name="DashboardPollSecondsBox" Margin="0,4,0,12" Padding="8"
                      Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
                      BorderBrush="{DynamicResource BorderBrush}" />
+
+            <TextBlock Text="Manter histórico de pedidos impressos por (dias)" Style="{StaticResource SecondaryTextStyle}" />
+            <TextBox x:Name="QueueRetentionDaysBox" Margin="0,4,0,12" Padding="8"
+                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                     BorderBrush="{DynamicResource BorderBrush}" />
+            <TextBlock Text="Pedidos já impressos (ou com falha definitiva) mais antigos que isso são apagados automaticamente do banco local — nunca acumula pra sempre."
+                       Style="{StaticResource SecondaryTextStyle}" TextWrapping="Wrap" Margin="0,0,0,12" />
 
             <CheckBox x:Name="NotificationsEnabledBox" Content="Ativar notificações do Windows"
                       Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,4,0,8" />
