@@ -1,0 +1,22 @@
+<Window x:Class="KazakoraAgent.App.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Sobre — KoraSync" Height="360" Width="380"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+    <StackPanel Margin="32" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Image Source="Assets/logo.png" Height="80" Margin="0,0,0,20" />
+        <TextBlock Text="KoraSync" Style="{StaticResource TitleTextStyle}" HorizontalAlignment="Center" FontSize="22" />
+        <TextBlock Text="v1.0.0" Style="{StaticResource SecondaryTextStyle}" HorizontalAlignment="Center" Margin="0,4,0,20" />
+        <TextBlock Text="Dashboard e agente de impressão da Kazakora" Style="{StaticResource BodyTextStyle}"
+                   HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,20" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <TextBlock Text="Desenvolvido com " Style="{StaticResource SecondaryTextStyle}" />
+            <TextBlock Text="❤" Style="{StaticResource FooterLinkStyle}" MouseLeftButtonUp="DevLiraLink_Click" Margin="2,0" />
+            <TextBlock Text=" por " Style="{StaticResource SecondaryTextStyle}" />
+            <TextBlock Text="Lira" Style="{StaticResource FooterLinkStyle}" MouseLeftButtonUp="DevLiraLink_Click" />
+        </StackPanel>
+        <TextBlock Text="© 2026 Kazakora. Todos os direitos reservados." Style="{StaticResource SecondaryTextStyle}"
+                   HorizontalAlignment="Center" Margin="0,8,0,0" />
+    </StackPanel>
+</Window>

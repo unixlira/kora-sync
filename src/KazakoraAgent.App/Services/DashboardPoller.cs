@@ -26,6 +26,17 @@ public sealed class DashboardPoller : IDisposable
 
     private bool _queueTickRunning;
     private bool _dashboardTickRunning;
+    private bool? _wasReachable;
+
+    /// Pausada via bandeja ("Pausar Fila") — o timer continua rodando (a
+    /// tela de fila segue atualizando visualmente), só não sincroniza nem
+    /// processa novos jobs enquanto pausado.
+    public bool IsPaused { get; set; }
+
+    /// Perda de conectividade com a API detectada (dispara notificação do Windows).
+    public event Action? ConnectionLost;
+
+    public event Action? ConnectionRestored;
 
     public DashboardPoller(
         IKazakoraApiClient api,
@@ -72,13 +83,16 @@ public sealed class DashboardPoller : IDisposable
 
         try
         {
-            await _queueEngine.SyncFromServerAsync();
-
-            // Drena tudo que já está pronto agora, não só um job por tick —
-            // com vários pedidos chegando juntos (Shopee+ML+TikTok), não faz
-            // sentido esperar mais 1s pra cada um.
-            while (await _queueEngine.ProcessNextDueJobAsync())
+            if (!IsPaused)
             {
+                await _queueEngine.SyncFromServerAsync();
+
+                // Drena tudo que já está pronto agora, não só um job por tick —
+                // com vários pedidos chegando juntos (Shopee+ML+TikTok), não faz
+                // sentido esperar mais 1s pra cada um.
+                while (await _queueEngine.ProcessNextDueJobAsync())
+                {
+                }
             }
 
             var jobs = await _jobStore.GetAllAsync();
@@ -112,10 +126,24 @@ public sealed class DashboardPoller : IDisposable
 
             var metrics = await _api.GetMetricsAsync();
             _viewModel.UpdateMetrics(metrics);
+
+            if (_wasReachable == false)
+            {
+                ConnectionRestored?.Invoke();
+            }
+
+            _wasReachable = true;
         }
         catch
         {
             _viewModel.MarkChannelsUnreachable();
+
+            if (_wasReachable != false)
+            {
+                ConnectionLost?.Invoke();
+            }
+
+            _wasReachable = false;
         }
         finally
         {

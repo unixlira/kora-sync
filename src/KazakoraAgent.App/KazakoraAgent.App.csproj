@@ -4,6 +4,9 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <!-- Só pra NotifyIcon (ícone da bandeja) — WPF não tem equivalente
+         próprio, esse é o jeito padrão/consagrado de fazer isso. -->
+    <UseWindowsForms>true</UseWindowsForms>
     <!-- Permite restaurar/compilar (não rodar) fora do Windows — usado só
          pra checar erro de sintaxe aqui no ambiente de dev Linux; o build
          "de verdade" continua sendo feito no Windows. -->

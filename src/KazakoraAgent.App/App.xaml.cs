@@ -15,12 +15,21 @@ public partial class App : System.Windows.Application
 {
     private DashboardPoller? _poller;
     private SqliteJobStore? _jobStore;
+    private TrayIconService? _tray;
+    private AppSettings? _settings;
+    private MainWindow? _mainWindow;
+    private bool _isExiting;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
+        // Fechar a última janela (dashboard escondido na bandeja) não deve
+        // encerrar o processo — só "Sair" no menu da bandeja encerra de verdade.
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
         var settings = AppSettings.Load();
+        _settings = settings;
 
         ThemeManager.SetTheme(settings.Theme == "Light" ? AppTheme.Light : AppTheme.Dark);
 
@@ -50,25 +59,96 @@ public partial class App : System.Windows.Application
 
         var mainViewModel = new MainViewModel(api);
 
-        _poller = new DashboardPoller(
+        var poller = new DashboardPoller(
             api,
             _jobStore,
             queueEngine,
             mainViewModel,
             TimeSpan.FromSeconds(Math.Max(1, settings.QueuePollSeconds)),
             TimeSpan.FromSeconds(Math.Max(1, settings.DashboardPollSeconds)));
+        _poller = poller;
+
+        var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico");
+        var tray = new TrayIconService(iconPath);
+        _tray = tray;
+        tray.OpenDashboardRequested += ShowMainWindow;
+        tray.OpenSettingsRequested += OpenSettings;
+        tray.OpenAboutRequested += OpenAbout;
+        tray.QueuePauseToggled += paused => poller.IsPaused = paused;
+        tray.ExitRequested += () =>
+        {
+            _isExiting = true;
+            Shutdown();
+        };
+
+        if (settings.NotificationsEnabled)
+        {
+            queueEngine.JobFailedPermanently += job =>
+                Dispatcher.Invoke(() => tray.ShowError(
+                    "Falha permanente na impressão",
+                    $"Pedido #{job.OrderId}: {job.LastError ?? "esgotou as tentativas"}"));
+
+            poller.ConnectionLost += () =>
+                Dispatcher.Invoke(() => tray.ShowError("Conexão perdida", "Não foi possível falar com o servidor da Kazakora."));
+
+            poller.ConnectionRestored += () =>
+                Dispatcher.Invoke(() => tray.ShowInfo("Conexão restaurada", "A comunicação com o servidor voltou ao normal."));
+        }
 
         var mainWindow = new MainWindow { DataContext = mainViewModel };
+        _mainWindow = mainWindow;
+        mainWindow.Closing += (_, args) =>
+        {
+            if (_isExiting)
+            {
+                return;
+            }
+
+            // "Fechar" minimiza pra bandeja em vez de encerrar — o app
+            // precisa continuar rodando em segundo plano processando a fila.
+            args.Cancel = true;
+            mainWindow.Hide();
+        };
+
         MainWindow = mainWindow;
         mainWindow.Show();
 
-        _poller.Start();
+        poller.Start();
+    }
+
+    private void ShowMainWindow()
+    {
+        _mainWindow?.Show();
+        _mainWindow?.Activate();
+
+        if (_mainWindow?.WindowState == WindowState.Minimized)
+        {
+            _mainWindow.WindowState = WindowState.Normal;
+        }
+    }
+
+    private void OpenSettings()
+    {
+        if (_settings is null)
+        {
+            return;
+        }
+
+        var window = new SettingsWindow(_settings) { Owner = _mainWindow };
+        window.ShowDialog();
+    }
+
+    private void OpenAbout()
+    {
+        var window = new AboutWindow { Owner = _mainWindow };
+        window.ShowDialog();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
         _poller?.Dispose();
         _jobStore?.Dispose();
+        _tray?.Dispose();
 
         base.OnExit(e);
     }

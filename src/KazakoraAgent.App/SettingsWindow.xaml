@@ -1,0 +1,53 @@
+<Window x:Class="KazakoraAgent.App.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Configurações — KoraSync" Height="560" Width="480"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+    <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <TextBlock Text="Configurações" Style="{StaticResource TitleTextStyle}" Margin="0,0,0,16" />
+
+            <TextBlock Text="URL da API" Style="{StaticResource SecondaryTextStyle}" />
+            <TextBox x:Name="ApiBaseUrlBox" Margin="0,4,0,12" Padding="8"
+                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                     BorderBrush="{DynamicResource BorderBrush}" />
+
+            <TextBlock Text="Token de autenticação" Style="{StaticResource SecondaryTextStyle}" />
+            <TextBox x:Name="ApiTokenBox" Margin="0,4,0,12" Padding="8"
+                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                     BorderBrush="{DynamicResource BorderBrush}" />
+
+            <TextBlock Text="Impressora padrão (nome exato no Windows)" Style="{StaticResource SecondaryTextStyle}" />
+            <TextBox x:Name="PrinterNameBox" Margin="0,4,0,12" Padding="8"
+                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                     BorderBrush="{DynamicResource BorderBrush}" />
+
+            <TextBlock Text="Intervalo de polling da fila (segundos)" Style="{StaticResource SecondaryTextStyle}" />
+            <TextBox x:Name="QueuePollSecondsBox" Margin="0,4,0,12" Padding="8"
+                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                     BorderBrush="{DynamicResource BorderBrush}" />
+
+            <TextBlock Text="Intervalo de polling do dashboard (segundos)" Style="{StaticResource SecondaryTextStyle}" />
+            <TextBox x:Name="DashboardPollSecondsBox" Margin="0,4,0,12" Padding="8"
+                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                     BorderBrush="{DynamicResource BorderBrush}" />
+
+            <CheckBox x:Name="NotificationsEnabledBox" Content="Ativar notificações do Windows"
+                      Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,4,0,8" />
+
+            <CheckBox x:Name="StartWithWindowsBox" Content="Iniciar junto com o Windows"
+                      Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,20" />
+
+            <TextBlock Text="Alterações exigem reiniciar o app pra valer." Style="{StaticResource SecondaryTextStyle}" Margin="0,0,0,12" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancelar" Click="Cancel_Click" Padding="14,8" Margin="0,0,8,0"
+                        Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" />
+                <Button Content="Salvar" Click="Save_Click" Padding="14,8"
+                        Background="{DynamicResource BrandPrimaryBrush}" Foreground="#0D0D0D" BorderThickness="0" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Window>
