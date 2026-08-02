@@ -22,4 +22,10 @@ public sealed class DashboardMetricsDto
 
     [JsonPropertyName("cart_items_count")]
     public required int CartItemsCount { get; init; }
+
+    /// Aproximação (bruto - taxas de marketplace capturadas), não lucro
+    /// real — o Kazakora ainda não tem custo de produto cadastrado. Ver
+    /// comentário em DashboardAgentController::metrics() no Laravel.
+    [JsonPropertyName("net_profit_today")]
+    public required decimal NetProfitToday { get; init; }
 }
