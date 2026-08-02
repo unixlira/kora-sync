@@ -11,5 +11,7 @@ public static class MarketplaceChannel
 
     public const string TikTokShop = "tiktok_shop";
 
-    public static readonly IReadOnlyList<string> All = [Store, MercadoLivre, Shopee, TikTokShop];
+    public const string Amazon = "amazon";
+
+    public static readonly IReadOnlyList<string> All = [Store, MercadoLivre, Shopee, TikTokShop, Amazon];
 }

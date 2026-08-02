@@ -49,16 +49,19 @@ public partial class MainViewModel : ObservableObject
 
         var resources = Application.Current.Resources;
 
+        var brandBrush = (Brush) resources["BrandPrimaryBrush"];
+        var processingBrush = (Brush) resources["StatusProcessingBrush"];
+        var errorBrush = (Brush) resources["StatusErrorBrush"];
+        var warningBrush = (Brush) resources["StatusWarningBrush"];
+        var neutralBrush = (Brush) resources["TextPrimaryBrush"];
+
         MetricCards =
         [
-            new MetricCardViewModel { Label = "Faturamento Bruto do Dia", NumberBrush = (Brush) resources["BrandPrimaryBrush"] },
-            // Aproximado (bruto - taxas de marketplace capturadas) — ainda
-            // não é lucro real, não existe custo de produto cadastrado.
-            new MetricCardViewModel { Label = "Lucro Líquido (aprox.)", NumberBrush = (Brush) resources["BrandPrimaryBrush"] },
-            new MetricCardViewModel { Label = "Total de Vendas", NumberBrush = (Brush) resources["TextPrimaryBrush"] },
-            new MetricCardViewModel { Label = "Vendas Canceladas", NumberBrush = (Brush) resources["StatusErrorBrush"] },
-            new MetricCardViewModel { Label = "Vendas Reembolsadas / Devoluções", NumberBrush = (Brush) resources["StatusWarningBrush"] },
-            new MetricCardViewModel { Label = "Produtos no Carrinho", NumberBrush = (Brush) resources["TextPrimaryBrush"] },
+            new MetricCardViewModel { Label = "Faturamento", NumberBrush = neutralBrush, AccentBrush = brandBrush, Icon = MetricIcons.Revenue },
+            new MetricCardViewModel { Label = "Pedidos", NumberBrush = neutralBrush, AccentBrush = processingBrush, Icon = MetricIcons.Orders },
+            new MetricCardViewModel { Label = "Cancelados", NumberBrush = neutralBrush, AccentBrush = errorBrush, Icon = MetricIcons.Cancelled },
+            new MetricCardViewModel { Label = "Reembolsos", NumberBrush = neutralBrush, AccentBrush = warningBrush, Icon = MetricIcons.Refunds },
+            new MetricCardViewModel { Label = "Carrinho", NumberBrush = neutralBrush, AccentBrush = neutralBrush, Icon = MetricIcons.Cart },
         ];
 
         CloseDetailCommand = new RelayCommand(() =>
@@ -73,11 +76,10 @@ public partial class MainViewModel : ObservableObject
         Metrics.UpdateFrom(dto);
 
         MetricCards[0].Value = dto.RevenueToday.ToString("C2", PtBr);
-        MetricCards[1].Value = dto.NetProfitToday.ToString("C2", PtBr);
-        MetricCards[2].Value = dto.SalesToday.ToString(PtBr);
-        MetricCards[3].Value = dto.CancelledToday.ToString(PtBr);
-        MetricCards[4].Value = dto.RefundedToday.ToString(PtBr);
-        MetricCards[5].Value = dto.CartItemsCount.ToString(PtBr);
+        MetricCards[1].Value = dto.SalesToday.ToString(PtBr);
+        MetricCards[2].Value = dto.CancelledToday.ToString(PtBr);
+        MetricCards[3].Value = dto.RefundedToday.ToString(PtBr);
+        MetricCards[4].Value = dto.CartItemsCount.ToString(PtBr);
     }
 
     public void UpdateChannels(IReadOnlyList<ChannelStatusDto> statuses)

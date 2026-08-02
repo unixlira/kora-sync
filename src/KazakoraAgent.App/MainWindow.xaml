@@ -9,13 +9,22 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
-        <!-- Card de métrica (topo): número grande + rótulo. Cor do número passada via NumberBrush. -->
+        <!-- Card de métrica (topo): ícone numa bolha colorida + rótulo + número. -->
         <DataTemplate x:Key="MetricCardTemplate">
             <Border Style="{StaticResource CardStyle}" Margin="0,0,12,0" MinWidth="200">
-                <StackPanel>
-                    <TextBlock Text="{Binding Label}" Style="{StaticResource SecondaryTextStyle}" />
-                    <TextBlock Text="{Binding Value}" Style="{StaticResource MetricValueTextStyle}"
-                               Foreground="{Binding NumberBrush}" Margin="0,6,0,0" />
+                <StackPanel Orientation="Horizontal">
+                    <Grid Width="44" Height="44" Margin="0,0,12,0">
+                        <Ellipse Fill="{Binding AccentBrush}" Opacity="0.16" />
+                        <Viewbox Width="22" Height="22">
+                            <Path Data="{Binding Icon}" Fill="{Binding AccentBrush}" Stroke="{Binding AccentBrush}"
+                                  StrokeThickness="1.6" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        </Viewbox>
+                    </Grid>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Label}" Style="{StaticResource SecondaryTextStyle}" />
+                        <TextBlock Text="{Binding Value}" Style="{StaticResource MetricValueTextStyle}"
+                                   Foreground="{Binding NumberBrush}" Margin="0,4,0,0" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </DataTemplate>

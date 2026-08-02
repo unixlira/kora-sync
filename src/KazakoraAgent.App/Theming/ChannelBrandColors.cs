@@ -20,12 +20,15 @@ public static class ChannelBrandColors
 
     public static readonly Color TikTokShop = (Color) ColorConverter.ConvertFromString("#7B61FF")!;
 
+    public static readonly Color Amazon = (Color) ColorConverter.ConvertFromString("#FF9900")!;
+
     public static Color For(string channel) => channel switch
     {
         MarketplaceChannel.Store => Store,
         MarketplaceChannel.MercadoLivre => MercadoLivre,
         MarketplaceChannel.Shopee => Shopee,
         MarketplaceChannel.TikTokShop => TikTokShop,
+        MarketplaceChannel.Amazon => Amazon,
         _ => Colors.Gray,
     };
 
@@ -37,6 +40,7 @@ public static class ChannelBrandColors
         MarketplaceChannel.MercadoLivre => "Mercado Livre",
         MarketplaceChannel.Shopee => "Shopee",
         MarketplaceChannel.TikTokShop => "TikTok Shop",
+        MarketplaceChannel.Amazon => "Amazon",
         _ => channel,
     };
 }
