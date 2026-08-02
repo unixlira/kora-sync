@@ -24,7 +24,7 @@ OutputDir=dist
 OutputBaseFilename=KoraSyncSetup
 Compression=lzma
 SolidCompression=yes
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesInstallIn64BitMode=x64compatible
 ; Instala só pro usuário atual — não precisa admin (mesma filosofia da
 ; chave de "iniciar com o Windows" do app, que também é por usuário).
 PrivilegesRequired=lowest
