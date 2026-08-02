@@ -34,9 +34,17 @@
   <ItemGroup>
     <!-- Content (não Resource) de propósito — precisa existir como arquivo
          de verdade na pasta de publish pra ser executável via Process.Start,
-         diferente de Resource (embutido no assembly, só serve pra XAML). -->
+         diferente de Resource (embutido no assembly, só serve pra XAML).
+         ExcludeFromSingleFile é obrigatório: sem isso, PublishSingleFile
+         embute o .exe inteiro dentro do bundle único (extraído só em
+         runtime, numa pasta temporária — não em AppContext.BaseDirectory,
+         onde o código procura) em vez de deixar como arquivo solto do
+         lado do KazakoraAgent.App.exe. Confirmado: sem essa flag, o
+         publish simplesmente não cria a pasta Tools\ nenhuma. -->
     <Content Include="Tools\SumatraPDF.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
   </ItemGroup>
 
