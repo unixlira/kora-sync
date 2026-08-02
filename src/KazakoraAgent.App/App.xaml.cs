@@ -70,8 +70,7 @@ public partial class App : System.Windows.Application
             TimeSpan.FromSeconds(Math.Max(1, settings.DashboardPollSeconds)));
         _poller = poller;
 
-        var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico");
-        var tray = new TrayIconService(iconPath);
+        var tray = new TrayIconService();
         _tray = tray;
         tray.OpenDashboardRequested += ShowMainWindow;
         tray.OpenSettingsRequested += OpenSettings;

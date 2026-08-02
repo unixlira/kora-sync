@@ -24,7 +24,7 @@ public sealed class TrayIconService : IDisposable
 
     public event Action? ExitRequested;
 
-    public TrayIconService(string iconPath)
+    public TrayIconService()
     {
         _toggleQueueItem = new ToolStripMenuItem("Pausar Fila", null, (_, _) => ToggleQueue());
 
@@ -38,7 +38,12 @@ public sealed class TrayIconService : IDisposable
 
         _notifyIcon = new NotifyIcon
         {
-            Icon = new System.Drawing.Icon(iconPath),
+            // Extrai o ícone do próprio .exe em execução (embutido via
+            // ApplicationIcon no .csproj) em vez de abrir Assets\app.ico
+            // como arquivo solto — esse arquivo é um recurso WPF embutido
+            // no assembly, não existe fisicamente na pasta de publish
+            // (causou um crash real na abertura: DirectoryNotFoundException).
+            Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!)!,
             Text = "KoraSync",
             Visible = true,
             ContextMenuStrip = menu,
