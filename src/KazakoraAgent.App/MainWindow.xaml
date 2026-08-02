@@ -1,9 +1,134 @@
 <Window x:Class="KazakoraAgent.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="KoraSync" Height="720" Width="1200"
+        xmlns:vm="clr-namespace:KazakoraAgent.App.ViewModels"
+        Title="KoraSync" Height="820" Width="1360"
         Background="{DynamicResource WindowBackgroundBrush}"
         WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <!-- Card de métrica (topo): número grande + rótulo. Cor do número passada via NumberBrush. -->
+        <DataTemplate x:Key="MetricCardTemplate">
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,12,0" MinWidth="200">
+                <StackPanel>
+                    <TextBlock Text="{Binding Label}" Style="{StaticResource SecondaryTextStyle}" />
+                    <TextBlock Text="{Binding Value}" Style="{StaticResource MetricValueTextStyle}"
+                               Foreground="{Binding NumberBrush}" Margin="0,6,0,0" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- Card de canal — faixa de cor da marca à esquerda, bolinha de status, clicável. -->
+        <DataTemplate DataType="{x:Type vm:ChannelCardViewModel}">
+            <Border Style="{StaticResource CardStyle}" Width="280" Margin="0,0,16,16" Cursor="Hand">
+                <Border.InputBindings>
+                    <MouseBinding MouseAction="LeftClick" Command="{Binding OpenDetailCommand}" />
+                </Border.InputBindings>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="{Binding AccentBrush}" CornerRadius="2" Margin="0,0,12,0" />
+
+                    <StackPanel Grid.Column="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding DisplayName}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" />
+                            <Ellipse Grid.Column="1" Style="{StaticResource StatusDotStyle}" Fill="{Binding StatusBrush}" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <TextBlock Text="Último pedido" Style="{StaticResource SecondaryTextStyle}" Margin="0,12,0,0" />
+                        <TextBlock Text="{Binding LastOrderLabel}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" />
+
+                        <TextBlock Text="Última etiqueta impressa" Style="{StaticResource SecondaryTextStyle}" Margin="0,8,0,0" />
+                        <TextBlock Text="{Binding LastLabelPrintedLabel}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" />
+
+                        <TextBlock Style="{StaticResource SecondaryTextStyle}" Margin="0,8,0,0">
+                            <Run Text="Etiquetas hoje: " /><Run Text="{Binding LabelsPrintedToday, Mode=OneWay}" FontWeight="Bold" />
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- Item da fila de impressão — usado nas 4 colunas (Aguardando/Processando/Concluídos/Falhados). -->
+        <DataTemplate x:Key="QueueItemTemplate" DataType="{x:Type vm:QueueItemViewModel}">
+            <Border Style="{StaticResource CardStyle}" Padding="10" Margin="0,0,0,8" CornerRadius="8">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource BodyTextStyle}" FontWeight="Bold">
+                            <Run Text="Pedido #" /><Run Text="{Binding OrderId, Mode=OneWay}" />
+                        </TextBlock>
+                        <Ellipse Grid.Column="1" Style="{StaticResource StatusDotStyle}" Fill="{Binding StatusBrush}" VerticalAlignment="Center" />
+                    </Grid>
+                    <TextBlock Text="{Binding ChannelDisplayName}" Style="{StaticResource SecondaryTextStyle}" />
+                    <TextBlock Text="{Binding ShippingType}" Style="{StaticResource SecondaryTextStyle}" />
+                    <TextBlock Style="{StaticResource SecondaryTextStyle}">
+                        <Run Text="{Binding StatusLabel, Mode=OneWay}" /><Run Text=" — tentativa " /><Run Text="{Binding AttemptCount, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Text="{Binding LastError}" Style="{StaticResource SecondaryTextStyle}"
+                                Foreground="{DynamicResource StatusErrorBrush}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Timestamp, StringFormat='dd/MM HH:mm:ss'}" Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,0" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- Linha de pedido na visão detalhada do canal. -->
+        <DataTemplate x:Key="OrderRowTemplate" DataType="{x:Type vm:ChannelOrderRowViewModel}">
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,8" Padding="14">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="140" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Style="{StaticResource BodyTextStyle}" FontWeight="Bold">
+                            <Run Text="#" /><Run Text="{Binding Id, Mode=OneWay}" /><Run Text=" — " /><Run Text="{Binding ExternalOrderId, Mode=OneWay}" />
+                        </TextBlock>
+                        <TextBlock Text="{Binding CustomerName}" Style="{StaticResource SecondaryTextStyle}" />
+                        <TextBlock Text="{Binding ProductsSummary}" Style="{StaticResource SecondaryTextStyle}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding ShippingMethod}" Style="{StaticResource SecondaryTextStyle}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Bruto" Style="{StaticResource SecondaryTextStyle}" />
+                        <TextBlock Text="{Binding GrossAmount, StringFormat='R$ {0:N2}'}" Style="{StaticResource BodyTextStyle}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="Taxa" Style="{StaticResource SecondaryTextStyle}" />
+                        <TextBlock Text="{Binding FeeAmount, StringFormat='R$ {0:N2}', TargetNullValue=--}" Style="{StaticResource BodyTextStyle}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="3" VerticalAlignment="Center">
+                        <TextBlock Text="Líquido" Style="{StaticResource SecondaryTextStyle}" />
+                        <TextBlock Text="{Binding NetAmount, StringFormat='R$ {0:N2}', TargetNullValue=--}"
+                                    Style="{StaticResource BodyTextStyle}" Foreground="{DynamicResource BrandPrimaryBrush}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="4" VerticalAlignment="Center">
+                        <TextBlock Text="Status" Style="{StaticResource SecondaryTextStyle}" />
+                        <TextBlock Text="{Binding StatusLabel}" Style="{StaticResource BodyTextStyle}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -11,8 +136,8 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Cabeçalho: logo (canto superior esquerdo) + troca de tema -->
-        <Grid Grid.Row="0" Margin="0,0,0,24">
+        <!-- Cabeçalho -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -23,40 +148,104 @@
                 <TextBlock Text="KoraSync" Style="{StaticResource TitleTextStyle}" VerticalAlignment="Center" />
             </StackPanel>
 
-            <Button Grid.Column="1" x:Name="ThemeToggleButton" Content="Alternar tema"
-                    Click="ThemeToggleButton_Click"
+            <Button Grid.Column="1" Content="Alternar tema" Click="ThemeToggleButton_Click"
                     Padding="12,6" Background="{DynamicResource CardBackgroundBrush}"
-                    Foreground="{DynamicResource TextPrimaryBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}" />
+                    Foreground="{DynamicResource TextPrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}" />
         </Grid>
 
-        <!--
-            Área de conteúdo — placeholder por enquanto (métricas, cards de
-            canal, fila de impressão entram aqui na próxima fatia). Um card
-            de exemplo já demonstra o CardStyle com a paleta real.
-        -->
-        <Border Grid.Row="1" Style="{StaticResource CardStyle}" VerticalAlignment="Top">
+        <!-- Conteúdo principal -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <TextBlock Text="Dashboard em construção" Style="{StaticResource TitleTextStyle}" />
-                <TextBlock Text="Esta é a primeira fatia: projeto, tema dark/light e logo funcionando."
-                           Style="{StaticResource SecondaryTextStyle}" Margin="0,8,0,0" />
-                <TextBlock Text="R$ 0,00" Style="{StaticResource MetricValueTextStyle}"
-                           Foreground="{DynamicResource BrandPrimaryBrush}" Margin="0,16,0,0" />
+                <!-- Métricas do dia -->
+                <ItemsControl ItemsSource="{Binding MetricCards}" ItemTemplate="{StaticResource MetricCardTemplate}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+
+                <!-- Cards de integração por canal -->
+                <TextBlock Text="Canais de venda" Style="{StaticResource TitleTextStyle}" Margin="0,28,0,12" FontSize="16" />
+                <ItemsControl ItemsSource="{Binding Channels}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+
+                <!-- Fila de impressão ao vivo -->
+                <TextBlock Text="Fila de impressão" Style="{StaticResource TitleTextStyle}" Margin="0,28,0,12" FontSize="16" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                        <TextBlock Text="Aguardando" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,0,0,8" />
+                        <ItemsControl ItemsSource="{Binding QueueWaiting}" ItemTemplate="{StaticResource QueueItemTemplate}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                        <TextBlock Text="Processando agora" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,0,0,8" />
+                        <ItemsControl ItemsSource="{Binding QueueProcessing}" ItemTemplate="{StaticResource QueueItemTemplate}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                        <TextBlock Text="Concluídos hoje" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,0,0,8" />
+                        <ItemsControl ItemsSource="{Binding QueueCompletedToday}" ItemTemplate="{StaticResource QueueItemTemplate}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="3">
+                        <TextBlock Text="Falhados / Retentativa" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,0,0,8" />
+                        <ItemsControl ItemsSource="{Binding QueueFailedOrRetrying}" ItemTemplate="{StaticResource QueueItemTemplate}" />
+                    </StackPanel>
+                </Grid>
             </StackPanel>
-        </Border>
+        </ScrollViewer>
 
         <!-- Rodapé -->
-        <Grid Grid.Row="2" Margin="0,24,0,0">
+        <Grid Grid.Row="2" Margin="0,20,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <TextBlock Text="Desenvolvido com " Style="{StaticResource SecondaryTextStyle}" />
-                <TextBlock Text="❤" Style="{StaticResource FooterLinkStyle}"
-                           MouseLeftButtonUp="DevLiraLink_Click" Margin="2,0" />
+                <TextBlock Text="❤" Style="{StaticResource FooterLinkStyle}" MouseLeftButtonUp="DevLiraLink_Click" Margin="2,0" />
                 <TextBlock Text=" por " Style="{StaticResource SecondaryTextStyle}" />
-                <TextBlock Text="Lira" Style="{StaticResource FooterLinkStyle}"
-                           MouseLeftButtonUp="DevLiraLink_Click" />
+                <TextBlock Text="Lira" Style="{StaticResource FooterLinkStyle}" MouseLeftButtonUp="DevLiraLink_Click" />
                 <TextBlock Text="    |    © 2026 Kazakora. Todos os direitos reservados.    |    v1.0.0"
                            Style="{StaticResource SecondaryTextStyle}" />
             </StackPanel>
+        </Grid>
+
+        <!-- Overlay da visão detalhada do canal -->
+        <Grid Grid.RowSpan="3" Background="#CC000000" Visibility="{Binding IsShowingDetail, Converter={StaticResource BoolToVisibility}}">
+            <Border Style="{StaticResource CardStyle}" Margin="60" DataContext="{Binding SelectedDetail}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding DisplayName}" Style="{StaticResource TitleTextStyle}" />
+                        <Button Grid.Column="1" Content="Voltar" Padding="12,6"
+                                Command="{Binding DataContext.CloseDetailCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" />
+                    </Grid>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Orders}" ItemTemplate="{StaticResource OrderRowTemplate}" />
+                    </ScrollViewer>
+                </Grid>
+            </Border>
         </Grid>
     </Grid>
 </Window>

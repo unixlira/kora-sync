@@ -73,6 +73,20 @@ public sealed class KazakoraApiClient : IKazakoraApiClient
             ?? throw new InvalidOperationException("Resposta vazia de GET dashboard/metrics.");
     }
 
+    public async Task<IReadOnlyList<ChannelOrderDto>> GetChannelOrdersAsync(string channel, CancellationToken ct = default)
+    {
+        var response = await _http.GetFromJsonAsync<ChannelOrdersResponse>($"dashboard/channels/{channel}/orders", JsonOptions, ct)
+            ?? throw new InvalidOperationException("Resposta vazia de GET dashboard/channels/{channel}/orders.");
+
+        return response.Orders;
+    }
+
+    private sealed class ChannelOrdersResponse
+    {
+        [JsonPropertyName("orders")]
+        public required List<ChannelOrderDto> Orders { get; init; }
+    }
+
     private sealed class JobsIndexResponse
     {
         [JsonPropertyName("jobs")]

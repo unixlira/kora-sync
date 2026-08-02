@@ -1,0 +1,66 @@
+using System.IO;
+using System.Text.Json;
+
+namespace KazakoraAgent.App.Services;
+
+/// <summary>
+/// Persistida em %AppData%\KoraSync\settings.json — é o que a tela de
+/// Configurações (URL da API, token, impressora, intervalos de polling,
+/// notificações, iniciar com o Windows) lê/grava. Ainda não tem UI própria
+/// nesta fatia; carregada com defaults vazios/sensatos até essa tela existir.
+/// </summary>
+public sealed class AppSettings
+{
+    public string ApiBaseUrl { get; set; } = "https://kazakora.devlira.com.br/api/print-agent/";
+
+    public string ApiToken { get; set; } = "";
+
+    public string AgentId { get; set; } = Environment.MachineName;
+
+    public string PrinterName { get; set; } = "";
+
+    public int QueuePollSeconds { get; set; } = 1;
+
+    public int DashboardPollSeconds { get; set; } = 5;
+
+    public bool NotificationsEnabled { get; set; } = true;
+
+    public bool StartWithWindows { get; set; }
+
+    public string Theme { get; set; } = "Dark";
+
+    private static string FilePath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "KoraSync", "settings.json");
+
+    public static AppSettings Load()
+    {
+        try
+        {
+            if (File.Exists(FilePath))
+            {
+                var json = File.ReadAllText(FilePath);
+                var settings = JsonSerializer.Deserialize<AppSettings>(json);
+
+                if (settings is not null)
+                {
+                    return settings;
+                }
+            }
+        }
+        catch
+        {
+            // Config corrompida/ilegível — segue com defaults em vez de travar a inicialização.
+        }
+
+        return new AppSettings();
+    }
+
+    public void Save()
+    {
+        var directory = Path.GetDirectoryName(FilePath)!;
+        Directory.CreateDirectory(directory);
+
+        var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(FilePath, json);
+    }
+}
