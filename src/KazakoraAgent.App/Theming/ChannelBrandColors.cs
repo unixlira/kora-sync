@@ -33,7 +33,7 @@ public static class ChannelBrandColors
 
     public static string DisplayNameFor(string channel) => channel switch
     {
-        MarketplaceChannel.Store => "Site Próprio",
+        MarketplaceChannel.Store => "KazaKora",
         MarketplaceChannel.MercadoLivre => "Mercado Livre",
         MarketplaceChannel.Shopee => "Shopee",
         MarketplaceChannel.TikTokShop => "TikTok Shop",

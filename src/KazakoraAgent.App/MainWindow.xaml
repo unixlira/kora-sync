@@ -144,13 +144,33 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Image Source="Assets/logo.png" Height="40" Margin="0,0,12,0" />
+                <Image Source="Assets/logo.png" Height="64" Margin="0,0,12,0" />
                 <TextBlock Text="KoraSync" Style="{StaticResource TitleTextStyle}" VerticalAlignment="Center" />
             </StackPanel>
 
-            <Button Grid.Column="1" Content="Alternar tema" Click="ThemeToggleButton_Click"
-                    Padding="12,6" Background="{DynamicResource CardBackgroundBrush}"
-                    Foreground="{DynamicResource TextPrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}" />
+            <Button Grid.Column="1" Click="ThemeToggleButton_Click" Padding="8"
+                    Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                    Width="36" Height="36" ToolTip="Alternar tema">
+                <Grid Width="18" Height="18">
+                    <!-- Sol — visível no tema escuro (clicar troca pra claro) -->
+                    <Grid x:Name="SunIcon">
+                        <Ellipse Width="9" Height="9" Fill="{DynamicResource TextPrimaryBrush}" />
+                        <Line X1="9" Y1="0" X2="9" Y2="2.5" Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        <Line X1="9" Y1="15.5" X2="9" Y2="18" Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        <Line X1="0" Y1="9" X2="2.5" Y2="9" Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        <Line X1="15.5" Y1="9" X2="18" Y2="9" Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        <Line X1="2.64" Y1="2.64" X2="4.4" Y2="4.4" Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        <Line X1="13.6" Y1="13.6" X2="15.36" Y2="15.36" Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        <Line X1="15.36" Y1="2.64" X2="13.6" Y2="4.4" Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        <Line X1="4.4" Y1="13.6" X2="2.64" Y2="15.36" Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                    </Grid>
+                    <!-- Lua (círculo com uma mordida do fundo por cima) — visível no tema claro (clicar troca pra escuro) -->
+                    <Grid x:Name="MoonIcon" Visibility="Collapsed">
+                        <Ellipse Width="16" Height="16" Fill="{DynamicResource TextPrimaryBrush}" />
+                        <Ellipse Width="13" Height="13" Fill="{DynamicResource WindowBackgroundBrush}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-3,0" />
+                    </Grid>
+                </Grid>
+            </Button>
         </Grid>
 
         <!-- Conteúdo principal -->
