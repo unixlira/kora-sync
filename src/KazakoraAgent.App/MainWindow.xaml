@@ -144,10 +144,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Image Source="{DynamicResource LogoImageSource}" Height="64" Margin="0,0,12,0" />
-                <TextBlock Text="KoraSync" Style="{StaticResource TitleTextStyle}" VerticalAlignment="Center" />
-            </StackPanel>
+            <Image Source="{DynamicResource LogoImageSource}" Height="94" HorizontalAlignment="Left" VerticalAlignment="Center" />
 
             <Button Grid.Column="1" Click="ThemeToggleButton_Click" Padding="8"
                     Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
