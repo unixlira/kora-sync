@@ -28,7 +28,10 @@ ArchitecturesInstallIn64BitMode=x64compatible
 ; Instala só pro usuário atual — não precisa admin (mesma filosofia da
 ; chave de "iniciar com o Windows" do app, que também é por usuário).
 PrivilegesRequired=lowest
-SetupIconFile=..\assets\logo\kora_sync.ico
+; Ícone do instalador em si (fundo branco quadrado) — deliberadamente
+; diferente do ícone do app instalado (Assets\app.ico, fundo redondo),
+; que continua vindo embutido no .exe publicado via ApplicationIcon.
+SetupIconFile=..\assets\logo\kora_sync_installer.ico
 
 [Languages]
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
