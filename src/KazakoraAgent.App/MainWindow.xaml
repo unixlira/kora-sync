@@ -1,0 +1,62 @@
+<Window x:Class="KazakoraAgent.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="KoraSync" Height="720" Width="1200"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Cabeçalho: logo (canto superior esquerdo) + troca de tema -->
+        <Grid Grid.Row="0" Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Image Source="Assets/logo.png" Height="40" Margin="0,0,12,0" />
+                <TextBlock Text="KoraSync" Style="{StaticResource TitleTextStyle}" VerticalAlignment="Center" />
+            </StackPanel>
+
+            <Button Grid.Column="1" x:Name="ThemeToggleButton" Content="Alternar tema"
+                    Click="ThemeToggleButton_Click"
+                    Padding="12,6" Background="{DynamicResource CardBackgroundBrush}"
+                    Foreground="{DynamicResource TextPrimaryBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" />
+        </Grid>
+
+        <!--
+            Área de conteúdo — placeholder por enquanto (métricas, cards de
+            canal, fila de impressão entram aqui na próxima fatia). Um card
+            de exemplo já demonstra o CardStyle com a paleta real.
+        -->
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" VerticalAlignment="Top">
+            <StackPanel>
+                <TextBlock Text="Dashboard em construção" Style="{StaticResource TitleTextStyle}" />
+                <TextBlock Text="Esta é a primeira fatia: projeto, tema dark/light e logo funcionando."
+                           Style="{StaticResource SecondaryTextStyle}" Margin="0,8,0,0" />
+                <TextBlock Text="R$ 0,00" Style="{StaticResource MetricValueTextStyle}"
+                           Foreground="{DynamicResource BrandPrimaryBrush}" Margin="0,16,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- Rodapé -->
+        <Grid Grid.Row="2" Margin="0,24,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock Text="Desenvolvido com " Style="{StaticResource SecondaryTextStyle}" />
+                <TextBlock Text="❤" Style="{StaticResource FooterLinkStyle}"
+                           MouseLeftButtonUp="DevLiraLink_Click" Margin="2,0" />
+                <TextBlock Text=" por " Style="{StaticResource SecondaryTextStyle}" />
+                <TextBlock Text="Lira" Style="{StaticResource FooterLinkStyle}"
+                           MouseLeftButtonUp="DevLiraLink_Click" />
+                <TextBlock Text="    |    © 2026 Kazakora. Todos os direitos reservados.    |    v1.0.0"
+                           Style="{StaticResource SecondaryTextStyle}" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

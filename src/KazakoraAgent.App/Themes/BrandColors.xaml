@@ -1,0 +1,28 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Cores da marca e de status — iguais nos dois temas (dark/light),
+        por isso ficam num dicionário separado, sempre mesclado, nunca
+        trocado pela troca de tema.
+    -->
+
+    <Color x:Key="BrandPrimaryColor">#00E676</Color>
+    <Color x:Key="BrandHoverColor">#00C853</Color>
+    <Color x:Key="SuccessBackgroundColor">#1B3A2B</Color>
+
+    <Color x:Key="StatusSuccessColor">#00E676</Color>
+    <Color x:Key="StatusWarningColor">#FFB74D</Color>
+    <Color x:Key="StatusErrorColor">#FF5252</Color>
+    <Color x:Key="StatusProcessingColor">#40C4FF</Color>
+
+    <SolidColorBrush x:Key="BrandPrimaryBrush" Color="{StaticResource BrandPrimaryColor}" />
+    <SolidColorBrush x:Key="BrandHoverBrush" Color="{StaticResource BrandHoverColor}" />
+    <SolidColorBrush x:Key="SuccessBackgroundBrush" Color="{StaticResource SuccessBackgroundColor}" />
+
+    <SolidColorBrush x:Key="StatusSuccessBrush" Color="{StaticResource StatusSuccessColor}" />
+    <SolidColorBrush x:Key="StatusWarningBrush" Color="{StaticResource StatusWarningColor}" />
+    <SolidColorBrush x:Key="StatusErrorBrush" Color="{StaticResource StatusErrorColor}" />
+    <SolidColorBrush x:Key="StatusProcessingBrush" Color="{StaticResource StatusProcessingColor}" />
+
+</ResourceDictionary>

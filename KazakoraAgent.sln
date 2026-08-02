@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{99113E10
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KazakoraAgent.Core.Tests", "tests\KazakoraAgent.Core.Tests\KazakoraAgent.Core.Tests.csproj", "{3C9B266A-4E30-4821-B146-AE47B2179448}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KazakoraAgent.App", "src\KazakoraAgent.App\KazakoraAgent.App.csproj", "{C0EC3A31-F0CC-43F6-877E-9FAA084BAF25}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,9 +30,14 @@ Global
 		{3C9B266A-4E30-4821-B146-AE47B2179448}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3C9B266A-4E30-4821-B146-AE47B2179448}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3C9B266A-4E30-4821-B146-AE47B2179448}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0EC3A31-F0CC-43F6-877E-9FAA084BAF25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0EC3A31-F0CC-43F6-877E-9FAA084BAF25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0EC3A31-F0CC-43F6-877E-9FAA084BAF25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0EC3A31-F0CC-43F6-877E-9FAA084BAF25}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{82A0D3C8-45EA-41B4-A701-321D1C2E85DE} = {B9C337FA-39F2-4037-A599-E7F21E9AC33D}
 		{3C9B266A-4E30-4821-B146-AE47B2179448} = {99113E10-2932-4738-A986-95742B947C7A}
+		{C0EC3A31-F0CC-43F6-877E-9FAA084BAF25} = {B9C337FA-39F2-4037-A599-E7F21E9AC33D}
 	EndGlobalSection
 EndGlobal

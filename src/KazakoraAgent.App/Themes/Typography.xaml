@@ -1,0 +1,35 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        "Inter" com fallback pra "Segoe UI" — se a fonte não estiver
+        instalada na máquina, o WPF cai pro fallback automaticamente em vez
+        de quebrar. Baixar/instalar Inter (fonts.google.com) deixa o
+        visual mais fiel ao especificado; não é obrigatório pro app rodar.
+    -->
+    <FontFamily x:Key="AppFontFamily">Inter, Segoe UI</FontFamily>
+
+    <Style x:Key="TitleTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+
+    <Style x:Key="BodyTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontWeight" Value="Regular" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+
+    <Style x:Key="SecondaryTextStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyTextStyle}">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    </Style>
+
+    <Style x:Key="MetricValueTextStyle" TargetType="TextBlock" BasedOn="{StaticResource TitleTextStyle}">
+        <Setter Property="FontSize" Value="28" />
+    </Style>
+
+</ResourceDictionary>

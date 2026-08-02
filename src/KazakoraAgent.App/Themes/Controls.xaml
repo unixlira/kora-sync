@@ -1,0 +1,26 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Cantos arredondados (8-12px) e padding generoso (mínimo 16px), conforme especificado. -->
+    <Style x:Key="CardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+    <!-- Bolinha de status (verde/amarelo/vermelho) usada nos cards de canal. -->
+    <Style x:Key="StatusDotStyle" TargetType="Ellipse">
+        <Setter Property="Width" Value="10" />
+        <Setter Property="Height" Value="10" />
+    </Style>
+
+    <!-- Link clicável estilo "Desenvolvido com ❤ por Lira" no rodapé. -->
+    <Style x:Key="FooterLinkStyle" TargetType="TextBlock" BasedOn="{StaticResource SecondaryTextStyle}">
+        <Setter Property="Foreground" Value="{DynamicResource BrandPrimaryBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="TextDecorations" Value="Underline" />
+    </Style>
+
+</ResourceDictionary>
