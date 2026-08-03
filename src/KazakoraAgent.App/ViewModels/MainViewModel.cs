@@ -89,33 +89,33 @@ public partial class MainViewModel : ObservableObject
             new QueueStatusCardViewModel
             {
                 Label = "Na fila", Description = "Aguardando o KoraSync processar.",
-                IconKind = PackIconMaterialKind.TrayFull, AccentBrush = warningBrush,
-                CardBackgroundBrush = (Brush) resources["StatusWarningSoftBrush"],
-                CardBorderBrush = (Brush) resources["StatusWarningSoftBorderBrush"],
+                IconKind = PackIconMaterialKind.TrayFull, AccentBrush = QueueStatusColors.Warning.Accent,
+                CardBackgroundBrush = QueueStatusColors.Warning.SoftBackground,
+                CardBorderBrush = QueueStatusColors.Warning.SoftBorder,
                 OpenCommand = new RelayCommand(() => OpenQueueDetail(QueueWaiting, "Na fila")),
             },
             new QueueStatusCardViewModel
             {
                 Label = "Imprimindo", Description = "Sendo processado agora mesmo.",
-                IconKind = PackIconMaterialKind.Printer, AccentBrush = processingBrush,
-                CardBackgroundBrush = (Brush) resources["StatusProcessingSoftBrush"],
-                CardBorderBrush = (Brush) resources["StatusProcessingSoftBorderBrush"],
+                IconKind = PackIconMaterialKind.Printer, AccentBrush = QueueStatusColors.Processing.Accent,
+                CardBackgroundBrush = QueueStatusColors.Processing.SoftBackground,
+                CardBorderBrush = QueueStatusColors.Processing.SoftBorder,
                 OpenCommand = new RelayCommand(() => OpenQueueDetail(QueueProcessing, "Imprimindo")),
             },
             new QueueStatusCardViewModel
             {
                 Label = "Concluídas hoje", Description = "Etiquetas impressas com sucesso.",
-                IconKind = PackIconMaterialKind.CheckCircleOutline, AccentBrush = successBrush,
-                CardBackgroundBrush = (Brush) resources["StatusSuccessSoftBrush"],
-                CardBorderBrush = (Brush) resources["StatusSuccessSoftBorderBrush"],
+                IconKind = PackIconMaterialKind.CheckCircleOutline, AccentBrush = QueueStatusColors.Success.Accent,
+                CardBackgroundBrush = QueueStatusColors.Success.SoftBackground,
+                CardBorderBrush = QueueStatusColors.Success.SoftBorder,
                 OpenCommand = new RelayCommand(() => OpenQueueDetail(QueueCompletedToday, "Concluídas hoje")),
             },
             new QueueStatusCardViewModel
             {
                 Label = "Falharam", Description = "Erro ao processar ou aguardando nova tentativa.",
-                IconKind = PackIconMaterialKind.AlertCircleOutline, AccentBrush = errorBrush,
-                CardBackgroundBrush = (Brush) resources["StatusErrorSoftBrush"],
-                CardBorderBrush = (Brush) resources["StatusErrorSoftBorderBrush"],
+                IconKind = PackIconMaterialKind.AlertCircleOutline, AccentBrush = QueueStatusColors.Error.Accent,
+                CardBackgroundBrush = QueueStatusColors.Error.SoftBackground,
+                CardBorderBrush = QueueStatusColors.Error.SoftBorder,
                 OpenCommand = new RelayCommand(() => OpenQueueDetail(QueueFailedOrRetrying, "Falharam")),
             },
         ];
