@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
                     xmlns:imaging="clr-namespace:System.Windows.Media.Imaging;assembly=PresentationCore">
 
     <!--
@@ -9,17 +10,23 @@
         hex direto.
     -->
 
-    <Color x:Key="WindowBackgroundColor">#0D0D0D</Color>
-    <Color x:Key="CardBackgroundColor">#1A1A2E</Color>
-    <Color x:Key="BorderColor">#2A2A3E</Color>
+    <Color x:Key="WindowBackgroundColor">#0A0B10</Color>
+    <Color x:Key="CardBackgroundColor">#181A26</Color>
+    <Color x:Key="CardBackgroundHoverColor">#20232F</Color>
+    <Color x:Key="BorderColor">#2A2D3C</Color>
     <Color x:Key="TextPrimaryColor">#FFFFFF</Color>
-    <Color x:Key="TextSecondaryColor">#6B6B7B</Color>
+    <Color x:Key="TextSecondaryColor">#8B8DA0</Color>
 
     <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource WindowBackgroundColor}" />
     <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardBackgroundColor}" />
+    <SolidColorBrush x:Key="CardBackgroundHoverBrush" Color="{StaticResource CardBackgroundHoverColor}" />
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+
+    <!-- Sombra bem sutil no escuro — já tem contraste natural entre card e fundo. -->
+    <sys:Double x:Key="CardShadowOpacity">0.35</sys:Double>
+    <sys:Double x:Key="CardShadowDepth">4</sys:Double>
 
     <!-- Versão do logo com cores que ficam legíveis sobre fundo escuro. -->
     <imaging:BitmapImage x:Key="LogoImageSource" UriSource="/Assets/logo_dark.png" />

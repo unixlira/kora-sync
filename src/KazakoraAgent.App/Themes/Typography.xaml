@@ -29,7 +29,15 @@
     </Style>
 
     <Style x:Key="MetricValueTextStyle" TargetType="TextBlock" BasedOn="{StaticResource TitleTextStyle}">
-        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontSize" Value="32" />
+    </Style>
+
+    <!-- Rótulo pequeno em maiúsculas antes de cada seção (ex: "CANAIS DE VENDA"). -->
+    <Style x:Key="EyebrowTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
     </Style>
 
 </ResourceDictionary>

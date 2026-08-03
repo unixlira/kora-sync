@@ -11,7 +11,7 @@
 
         <!-- Card de métrica (topo): ícone numa bolha colorida + rótulo + número. -->
         <DataTemplate x:Key="MetricCardTemplate">
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,12,0" MinWidth="200">
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,16,16" MinWidth="220">
                 <StackPanel Orientation="Horizontal">
                     <Grid Width="44" Height="44" Margin="0,0,12,0">
                         <Ellipse Fill="{Binding AccentBrush}" Opacity="0.16" />
@@ -31,7 +31,7 @@
 
         <!-- Card de canal — faixa de cor da marca à esquerda, bolinha de status, clicável. -->
         <DataTemplate DataType="{x:Type vm:ChannelCardViewModel}">
-            <Border Style="{StaticResource CardStyle}" Width="280" Margin="0,0,16,16" Cursor="Hand">
+            <Border Style="{StaticResource InteractiveCardStyle}" Width="300" Margin="0,0,16,16" Cursor="Hand">
                 <Border.InputBindings>
                     <MouseBinding MouseAction="LeftClick" Command="{Binding OpenDetailCommand}" />
                 </Border.InputBindings>
@@ -41,7 +41,7 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="{Binding AccentBrush}" CornerRadius="2" Margin="0,0,12,0" />
+                    <Border Grid.Column="0" Background="{Binding AccentBrush}" CornerRadius="3" Margin="0,0,14,0" />
 
                     <StackPanel Grid.Column="1">
                         <Grid>
@@ -149,13 +149,20 @@
         </Grid.RowDefinitions>
 
         <!-- Cabeçalho -->
-        <Grid Grid.Row="0" Margin="0,0,0,20">
+        <Border Grid.Row="0" Margin="0,0,0,24" Padding="0,0,0,20" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource BorderBrush}">
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Image Source="{DynamicResource LogoImageSource}" Height="94" HorizontalAlignment="Left" VerticalAlignment="Center" />
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Image Source="{DynamicResource LogoImageSource}" Height="94" />
+                <StackPanel VerticalAlignment="Center" Margin="16,0,0,0">
+                    <TextBlock Text="PAINEL DE IMPRESSÃO" Style="{StaticResource EyebrowTextStyle}" />
+                    <TextBlock Text="Acompanhe pedidos e etiquetas em tempo real" Style="{StaticResource SecondaryTextStyle}" Margin="0,2,0,0" />
+                </StackPanel>
+            </StackPanel>
 
             <Button Grid.Column="1" Click="ThemeToggleButton_Click" Padding="8"
                     Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
@@ -181,6 +188,7 @@
                 </Grid>
             </Button>
         </Grid>
+        </Border>
 
         <!-- Conteúdo principal -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -195,7 +203,10 @@
                 </ItemsControl>
 
                 <!-- Cards de integração por canal -->
-                <TextBlock Text="Canais de venda" Style="{StaticResource TitleTextStyle}" Margin="0,28,0,12" FontSize="16" />
+                <StackPanel Orientation="Horizontal" Margin="0,32,0,14">
+                    <Border Style="{StaticResource SectionAccentBarStyle}" />
+                    <TextBlock Text="CANAIS DE VENDA" Style="{StaticResource EyebrowTextStyle}" VerticalAlignment="Center" />
+                </StackPanel>
                 <ItemsControl ItemsSource="{Binding Channels}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -205,7 +216,10 @@
                 </ItemsControl>
 
                 <!-- Fila de impressão ao vivo -->
-                <TextBlock Text="Fila de impressão" Style="{StaticResource TitleTextStyle}" Margin="0,28,0,12" FontSize="16" />
+                <StackPanel Orientation="Horizontal" Margin="0,32,0,14">
+                    <Border Style="{StaticResource SectionAccentBarStyle}" />
+                    <TextBlock Text="FILA DE IMPRESSÃO" Style="{StaticResource EyebrowTextStyle}" VerticalAlignment="Center" />
+                </StackPanel>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -215,22 +229,46 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                        <TextBlock Text="Aguardando" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,0,0,8" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Ellipse Width="8" Height="8" Fill="{DynamicResource StatusWarningBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Text="Aguardando" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
+                            <Border Style="{StaticResource CountBadgeStyle}" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding QueueWaiting.Count}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" />
+                            </Border>
+                        </StackPanel>
                         <ItemsControl ItemsSource="{Binding QueueWaiting}" ItemTemplate="{StaticResource QueueItemTemplate}" />
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Margin="0,0,12,0">
-                        <TextBlock Text="Processando agora" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,0,0,8" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Ellipse Width="8" Height="8" Fill="{DynamicResource StatusProcessingBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Text="Processando agora" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
+                            <Border Style="{StaticResource CountBadgeStyle}" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding QueueProcessing.Count}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" />
+                            </Border>
+                        </StackPanel>
                         <ItemsControl ItemsSource="{Binding QueueProcessing}" ItemTemplate="{StaticResource QueueItemTemplate}" />
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Margin="0,0,12,0">
-                        <TextBlock Text="Concluídos hoje" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,0,0,8" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Ellipse Width="8" Height="8" Fill="{DynamicResource StatusSuccessBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Text="Concluídos hoje" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
+                            <Border Style="{StaticResource CountBadgeStyle}" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding QueueCompletedToday.Count}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" />
+                            </Border>
+                        </StackPanel>
                         <ItemsControl ItemsSource="{Binding QueueCompletedToday}" ItemTemplate="{StaticResource QueueItemTemplate}" />
                     </StackPanel>
 
                     <StackPanel Grid.Column="3">
-                        <TextBlock Text="Falhados / Retentativa" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,0,0,8" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Ellipse Width="8" Height="8" Fill="{DynamicResource StatusErrorBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Text="Falhados / Retentativa" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
+                            <Border Style="{StaticResource CountBadgeStyle}" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding QueueFailedOrRetrying.Count}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" />
+                            </Border>
+                        </StackPanel>
                         <ItemsControl ItemsSource="{Binding QueueFailedOrRetrying}" ItemTemplate="{StaticResource QueueItemTemplate}" />
                     </StackPanel>
                 </Grid>

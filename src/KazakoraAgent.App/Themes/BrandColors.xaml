@@ -16,6 +16,10 @@
     <Color x:Key="StatusErrorColor">#FF5252</Color>
     <Color x:Key="StatusProcessingColor">#40C4FF</Color>
 
+    <!-- Preto puro pra sombra de card — a opacidade é ajustada por tema
+         (mais forte no claro, mais sutil no escuro) nos Setters do Effect. -->
+    <Color x:Key="ShadowColor">#000000</Color>
+
     <SolidColorBrush x:Key="BrandPrimaryBrush" Color="{StaticResource BrandPrimaryColor}" />
     <SolidColorBrush x:Key="BrandHoverBrush" Color="{StaticResource BrandHoverColor}" />
     <SolidColorBrush x:Key="SuccessBackgroundBrush" Color="{StaticResource SuccessBackgroundColor}" />
