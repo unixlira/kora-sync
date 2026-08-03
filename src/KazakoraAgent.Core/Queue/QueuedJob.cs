@@ -8,7 +8,7 @@ public sealed class QueuedJob
 {
     public required long ServerJobId { get; init; }
 
-    public required long OrderId { get; init; }
+    public long? OrderId { get; init; }
 
     /// Origem do pedido (loja/mercado_livre/shopee/tiktok_shop) — meramente
     /// informativo pra exibição na dashboard, não afeta o processamento.

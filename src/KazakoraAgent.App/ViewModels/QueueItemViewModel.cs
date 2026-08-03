@@ -9,7 +9,7 @@ public sealed class QueueItemViewModel
 {
     public required long ServerJobId { get; init; }
 
-    public required long OrderId { get; init; }
+    public long? OrderId { get; init; }
 
     public string? Channel { get; init; }
 

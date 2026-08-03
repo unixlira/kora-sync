@@ -119,7 +119,7 @@
 
                         <StackPanel Grid.Column="0">
                             <TextBlock Style="{StaticResource BodyTextStyle}" FontWeight="Bold">
-                                <Run Text="{Binding ChannelDisplayName}" /><Run Text=" — Pedido #" /><Run Text="{Binding OrderId, Mode=OneWay}" />
+                                <Run Text="{Binding ChannelDisplayName}" /><Run Text=" — Pedido #" /><Run Text="{Binding OrderId, Mode=OneWay, TargetNullValue=—}" />
                             </TextBlock>
                             <TextBlock Style="{StaticResource SecondaryTextStyle}" Margin="0,2,0,0">
                                 <Run Text="ID da impressão: #" /><Run Text="{Binding ServerJobId, Mode=OneWay}" />

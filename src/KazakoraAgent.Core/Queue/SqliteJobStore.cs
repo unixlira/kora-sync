@@ -22,11 +22,55 @@ public sealed class SqliteJobStore : IJobStore, IDisposable
 
     private void EnsureSchema()
     {
-        using var command = _connection.CreateCommand();
-        command.CommandText = """
-            CREATE TABLE IF NOT EXISTS jobs (
+        using (var command = _connection.CreateCommand())
+        {
+            command.CommandText = """
+                CREATE TABLE IF NOT EXISTS jobs (
+                    server_job_id INTEGER PRIMARY KEY,
+                    order_id INTEGER NULL,
+                    channel TEXT NULL,
+                    shipping_type TEXT NULL,
+                    status TEXT NOT NULL,
+                    attempt_count INTEGER NOT NULL DEFAULT 0,
+                    last_error TEXT NULL,
+                    next_attempt_at TEXT NOT NULL,
+                    enqueued_at TEXT NOT NULL,
+                    printed_at TEXT NULL
+                );
+                """;
+            command.ExecuteNonQuery();
+        }
+
+        MigrateOrderIdToNullableIfNeeded();
+    }
+
+    /// <summary>
+    /// Instalação já existente criou a tabela com "order_id INTEGER NOT
+    /// NULL" antes da etiqueta manual (sem pedido) existir — CREATE TABLE
+    /// IF NOT EXISTS não corrige isso sozinho, e SQLite não suporta soltar
+    /// NOT NULL direto, então reconstrói a tabela (padrão recomendado pelo
+    /// próprio SQLite pra esse tipo de mudança). Fila local é só estado
+    /// operacional recuperável via polling do servidor, então não tem
+    /// problema em recriar.
+    /// </summary>
+    private void MigrateOrderIdToNullableIfNeeded()
+    {
+        using var pragma = _connection.CreateCommand();
+        pragma.CommandText = "SELECT \"notnull\" FROM pragma_table_info('jobs') WHERE name = 'order_id';";
+        var isNotNull = Convert.ToInt64(pragma.ExecuteScalar() ?? 0L) == 1;
+
+        if (!isNotNull)
+        {
+            return;
+        }
+
+        using var migrate = _connection.CreateCommand();
+        migrate.CommandText = """
+            ALTER TABLE jobs RENAME TO jobs_old;
+
+            CREATE TABLE jobs (
                 server_job_id INTEGER PRIMARY KEY,
-                order_id INTEGER NOT NULL,
+                order_id INTEGER NULL,
                 channel TEXT NULL,
                 shipping_type TEXT NULL,
                 status TEXT NOT NULL,
@@ -36,8 +80,12 @@ public sealed class SqliteJobStore : IJobStore, IDisposable
                 enqueued_at TEXT NOT NULL,
                 printed_at TEXT NULL
             );
+
+            INSERT INTO jobs SELECT * FROM jobs_old;
+
+            DROP TABLE jobs_old;
             """;
-        command.ExecuteNonQuery();
+        migrate.ExecuteNonQuery();
     }
 
     public Task UpsertAsync(QueuedJob job, CancellationToken ct = default)
@@ -57,7 +105,7 @@ public sealed class SqliteJobStore : IJobStore, IDisposable
             """;
 
         command.Parameters.AddWithValue("$serverJobId", job.ServerJobId);
-        command.Parameters.AddWithValue("$orderId", job.OrderId);
+        command.Parameters.AddWithValue("$orderId", (object?) job.OrderId ?? DBNull.Value);
         command.Parameters.AddWithValue("$channel", (object?) job.Channel ?? DBNull.Value);
         command.Parameters.AddWithValue("$shippingType", (object?) job.ShippingType ?? DBNull.Value);
         command.Parameters.AddWithValue("$status", job.Status.ToString());
@@ -137,7 +185,7 @@ public sealed class SqliteJobStore : IJobStore, IDisposable
         return new QueuedJob
         {
             ServerJobId = reader.GetInt64(reader.GetOrdinal("server_job_id")),
-            OrderId = reader.GetInt64(reader.GetOrdinal("order_id")),
+            OrderId = reader.IsDBNull(reader.GetOrdinal("order_id")) ? null : reader.GetInt64(reader.GetOrdinal("order_id")),
             Channel = reader.IsDBNull(reader.GetOrdinal("channel")) ? null : reader.GetString(reader.GetOrdinal("channel")),
             ShippingType = reader.IsDBNull(reader.GetOrdinal("shipping_type")) ? null : reader.GetString(reader.GetOrdinal("shipping_type")),
             Status = Enum.Parse<QueuedJobStatus>(reader.GetString(reader.GetOrdinal("status"))),

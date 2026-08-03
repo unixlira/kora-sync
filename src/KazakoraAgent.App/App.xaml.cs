@@ -106,7 +106,7 @@ public partial class App : System.Windows.Application
             queueEngine.JobFailedPermanently += job =>
                 Dispatcher.Invoke(() => tray.ShowError(
                     "Falha permanente na impressão",
-                    $"Pedido #{job.OrderId}: {job.LastError ?? "esgotou as tentativas"}"));
+                    $"Pedido #{job.OrderId?.ToString() ?? "—"}: {job.LastError ?? "esgotou as tentativas"}"));
 
             poller.ConnectionLost += () =>
                 Dispatcher.Invoke(() => tray.ShowError("Conexão perdida", "Não foi possível falar com o servidor da Kazakora."));
