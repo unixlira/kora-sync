@@ -26,6 +26,25 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
+        // Sem isso, qualquer exceção não tratada na UI thread (ex: erro de
+        // binding, NullReferenceException num clique) derruba o processo
+        // inteiro sem deixar nenhum rastro — nem uma mensagem de erro. Loga
+        // em vez de deixar morrer, e mantém a UI thread viva (Handled=true)
+        // pra dar pra continuar usando o app mesmo depois de um erro.
+        DispatcherUnhandledException += (_, args) =>
+        {
+            LogCrash(args.Exception);
+            args.Handled = true;
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            if (args.ExceptionObject is Exception ex)
+            {
+                LogCrash(ex);
+            }
+        };
+
         // Fechar a última janela (dashboard escondido na bandeja) não deve
         // encerrar o processo — só "Sair" no menu da bandeja encerra de verdade.
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -125,6 +144,21 @@ public partial class App : System.Windows.Application
         _cleanupTimer = new DispatcherTimer { Interval = TimeSpan.FromDays(1) };
         _cleanupTimer.Tick += async (_, _) => await CleanupOldJobsAsync(_jobStore, retention);
         _cleanupTimer.Start();
+    }
+
+    private static void LogCrash(Exception exception)
+    {
+        try
+        {
+            var logPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "KoraSync", "crash.log");
+            Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+            File.AppendAllText(logPath, $"[{DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss}] {exception}\n\n");
+        }
+        catch
+        {
+            // Se nem o log der pra escrever, não há mais nada a fazer aqui.
+        }
     }
 
     private static async Task CleanupOldJobsAsync(SqliteJobStore jobStore, TimeSpan retention)
