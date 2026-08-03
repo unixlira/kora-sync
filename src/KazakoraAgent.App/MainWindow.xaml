@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:KazakoraAgent.App.ViewModels"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         Title="KoraSync" Height="820" Width="1360"
         Background="{DynamicResource WindowBackgroundBrush}"
         WindowStartupLocation="CenterScreen"
@@ -15,10 +16,9 @@
                 <StackPanel Orientation="Horizontal">
                     <Grid Width="44" Height="44" Margin="0,0,12,0">
                         <Ellipse Fill="{Binding AccentBrush}" Opacity="0.16" />
-                        <Viewbox Width="22" Height="22">
-                            <Path Data="{Binding Icon}" Fill="{Binding AccentBrush}" Stroke="{Binding AccentBrush}"
-                                  StrokeThickness="1.6" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                        </Viewbox>
+                        <iconPacks:PackIconMaterial Kind="{Binding IconKind}" Width="22" Height="22"
+                                                     Foreground="{Binding AccentBrush}"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="{Binding Label}" Style="{StaticResource SecondaryTextStyle}" />
@@ -67,31 +67,82 @@
             </Border>
         </DataTemplate>
 
-        <!-- Item da fila de impressão — usado nas 4 colunas (Aguardando/Processando/Concluídos/Falhados). -->
-        <DataTemplate x:Key="QueueItemTemplate" DataType="{x:Type vm:QueueItemViewModel}">
-            <Border Style="{StaticResource CardStyle}" Padding="10" Margin="0,0,0,8" CornerRadius="8">
+        <!-- Card de status da fila (Na fila/Imprimindo/Concluídas/Falharam) — mesmo
+             padrão visual dos cards de "Impressões" do painel Casa Cora: fundo e
+             borda tingidos na cor do status, ícone em bolha, contagem em destaque.
+             Clicável — abre a listagem completa daquele status. -->
+        <DataTemplate DataType="{x:Type vm:QueueStatusCardViewModel}">
+            <Border Style="{StaticResource StatusCardStyle}" Background="{Binding CardBackgroundBrush}"
+                    BorderBrush="{Binding CardBorderBrush}" Width="270" Margin="0,0,16,16">
+                <Border.InputBindings>
+                    <MouseBinding MouseAction="LeftClick" Command="{Binding OpenCommand}" />
+                </Border.InputBindings>
                 <StackPanel>
                     <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0" Width="44" Height="44" HorizontalAlignment="Left">
+                            <Ellipse Fill="{Binding AccentBrush}" Opacity="0.18" />
+                            <iconPacks:PackIconMaterial Kind="{Binding IconKind}" Width="22" Height="22"
+                                                         Foreground="{Binding AccentBrush}"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock Grid.Column="1" Text="{Binding Count}" Style="{StaticResource MetricValueTextStyle}"
+                                    Foreground="{Binding AccentBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    </Grid>
+                    <TextBlock Text="{Binding Label}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,14,0,0" />
+                    <TextBlock Text="{Binding Description}" Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- Linha da listagem de detalhe de um status da fila — faixa na cor do
+             canal (mesma linguagem do card de canal), pedido, ID da impressão
+             (ServerJobId, chave real do PrintJob no servidor) e status. -->
+        <DataTemplate x:Key="QueueItemTemplate" DataType="{x:Type vm:QueueItemViewModel}">
+            <Border Style="{StaticResource CardStyle}" Padding="14" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" CornerRadius="3" Margin="0,0,14,0" />
+
+                    <Grid Grid.Column="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Style="{StaticResource BodyTextStyle}" FontWeight="Bold">
-                            <Run Text="Pedido #" /><Run Text="{Binding OrderId, Mode=OneWay}" />
-                        </TextBlock>
-                        <Ellipse Grid.Column="1" Style="{StaticResource StatusDotStyle}" Fill="{Binding StatusBrush}" VerticalAlignment="Center" />
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Style="{StaticResource BodyTextStyle}" FontWeight="Bold">
+                                <Run Text="{Binding ChannelDisplayName}" /><Run Text=" — Pedido #" /><Run Text="{Binding OrderId, Mode=OneWay}" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource SecondaryTextStyle}" Margin="0,2,0,0">
+                                <Run Text="ID da impressão: #" /><Run Text="{Binding ServerJobId, Mode=OneWay}" />
+                            </TextBlock>
+                            <TextBlock Text="{Binding ShippingType}" Style="{StaticResource SecondaryTextStyle}" />
+                            <TextBlock Text="{Binding LastError}" Style="{StaticResource SecondaryTextStyle}"
+                                        Foreground="{DynamicResource StatusErrorBrush}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Ellipse Style="{StaticResource StatusDotStyle}" Fill="{Binding StatusBrush}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                <TextBlock Style="{StaticResource SecondaryTextStyle}">
+                                    <Run Text="{Binding StatusLabel, Mode=OneWay}" /><Run Text=" (tentativa " /><Run Text="{Binding AttemptCount, Mode=OneWay}" /><Run Text=")" />
+                                </TextBlock>
+                            </StackPanel>
+                            <!-- .LocalDateTime — Timestamp vem em UTC (servidor/SQLite local
+                                 gravam tudo em UTC), sem isso mostrava hora errada. -->
+                            <TextBlock Text="{Binding Timestamp.LocalDateTime, StringFormat='dd/MM HH:mm:ss'}"
+                                        Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,0" HorizontalAlignment="Right" />
+                        </StackPanel>
                     </Grid>
-                    <TextBlock Text="{Binding ChannelDisplayName}" Style="{StaticResource SecondaryTextStyle}" />
-                    <TextBlock Text="{Binding ShippingType}" Style="{StaticResource SecondaryTextStyle}" />
-                    <TextBlock Style="{StaticResource SecondaryTextStyle}">
-                        <Run Text="{Binding StatusLabel, Mode=OneWay}" /><Run Text=" — tentativa " /><Run Text="{Binding AttemptCount, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock Text="{Binding LastError}" Style="{StaticResource SecondaryTextStyle}"
-                                Foreground="{DynamicResource StatusErrorBrush}" TextWrapping="Wrap" />
-                    <!-- .LocalDateTime — Timestamp vem em UTC (servidor/SQLite local
-                         gravam tudo em UTC), sem isso mostrava hora errada. -->
-                    <TextBlock Text="{Binding Timestamp.LocalDateTime, StringFormat='dd/MM HH:mm:ss'}" Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,0" />
-                </StackPanel>
+                </Grid>
             </Border>
         </DataTemplate>
 
@@ -220,58 +271,13 @@
                     <Border Style="{StaticResource SectionAccentBarStyle}" />
                     <TextBlock Text="FILA DE IMPRESSÃO" Style="{StaticResource EyebrowTextStyle}" VerticalAlignment="Center" />
                 </StackPanel>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Ellipse Width="8" Height="8" Fill="{DynamicResource StatusWarningBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                            <TextBlock Text="Aguardando" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
-                            <Border Style="{StaticResource CountBadgeStyle}" Margin="8,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding QueueWaiting.Count}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" />
-                            </Border>
-                        </StackPanel>
-                        <ItemsControl ItemsSource="{Binding QueueWaiting}" ItemTemplate="{StaticResource QueueItemTemplate}" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="1" Margin="0,0,12,0">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Ellipse Width="8" Height="8" Fill="{DynamicResource StatusProcessingBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                            <TextBlock Text="Processando agora" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
-                            <Border Style="{StaticResource CountBadgeStyle}" Margin="8,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding QueueProcessing.Count}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" />
-                            </Border>
-                        </StackPanel>
-                        <ItemsControl ItemsSource="{Binding QueueProcessing}" ItemTemplate="{StaticResource QueueItemTemplate}" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="2" Margin="0,0,12,0">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Ellipse Width="8" Height="8" Fill="{DynamicResource StatusSuccessBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                            <TextBlock Text="Concluídos hoje" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
-                            <Border Style="{StaticResource CountBadgeStyle}" Margin="8,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding QueueCompletedToday.Count}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" />
-                            </Border>
-                        </StackPanel>
-                        <ItemsControl ItemsSource="{Binding QueueCompletedToday}" ItemTemplate="{StaticResource QueueItemTemplate}" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="3">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Ellipse Width="8" Height="8" Fill="{DynamicResource StatusErrorBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                            <TextBlock Text="Falhados / Retentativa" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
-                            <Border Style="{StaticResource CountBadgeStyle}" Margin="8,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding QueueFailedOrRetrying.Count}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" />
-                            </Border>
-                        </StackPanel>
-                        <ItemsControl ItemsSource="{Binding QueueFailedOrRetrying}" ItemTemplate="{StaticResource QueueItemTemplate}" />
-                    </StackPanel>
-                </Grid>
+                <ItemsControl ItemsSource="{Binding QueueStatusCards}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
             </StackPanel>
         </ScrollViewer>
 
@@ -310,6 +316,35 @@
 
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding Orders}" ItemTemplate="{StaticResource OrderRowTemplate}" />
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Overlay da listagem de detalhe de um status da fila (aberto ao
+             clicar num dos cards "Na fila/Imprimindo/Concluídas/Falharam"). -->
+        <Grid Grid.RowSpan="3" Background="#CC000000" Visibility="{Binding IsShowingQueueDetail, Converter={StaticResource BoolToVisibility}}">
+            <Border Style="{StaticResource CardStyle}" Margin="60">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding QueueDetailTitle}" Style="{StaticResource TitleTextStyle}" />
+                        <Button Grid.Column="1" Content="Voltar" Padding="12,6"
+                                Command="{Binding CloseQueueDetailCommand}"
+                                Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" />
+                    </Grid>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding SelectedQueueItems}" ItemTemplate="{StaticResource QueueItemTemplate}" />
                     </ScrollViewer>
                 </Grid>
             </Border>

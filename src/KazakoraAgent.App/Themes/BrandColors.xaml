@@ -29,4 +29,30 @@
     <SolidColorBrush x:Key="StatusErrorBrush" Color="{StaticResource StatusErrorColor}" />
     <SolidColorBrush x:Key="StatusProcessingBrush" Color="{StaticResource StatusProcessingColor}" />
 
+    <!--
+        Variantes com alfa (fundo bem sutil ~14%, borda um pouco mais forte
+        ~40%) dos cards de status da fila — mesmo padrão visual dos cards
+        de "Impressões" do painel Casa Cora (bg-X-50/border-X-200 do
+        Tailwind). Funcionam iguais nos dois temas porque o alfa se mistura
+        com o fundo por trás (escuro vira tom escurecido, claro vira
+        pastel), sem precisar de valor separado por tema.
+    -->
+    <Color x:Key="StatusWarningSoftColor">#26FFB74D</Color>
+    <Color x:Key="StatusWarningSoftBorderColor">#66FFB74D</Color>
+    <Color x:Key="StatusProcessingSoftColor">#2640C4FF</Color>
+    <Color x:Key="StatusProcessingSoftBorderColor">#6640C4FF</Color>
+    <Color x:Key="StatusSuccessSoftColor">#2600E676</Color>
+    <Color x:Key="StatusSuccessSoftBorderColor">#6600E676</Color>
+    <Color x:Key="StatusErrorSoftColor">#26FF5252</Color>
+    <Color x:Key="StatusErrorSoftBorderColor">#66FF5252</Color>
+
+    <SolidColorBrush x:Key="StatusWarningSoftBrush" Color="{StaticResource StatusWarningSoftColor}" />
+    <SolidColorBrush x:Key="StatusWarningSoftBorderBrush" Color="{StaticResource StatusWarningSoftBorderColor}" />
+    <SolidColorBrush x:Key="StatusProcessingSoftBrush" Color="{StaticResource StatusProcessingSoftColor}" />
+    <SolidColorBrush x:Key="StatusProcessingSoftBorderBrush" Color="{StaticResource StatusProcessingSoftBorderColor}" />
+    <SolidColorBrush x:Key="StatusSuccessSoftBrush" Color="{StaticResource StatusSuccessSoftColor}" />
+    <SolidColorBrush x:Key="StatusSuccessSoftBorderBrush" Color="{StaticResource StatusSuccessSoftBorderColor}" />
+    <SolidColorBrush x:Key="StatusErrorSoftBrush" Color="{StaticResource StatusErrorSoftColor}" />
+    <SolidColorBrush x:Key="StatusErrorSoftBorderBrush" Color="{StaticResource StatusErrorSoftBorderColor}" />
+
 </ResourceDictionary>

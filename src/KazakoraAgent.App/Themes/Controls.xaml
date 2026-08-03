@@ -30,6 +30,36 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Card de status da fila (Na fila/Imprimindo/Concluídas/Falharam) — igual
+         ao CardStyle, mas sem Background/BorderBrush fixos: cada instância
+         define a própria cor (tingida no status) via binding direto no
+         elemento. Só a sombra "levanta" um pouco ao passar o mouse. -->
+    <Style x:Key="StatusCardStyle" TargetType="Border">
+        <Setter Property="BorderThickness" Value="1.5" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="20" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="{DynamicResource ShadowColor}"
+                                   Opacity="{DynamicResource CardShadowOpacity}"
+                                   ShadowDepth="{DynamicResource CardShadowDepth}"
+                                   Direction="270" BlurRadius="16" />
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect Color="{DynamicResource ShadowColor}"
+                                           Opacity="{DynamicResource CardShadowOpacity}"
+                                           ShadowDepth="6" BlurRadius="22" Direction="270" />
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- Bolinha de status (verde/amarelo/vermelho) com anel na cor do fundo do
          card por trás — separa visualmente a bolinha do conteúdo ao redor. -->
     <Style x:Key="StatusDotStyle" TargetType="Ellipse">
@@ -46,13 +76,6 @@
         <Setter Property="CornerRadius" Value="2" />
         <Setter Property="Background" Value="{DynamicResource BrandPrimaryBrush}" />
         <Setter Property="Margin" Value="0,0,10,0" />
-    </Style>
-
-    <!-- Selo pequeno com a contagem de itens de uma coluna da fila (ex: "3"). -->
-    <Style x:Key="CountBadgeStyle" TargetType="Border">
-        <Setter Property="CornerRadius" Value="8" />
-        <Setter Property="Padding" Value="7,1" />
-        <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
     </Style>
 
     <!-- Link clicável estilo "Desenvolvido com ❤ por Lira" no rodapé. -->

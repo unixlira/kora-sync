@@ -15,6 +15,11 @@ public sealed class QueueItemViewModel
 
     public string? ChannelDisplayName => Channel is null ? null : ChannelBrandColors.DisplayNameFor(Channel);
 
+    /// Usado como faixa de destaque nas linhas da listagem de detalhe (mesma
+    /// cor de marca dos cards de canal), pra reforçar visualmente de qual
+    /// marketplace veio o pedido.
+    public Brush ChannelAccentBrush => Channel is null ? System.Windows.Media.Brushes.Gray : ChannelBrandColors.BrushFor(Channel);
+
     public string? ShippingType { get; init; }
 
     public required QueuedJobStatus Status { get; init; }

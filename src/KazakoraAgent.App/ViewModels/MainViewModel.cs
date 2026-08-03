@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using KazakoraAgent.App.Theming;
 using KazakoraAgent.Core.Api;
 using KazakoraAgent.Core.Models;
+using MahApps.Metro.IconPacks;
 
 namespace KazakoraAgent.App.ViewModels;
 
@@ -32,6 +33,11 @@ public partial class MainViewModel : ObservableObject
 
     public ObservableCollection<QueueItemViewModel> QueueFailedOrRetrying { get; } = [];
 
+    /// Um card por status da fila (mesmo padrão visual do painel de
+    /// Impressões do Casa Cora) — Count é sincronizado com as 4 coleções
+    /// acima toda vez que ReplaceQueueItems roda.
+    public ObservableCollection<QueueStatusCardViewModel> QueueStatusCards { get; }
+
     [ObservableProperty]
     private bool _isShowingDetail;
 
@@ -39,6 +45,19 @@ public partial class MainViewModel : ObservableObject
     private ChannelDetailViewModel? _selectedDetail;
 
     public IRelayCommand CloseDetailCommand { get; }
+
+    /// Aponta pra uma das 4 coleções acima (mesma instância, não uma cópia)
+    /// — assim a listagem de detalhe continua ao vivo enquanto está aberta.
+    [ObservableProperty]
+    private ObservableCollection<QueueItemViewModel>? _selectedQueueItems;
+
+    [ObservableProperty]
+    private string? _queueDetailTitle;
+
+    [ObservableProperty]
+    private bool _isShowingQueueDetail;
+
+    public IRelayCommand CloseQueueDetailCommand { get; }
 
     public MainViewModel(IKazakoraApiClient api)
     {
@@ -53,21 +72,64 @@ public partial class MainViewModel : ObservableObject
         var processingBrush = (Brush) resources["StatusProcessingBrush"];
         var errorBrush = (Brush) resources["StatusErrorBrush"];
         var warningBrush = (Brush) resources["StatusWarningBrush"];
+        var successBrush = (Brush) resources["StatusSuccessBrush"];
         var neutralBrush = (Brush) resources["TextPrimaryBrush"];
 
         MetricCards =
         [
-            new MetricCardViewModel { Label = "Faturamento", NumberBrush = neutralBrush, AccentBrush = brandBrush, Icon = MetricIcons.Revenue },
-            new MetricCardViewModel { Label = "Pedidos", NumberBrush = neutralBrush, AccentBrush = processingBrush, Icon = MetricIcons.Orders },
-            new MetricCardViewModel { Label = "Cancelados", NumberBrush = neutralBrush, AccentBrush = errorBrush, Icon = MetricIcons.Cancelled },
-            new MetricCardViewModel { Label = "Reembolsos", NumberBrush = neutralBrush, AccentBrush = warningBrush, Icon = MetricIcons.Refunds },
-            new MetricCardViewModel { Label = "Carrinho", NumberBrush = neutralBrush, AccentBrush = neutralBrush, Icon = MetricIcons.Cart },
+            new MetricCardViewModel { Label = "Faturamento", NumberBrush = neutralBrush, AccentBrush = brandBrush, IconKind = PackIconMaterialKind.CashMultiple },
+            new MetricCardViewModel { Label = "Pedidos", NumberBrush = neutralBrush, AccentBrush = processingBrush, IconKind = PackIconMaterialKind.PackageVariantClosed },
+            new MetricCardViewModel { Label = "Cancelados", NumberBrush = neutralBrush, AccentBrush = errorBrush, IconKind = PackIconMaterialKind.CloseCircleOutline },
+            new MetricCardViewModel { Label = "Reembolsos", NumberBrush = neutralBrush, AccentBrush = warningBrush, IconKind = PackIconMaterialKind.CashRefund },
+            new MetricCardViewModel { Label = "Carrinho", NumberBrush = neutralBrush, AccentBrush = neutralBrush, IconKind = PackIconMaterialKind.CartOutline },
+        ];
+
+        QueueStatusCards =
+        [
+            new QueueStatusCardViewModel
+            {
+                Label = "Na fila", Description = "Aguardando o KoraSync processar.",
+                IconKind = PackIconMaterialKind.TrayFull, AccentBrush = warningBrush,
+                CardBackgroundBrush = (Brush) resources["StatusWarningSoftBrush"],
+                CardBorderBrush = (Brush) resources["StatusWarningSoftBorderBrush"],
+                OpenCommand = new RelayCommand(() => OpenQueueDetail(QueueWaiting, "Na fila")),
+            },
+            new QueueStatusCardViewModel
+            {
+                Label = "Imprimindo", Description = "Sendo processado agora mesmo.",
+                IconKind = PackIconMaterialKind.Printer, AccentBrush = processingBrush,
+                CardBackgroundBrush = (Brush) resources["StatusProcessingSoftBrush"],
+                CardBorderBrush = (Brush) resources["StatusProcessingSoftBorderBrush"],
+                OpenCommand = new RelayCommand(() => OpenQueueDetail(QueueProcessing, "Imprimindo")),
+            },
+            new QueueStatusCardViewModel
+            {
+                Label = "Concluídas hoje", Description = "Etiquetas impressas com sucesso.",
+                IconKind = PackIconMaterialKind.CheckCircleOutline, AccentBrush = successBrush,
+                CardBackgroundBrush = (Brush) resources["StatusSuccessSoftBrush"],
+                CardBorderBrush = (Brush) resources["StatusSuccessSoftBorderBrush"],
+                OpenCommand = new RelayCommand(() => OpenQueueDetail(QueueCompletedToday, "Concluídas hoje")),
+            },
+            new QueueStatusCardViewModel
+            {
+                Label = "Falharam", Description = "Erro ao processar ou aguardando nova tentativa.",
+                IconKind = PackIconMaterialKind.AlertCircleOutline, AccentBrush = errorBrush,
+                CardBackgroundBrush = (Brush) resources["StatusErrorSoftBrush"],
+                CardBorderBrush = (Brush) resources["StatusErrorSoftBorderBrush"],
+                OpenCommand = new RelayCommand(() => OpenQueueDetail(QueueFailedOrRetrying, "Falharam")),
+            },
         ];
 
         CloseDetailCommand = new RelayCommand(() =>
         {
             IsShowingDetail = false;
             SelectedDetail = null;
+        });
+
+        CloseQueueDetailCommand = new RelayCommand(() =>
+        {
+            IsShowingQueueDetail = false;
+            SelectedQueueItems = null;
         });
     }
 
@@ -110,14 +172,20 @@ public partial class MainViewModel : ObservableObject
     public void ReplaceQueueItems(IEnumerable<QueueItemViewModel> items)
     {
         var today = DateTimeOffset.Now.Date;
+        var materialized = items as IReadOnlyCollection<QueueItemViewModel> ?? items.ToList();
 
-        ReplaceCollection(QueueWaiting, items.Where(i => i.Status == Core.Queue.QueuedJobStatus.Queued));
-        ReplaceCollection(QueueProcessing, items.Where(i => i.Status == Core.Queue.QueuedJobStatus.Processing));
-        ReplaceCollection(QueueCompletedToday, items
+        ReplaceCollection(QueueWaiting, materialized.Where(i => i.Status == Core.Queue.QueuedJobStatus.Queued));
+        ReplaceCollection(QueueProcessing, materialized.Where(i => i.Status == Core.Queue.QueuedJobStatus.Processing));
+        ReplaceCollection(QueueCompletedToday, materialized
             .Where(i => i.Status == Core.Queue.QueuedJobStatus.Printed && i.Timestamp.Date == today)
             .OrderByDescending(i => i.Timestamp));
-        ReplaceCollection(QueueFailedOrRetrying, items
+        ReplaceCollection(QueueFailedOrRetrying, materialized
             .Where(i => i.Status is Core.Queue.QueuedJobStatus.WaitingRetry or Core.Queue.QueuedJobStatus.FailedPermanently));
+
+        QueueStatusCards[0].Count = QueueWaiting.Count;
+        QueueStatusCards[1].Count = QueueProcessing.Count;
+        QueueStatusCards[2].Count = QueueCompletedToday.Count;
+        QueueStatusCards[3].Count = QueueFailedOrRetrying.Count;
     }
 
     private static void ReplaceCollection(ObservableCollection<QueueItemViewModel> target, IEnumerable<QueueItemViewModel> items)
@@ -128,6 +196,13 @@ public partial class MainViewModel : ObservableObject
         {
             target.Add(item);
         }
+    }
+
+    private void OpenQueueDetail(ObservableCollection<QueueItemViewModel> source, string title)
+    {
+        QueueDetailTitle = title;
+        SelectedQueueItems = source;
+        IsShowingQueueDetail = true;
     }
 
     private async void OpenChannelDetail(string channel)
