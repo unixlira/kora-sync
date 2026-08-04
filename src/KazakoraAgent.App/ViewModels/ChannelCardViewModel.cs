@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -21,6 +22,8 @@ public enum ChannelConnectionStatus
 
 public partial class ChannelCardViewModel : ObservableObject
 {
+    private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
+
     private readonly Action<string> _openDetail;
 
     public string Channel { get; }
@@ -40,6 +43,21 @@ public partial class ChannelCardViewModel : ObservableObject
 
     [ObservableProperty]
     private int _labelsPrintedToday;
+
+    [ObservableProperty]
+    private string _revenueMonthText = "R$ 0,00";
+
+    [ObservableProperty]
+    private string _revenueTodayText = "R$ 0,00";
+
+    [ObservableProperty]
+    private string _ordersTodayText = "0";
+
+    [ObservableProperty]
+    private string _returnsMonthText = "0";
+
+    [ObservableProperty]
+    private string _salesMonthText = "0 vendas no mês";
 
     public IRelayCommand OpenDetailCommand { get; }
 
@@ -72,6 +90,12 @@ public partial class ChannelCardViewModel : ObservableObject
             : dto.LastLabelPrintedAt.Value.LocalDateTime.ToString("dd/MM HH:mm");
 
         LabelsPrintedToday = dto.LabelsPrintedToday;
+
+        RevenueMonthText = dto.RevenueMonth.ToString("C2", PtBr);
+        RevenueTodayText = dto.RevenueToday.ToString("C2", PtBr);
+        OrdersTodayText = dto.OrdersToday.ToString(PtBr);
+        ReturnsMonthText = dto.ReturnsMonth.ToString(PtBr);
+        SalesMonthText = dto.SalesMonth == 1 ? "1 venda no mês" : $"{dto.SalesMonth.ToString(PtBr)} vendas no mês";
     }
 
     /// Chamado quando o poll pra API falhou inteiro (não deu nem pra saber

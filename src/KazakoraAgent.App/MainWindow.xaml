@@ -10,26 +10,36 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
-        <!-- Card de métrica (topo): ícone numa bolha colorida + rótulo + número. -->
+        <!-- Card de métrica (topo): ícone numa bolha colorida + rótulo (com
+             período real vindo do servidor) + número grande + variação
+             percentual colorida (verde alta, vermelha queda), quando houver
+             base de comparação. -->
         <DataTemplate x:Key="MetricCardTemplate">
             <Border Style="{StaticResource CardStyle}" Margin="0,0,16,16" MinWidth="264" Padding="26">
                 <StackPanel Orientation="Horizontal">
-                    <Grid Width="56" Height="56" Margin="0,0,16,0">
+                    <Grid Width="56" Height="56" Margin="0,0,16,0" VerticalAlignment="Top">
                         <Ellipse Fill="{Binding AccentBrush}" Opacity="0.16" />
                         <iconPacks:PackIconMaterial Kind="{Binding IconKind}" Width="28" Height="28"
                                                      Foreground="{Binding AccentBrush}"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Label}" Style="{StaticResource SecondaryTextStyle}" />
+                        <TextBlock Style="{StaticResource SecondaryTextStyle}">
+                            <Run Text="{Binding Label, Mode=OneWay}" /><Run Text=" — " /><Run Text="{Binding PeriodLabel, Mode=OneWay}" />
+                        </TextBlock>
                         <TextBlock Text="{Binding Value}" Style="{StaticResource MetricValueTextStyle}"
                                    FontSize="38" Foreground="{Binding NumberBrush}" Margin="0,4,0,0" />
+                        <TextBlock Text="{Binding VariationText}" Foreground="{Binding VariationBrush}"
+                                   Visibility="{Binding VariationVisibility}" FontWeight="Bold" FontSize="12" Margin="0,4,0,0" />
                     </StackPanel>
                 </StackPanel>
             </Border>
         </DataTemplate>
 
-        <!-- Card de canal — faixa de cor da marca à esquerda, bolinha de status, clicável. -->
+        <!-- Card de canal — faixa de cor da marca à esquerda, bolinha de
+             status, as mesmas 4 métricas do topo (individuais do canal) +
+             total de vendas do mês. Clicável (abre a listagem de pedidos
+             do canal). -->
         <DataTemplate DataType="{x:Type vm:ChannelCardViewModel}">
             <Border Style="{StaticResource InteractiveCardStyle}" Width="300" Margin="0,0,16,16" Cursor="Hand">
                 <Border.InputBindings>
@@ -49,17 +59,44 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{Binding DisplayName}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" />
+                            <TextBlock Grid.Column="0" Text="{Binding DisplayName}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="15" />
                             <Ellipse Grid.Column="1" Style="{StaticResource StatusDotStyle}" Fill="{Binding StatusBrush}" VerticalAlignment="Center" />
                         </Grid>
 
-                        <TextBlock Text="Último pedido" Style="{StaticResource SecondaryTextStyle}" Margin="0,12,0,0" />
-                        <TextBlock Text="{Binding LastOrderLabel}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding SalesMonthText}" Style="{StaticResource SecondaryTextStyle}" Margin="0,2,0,0" />
 
-                        <TextBlock Text="Última etiqueta impressa" Style="{StaticResource SecondaryTextStyle}" Margin="0,8,0,0" />
-                        <TextBlock Text="{Binding LastLabelPrintedLabel}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" />
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Fat. do mês" Style="{StaticResource SecondaryTextStyle}" FontSize="11" />
+                                <TextBlock Text="{Binding RevenueMonthText}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Fat. de hoje" Style="{StaticResource SecondaryTextStyle}" FontSize="11" />
+                                <TextBlock Text="{Binding RevenueTodayText}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
 
-                        <TextBlock Style="{StaticResource SecondaryTextStyle}" Margin="0,8,0,0">
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Pedidos hoje" Style="{StaticResource SecondaryTextStyle}" FontSize="11" />
+                                <TextBlock Text="{Binding OrdersTodayText}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Devoluções (mês)" Style="{StaticResource SecondaryTextStyle}" FontSize="11" />
+                                <TextBlock Text="{Binding ReturnsMonthText}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="{Binding LastOrderLabel}" Style="{StaticResource SecondaryTextStyle}" Margin="0,12,0,0" TextWrapping="Wrap" />
+                        <TextBlock Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,0">
                             <Run Text="Etiquetas hoje: " /><Run Text="{Binding LabelsPrintedToday, Mode=OneWay}" FontWeight="Bold" />
                         </TextBlock>
                     </StackPanel>
@@ -140,6 +177,63 @@
                                  gravam tudo em UTC), sem isso mostrava hora errada. -->
                             <TextBlock Text="{Binding Timestamp.LocalDateTime, StringFormat='dd/MM HH:mm:ss'}"
                                         Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,0" HorizontalAlignment="Right" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- Card da lista de etiquetas (produto/SKU/pedido) — uma linha por
+             produto, mais recentes no topo. Botão "Imprimir etiqueta" só
+             habilitado em pendente/erro (ver LabelItemViewModel.CanPrint);
+             "Ver detalhes" abre a listagem de pedidos daquele canal. -->
+        <DataTemplate x:Key="LabelItemTemplate" DataType="{x:Type vm:LabelItemViewModel}">
+            <Border Style="{StaticResource CardStyle}" Padding="14" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" CornerRadius="3" Margin="0,0,14,0" />
+
+                    <Grid Grid.Column="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding ChannelDisplayName}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" />
+                                <TextBlock Text=" • Pedido " Style="{StaticResource SecondaryTextStyle}" />
+                                <TextBlock Text="{Binding ExternalOrderId, TargetNullValue='—'}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" />
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,4,0,0" TextWrapping="Wrap">
+                                <Run Text="{Binding QuantityLabel, Mode=OneWay}" /><Run Text=" " /><Run Text="{Binding ProductName, Mode=OneWay}" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource SecondaryTextStyle}" Margin="0,2,0,0">
+                                <Run Text="SKU: " /><Run Text="{Binding Sku, Mode=OneWay, TargetNullValue='—'}" />
+                            </TextBlock>
+                            <TextBlock Text="{Binding ErrorMessage}" Style="{StaticResource SecondaryTextStyle}"
+                                        Foreground="{DynamicResource StatusErrorBrush}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Ellipse Style="{StaticResource StatusDotStyle}" Fill="{Binding StatusBrush}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                <TextBlock Text="{Binding StatusLabel, Mode=OneWay}" Style="{StaticResource SecondaryTextStyle}" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding Timestamp.LocalDateTime, StringFormat='dd/MM HH:mm'}"
+                                        Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,8" HorizontalAlignment="Right" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="Imprimir etiqueta" Padding="10,5" Margin="0,0,6,0"
+                                        Command="{Binding PrintCommand}" IsEnabled="{Binding CanPrint}"
+                                        Background="{DynamicResource BrandPrimaryBrush}" Foreground="White" BorderThickness="0" />
+                                <Button Content="Ver detalhes" Padding="10,5" Command="{Binding DetailsCommand}"
+                                        Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}" />
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -278,6 +372,16 @@
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                 </ItemsControl>
+
+                <!-- Lista de etiquetas — produto/SKU/pedido, sempre visível
+                     (não só em overlay), mais recentes no topo. O scroll é
+                     o mesmo ScrollViewer da página inteira, de propósito
+                     (evita scroll aninhado). -->
+                <StackPanel Orientation="Horizontal" Margin="0,32,0,14">
+                    <Border Style="{StaticResource SectionAccentBarStyle}" />
+                    <TextBlock Text="ETIQUETAS" Style="{StaticResource EyebrowTextStyle}" VerticalAlignment="Center" />
+                </StackPanel>
+                <ItemsControl ItemsSource="{Binding Labels}" ItemTemplate="{StaticResource LabelItemTemplate}" />
             </StackPanel>
         </ScrollViewer>
 

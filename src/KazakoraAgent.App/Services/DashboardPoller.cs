@@ -127,6 +127,9 @@ public sealed class DashboardPoller : IDisposable
             var metrics = await _api.GetMetricsAsync();
             _viewModel.UpdateMetrics(metrics);
 
+            var labels = await _api.GetLabelsAsync();
+            _viewModel.ReplaceLabels(labels);
+
             if (_wasReachable == false)
             {
                 ConnectionRestored?.Invoke();

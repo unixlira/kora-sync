@@ -78,7 +78,7 @@ public partial class App : System.Windows.Application
             settings.AgentId,
             _ => settings.PrinterName);
 
-        var mainViewModel = new MainViewModel(api);
+        var mainViewModel = new MainViewModel(api, queueEngine);
 
         var poller = new DashboardPoller(
             api,

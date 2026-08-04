@@ -81,10 +81,24 @@ public sealed class KazakoraApiClient : IKazakoraApiClient
         return response.Orders;
     }
 
+    public async Task<IReadOnlyList<LabelDto>> GetLabelsAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetFromJsonAsync<LabelsResponse>("dashboard/labels", JsonOptions, ct)
+            ?? throw new InvalidOperationException("Resposta vazia de GET dashboard/labels.");
+
+        return response.Labels;
+    }
+
     private sealed class ChannelOrdersResponse
     {
         [JsonPropertyName("orders")]
         public required List<ChannelOrderDto> Orders { get; init; }
+    }
+
+    private sealed class LabelsResponse
+    {
+        [JsonPropertyName("labels")]
+        public required List<LabelDto> Labels { get; init; }
     }
 
     private sealed class JobsIndexResponse

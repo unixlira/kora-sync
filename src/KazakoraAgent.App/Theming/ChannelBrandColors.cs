@@ -22,6 +22,12 @@ public static class ChannelBrandColors
 
     public static readonly Color Amazon = (Color) ColorConverter.ConvertFromString("#FF9900")!;
 
+    /// Marca da Shein é minimalista preto/branco — usa um cinza-escuro em
+    /// vez de preto puro pra continuar visível como faixa/bolha tingida
+    /// (preto puro com opacidade reduzida vira quase invisível nos dois
+    /// temas).
+    public static readonly Color Shein = (Color) ColorConverter.ConvertFromString("#3D3D3D")!;
+
     public static Color For(string channel) => channel switch
     {
         MarketplaceChannel.Store => Store,
@@ -29,6 +35,7 @@ public static class ChannelBrandColors
         MarketplaceChannel.Shopee => Shopee,
         MarketplaceChannel.TikTokShop => TikTokShop,
         MarketplaceChannel.Amazon => Amazon,
+        MarketplaceChannel.Shein => Shein,
         _ => Colors.Gray,
     };
 
@@ -41,6 +48,7 @@ public static class ChannelBrandColors
         MarketplaceChannel.Shopee => "Shopee",
         MarketplaceChannel.TikTokShop => "TikTok Shop",
         MarketplaceChannel.Amazon => "Amazon",
+        MarketplaceChannel.Shein => "Shein",
         _ => channel,
     };
 }

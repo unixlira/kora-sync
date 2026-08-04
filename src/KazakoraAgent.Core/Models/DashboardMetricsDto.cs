@@ -28,4 +28,31 @@ public sealed class DashboardMetricsDto
     /// comentário em DashboardAgentController::metrics() no Laravel.
     [JsonPropertyName("net_profit_today")]
     public required decimal NetProfitToday { get; init; }
+
+    [JsonPropertyName("revenue_month")]
+    public required decimal RevenueMonth { get; init; }
+
+    /// Null quando não há venda no mesmo trecho do mês anterior pra
+    /// comparar (ver DashboardAgentController::variationPct no Laravel) —
+    /// não confundir com 0%.
+    [JsonPropertyName("revenue_month_variation_pct")]
+    public decimal? RevenueMonthVariationPct { get; init; }
+
+    [JsonPropertyName("revenue_today_variation_pct")]
+    public decimal? RevenueTodayVariationPct { get; init; }
+
+    [JsonPropertyName("sales_today_variation_pct")]
+    public decimal? SalesTodayVariationPct { get; init; }
+
+    /// Contagem de pedidos com pagamento estornado no mês — proxy pra
+    /// "devolução" (não existe integração real com devolução física/
+    /// reclamação de marketplace ainda).
+    [JsonPropertyName("returns_month")]
+    public required int ReturnsMonth { get; init; }
+
+    [JsonPropertyName("month_label")]
+    public required string MonthLabel { get; init; }
+
+    [JsonPropertyName("today_label")]
+    public required string TodayLabel { get; init; }
 }

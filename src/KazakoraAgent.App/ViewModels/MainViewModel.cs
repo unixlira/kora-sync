@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using KazakoraAgent.App.Theming;
 using KazakoraAgent.Core.Api;
 using KazakoraAgent.Core.Models;
+using KazakoraAgent.Core.Queue;
 using MahApps.Metro.IconPacks;
 
 namespace KazakoraAgent.App.ViewModels;
@@ -16,6 +17,7 @@ public partial class MainViewModel : ObservableObject
     private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
 
     private readonly IKazakoraApiClient _api;
+    private readonly QueueEngine _queueEngine;
 
     public MetricsViewModel Metrics { get; } = new();
 
@@ -24,6 +26,11 @@ public partial class MainViewModel : ObservableObject
     /// Um card por métrica do topo — mantido em sincronia com Metrics
     /// sempre que UpdateMetrics roda (ver DashboardTickAsync no poller).
     public ObservableCollection<MetricCardViewModel> MetricCards { get; }
+
+    /// Lista de etiquetas (produto/SKU/pedido), mais recentes no topo —
+    /// populada por ReplaceLabels a cada tick do dashboard (ver
+    /// DashboardPoller). Uma linha por produto, não por PrintJob.
+    public ObservableCollection<LabelItemViewModel> Labels { get; } = [];
 
     public ObservableCollection<QueueItemViewModel> QueueWaiting { get; } = [];
 
@@ -59,29 +66,32 @@ public partial class MainViewModel : ObservableObject
 
     public IRelayCommand CloseQueueDetailCommand { get; }
 
-    public MainViewModel(IKazakoraApiClient api)
+    public MainViewModel(IKazakoraApiClient api, QueueEngine queueEngine)
     {
         _api = api;
+        _queueEngine = queueEngine;
 
         Channels = new ObservableCollection<ChannelCardViewModel>(
             MarketplaceChannel.All.Select(channel => new ChannelCardViewModel(channel, OpenChannelDetail)));
 
         var resources = Application.Current.Resources;
 
-        var brandBrush = (Brush) resources["BrandPrimaryBrush"];
-        var processingBrush = (Brush) resources["StatusProcessingBrush"];
-        var errorBrush = (Brush) resources["StatusErrorBrush"];
-        var warningBrush = (Brush) resources["StatusWarningBrush"];
         var successBrush = (Brush) resources["StatusSuccessBrush"];
+        var processingBrush = (Brush) resources["StatusProcessingBrush"];
+        var purpleBrush = new SolidColorBrush((Color) ColorConverter.ConvertFromString("#7B61FF")!);
+        var errorBrush = (Brush) resources["StatusErrorBrush"];
         var neutralBrush = (Brush) resources["TextPrimaryBrush"];
 
+        // 4 cards fixos (visão geral, todas as plataformas somadas) — ver
+        // UpdateMetrics pro preenchimento. Índices usados lá são
+        // posicionais de propósito (mesmo padrão já existente antes desta
+        // mudança), então a ordem aqui importa.
         MetricCards =
         [
-            new MetricCardViewModel { Label = "Faturamento", NumberBrush = neutralBrush, AccentBrush = brandBrush, IconKind = PackIconMaterialKind.CashMultiple },
-            new MetricCardViewModel { Label = "Pedidos", NumberBrush = neutralBrush, AccentBrush = processingBrush, IconKind = PackIconMaterialKind.PackageVariantClosed },
-            new MetricCardViewModel { Label = "Cancelados", NumberBrush = neutralBrush, AccentBrush = errorBrush, IconKind = PackIconMaterialKind.CloseCircleOutline },
-            new MetricCardViewModel { Label = "Reembolsos", NumberBrush = neutralBrush, AccentBrush = warningBrush, IconKind = PackIconMaterialKind.CashRefund },
-            new MetricCardViewModel { Label = "Carrinho", NumberBrush = neutralBrush, AccentBrush = neutralBrush, IconKind = PackIconMaterialKind.CartOutline },
+            new MetricCardViewModel { Label = "Faturamento do mês", NumberBrush = neutralBrush, AccentBrush = successBrush, IconKind = PackIconMaterialKind.TrendingUp, VariationSuffix = "vs mês anterior" },
+            new MetricCardViewModel { Label = "Faturamento de hoje", NumberBrush = neutralBrush, AccentBrush = processingBrush, IconKind = PackIconMaterialKind.CalendarClock, VariationSuffix = "vs ontem" },
+            new MetricCardViewModel { Label = "Pedidos hoje", NumberBrush = neutralBrush, AccentBrush = purpleBrush, IconKind = PackIconMaterialKind.PackageVariantClosed, VariationSuffix = "vs ontem" },
+            new MetricCardViewModel { Label = "Devoluções do mês", NumberBrush = neutralBrush, AccentBrush = errorBrush, IconKind = PackIconMaterialKind.KeyboardReturn },
         ];
 
         QueueStatusCards =
@@ -137,12 +147,37 @@ public partial class MainViewModel : ObservableObject
     {
         Metrics.UpdateFrom(dto);
 
-        MetricCards[0].Value = dto.RevenueToday.ToString("C2", PtBr);
-        MetricCards[1].Value = dto.SalesToday.ToString(PtBr);
-        MetricCards[2].Value = dto.CancelledToday.ToString(PtBr);
-        MetricCards[3].Value = dto.RefundedToday.ToString(PtBr);
-        MetricCards[4].Value = dto.CartItemsCount.ToString(PtBr);
+        MetricCards[0].Value = dto.RevenueMonth.ToString("C2", PtBr);
+        MetricCards[0].PeriodLabel = dto.MonthLabel;
+        MetricCards[0].VariationPct = dto.RevenueMonthVariationPct;
+
+        MetricCards[1].Value = dto.RevenueToday.ToString("C2", PtBr);
+        MetricCards[1].PeriodLabel = dto.TodayLabel;
+        MetricCards[1].VariationPct = dto.RevenueTodayVariationPct;
+
+        MetricCards[2].Value = dto.SalesToday.ToString(PtBr);
+        MetricCards[2].PeriodLabel = dto.TodayLabel;
+        MetricCards[2].VariationPct = dto.SalesTodayVariationPct;
+
+        MetricCards[3].Value = dto.ReturnsMonth.ToString(PtBr);
+        MetricCards[3].PeriodLabel = dto.MonthLabel;
     }
+
+    /// <summary>Mais recentes no topo — LabelDto já vem ordenado assim do servidor (latest('id')).</summary>
+    public void ReplaceLabels(IEnumerable<LabelDto> labels)
+    {
+        Labels.Clear();
+
+        foreach (var dto in labels)
+        {
+            foreach (var item in LabelItemViewModel.FromDto(dto, RequestPrintAsync, OpenChannelDetail))
+            {
+                Labels.Add(item);
+            }
+        }
+    }
+
+    private Task<bool> RequestPrintAsync(long jobId) => _queueEngine.RequestImmediateRetryAsync(jobId);
 
     public void UpdateChannels(IReadOnlyList<ChannelStatusDto> statuses)
     {

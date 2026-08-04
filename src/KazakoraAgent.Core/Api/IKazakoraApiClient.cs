@@ -22,4 +22,6 @@ public interface IKazakoraApiClient
     Task<DashboardMetricsDto> GetMetricsAsync(CancellationToken ct = default);
 
     Task<IReadOnlyList<ChannelOrderDto>> GetChannelOrdersAsync(string channel, CancellationToken ct = default);
+
+    Task<IReadOnlyList<LabelDto>> GetLabelsAsync(CancellationToken ct = default);
 }
