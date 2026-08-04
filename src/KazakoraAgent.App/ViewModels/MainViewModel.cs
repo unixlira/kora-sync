@@ -55,6 +55,25 @@ public partial class MainViewModel : ObservableObject
     /// acima toda vez que ReplaceQueueItems roda.
     public ObservableCollection<QueueStatusCardViewModel> QueueStatusCards { get; }
 
+    /// Mensagem da última falha ao buscar canais/métricas — null quando o
+    /// último tick foi bem-sucedido. Ver DashboardPoller.DashboardTickAsync.
+    [ObservableProperty]
+    private string? _lastDashboardError;
+
+    public Visibility HasDashboardErrorVisibility => LastDashboardError is null ? Visibility.Collapsed : Visibility.Visible;
+
+    partial void OnLastDashboardErrorChanged(string? value) => OnPropertyChanged(nameof(HasDashboardErrorVisibility));
+
+    /// Mesma ideia, mas só pra falha específica em buscar a lista de
+    /// etiquetas — separado de LastDashboardError porque canais/métricas
+    /// podem estar OK enquanto só a lista falha (ou vice-versa).
+    [ObservableProperty]
+    private string? _lastLabelsError;
+
+    public Visibility HasLabelsErrorVisibility => LastLabelsError is null ? Visibility.Collapsed : Visibility.Visible;
+
+    partial void OnLastLabelsErrorChanged(string? value) => OnPropertyChanged(nameof(HasLabelsErrorVisibility));
+
     [ObservableProperty]
     private bool _isShowingDetail;
 

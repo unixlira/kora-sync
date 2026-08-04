@@ -395,25 +395,16 @@
                     </ItemsControl.ItemsPanel>
                 </ItemsControl>
 
-                <!-- Cards de integração por canal — UMA LINHA SÓ, nunca
-                     quebra: StackPanel horizontal (não WrapPanel) dentro de
-                     um ScrollViewer horizontal, que só entra em ação se a
-                     janela for estreita demais pros 5 cards (o scroll da
-                     página é vertical, então isso é um segundo ScrollViewer
-                     só no eixo horizontal, sem conflito). -->
-                <StackPanel Orientation="Horizontal" Margin="0,32,0,14">
-                    <Border Style="{StaticResource SectionAccentBarStyle}" />
-                    <TextBlock Text="CANAIS DE VENDA" Style="{StaticResource EyebrowTextStyle}" VerticalAlignment="Center" />
-                </StackPanel>
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding Channels}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
-                </ScrollViewer>
+                <TextBlock Text="{Binding LastDashboardError, StringFormat='Falha ao atualizar o painel: {0}'}"
+                           Foreground="{DynamicResource StatusErrorBrush}" FontWeight="Bold" Margin="0,10,0,0"
+                           Visibility="{Binding HasDashboardErrorVisibility}" TextWrapping="Wrap" />
+
+                <!-- Cards de canal (removidos da tela por pedido explícito
+                     — 2026-08-04: "remove os cards dos canais e coloca essa
+                     lista de impressão"). MainViewModel.Channels continua
+                     existindo e sendo atualizado (OpenChannelDetail ainda é
+                     usado pelo botão "Ver detalhes" de cada etiqueta), só
+                     não tem mais uma seção própria na tela. -->
 
                 <!-- Fila de impressão (contadores por status) — centralizada
                      na página, não colada na borda esquerda. -->
@@ -429,9 +420,10 @@
                     </ItemsControl.ItemsPanel>
                 </ItemsControl>
 
-                <!-- Lista de etiquetas (produto/SKU/pedido) — centralizada
-                     num container de largura máxima 1100, uma etiqueta por
-                     linha ocupando a largura inteira desse container
+                <!-- Lista de etiquetas (canal, produto, quantidade, SKU,
+                     pedido no canal, status) — centralizada num container de
+                     largura máxima 1100, uma etiqueta por linha ocupando a
+                     largura inteira desse container
                      (HorizontalContentAlignment=Stretch + Border com
                      HorizontalAlignment=Stretch no template), mais recentes
                      no topo. Sem etiqueta de agradecimento — já filtrada no
@@ -442,6 +434,9 @@
                     <Border Style="{StaticResource SectionAccentBarStyle}" />
                     <TextBlock Text="ETIQUETAS" Style="{StaticResource EyebrowTextStyle}" VerticalAlignment="Center" />
                 </StackPanel>
+                <TextBlock Text="{Binding LastLabelsError, StringFormat='Falha ao carregar a lista de etiquetas: {0}'}"
+                           Foreground="{DynamicResource StatusErrorBrush}" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"
+                           Visibility="{Binding HasLabelsErrorVisibility}" TextWrapping="Wrap" />
                 <ItemsControl ItemsSource="{Binding Labels}" ItemTemplate="{StaticResource LabelItemTemplate}"
                               HorizontalAlignment="Center" HorizontalContentAlignment="Stretch" MaxWidth="1100" />
             </StackPanel>

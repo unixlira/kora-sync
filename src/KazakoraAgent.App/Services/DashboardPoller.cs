@@ -121,32 +121,70 @@ public sealed class DashboardPoller : IDisposable
 
         try
         {
-            var channels = await _api.GetChannelsAsync();
-            _viewModel.UpdateChannels(channels);
+            // Uma chamada por bloco try/catch, de propósito — antes uma
+            // única exceção em qualquer uma das 3 (ex: GetLabelsAsync)
+            // derrubava o tick inteiro sem sinalizar nada além da bolinha
+            // de status ficar amarela, deixando a lista de etiquetas
+            // travada/vazia silenciosamente mesmo com canais e métricas
+            // funcionando. Cada falha agora fica registrada em
+            // LastDashboardError/LastLabelsError (exibido na tela, ver
+            // MainWindow.xaml) em vez de sumir sem explicação.
+            var anyFailure = false;
 
-            var metrics = await _api.GetMetricsAsync();
-            _viewModel.UpdateMetrics(metrics);
-
-            var labels = await _api.GetLabelsAsync();
-            _viewModel.ReplaceLabels(labels);
-
-            if (_wasReachable == false)
+            try
             {
-                ConnectionRestored?.Invoke();
+                var channels = await _api.GetChannelsAsync();
+                _viewModel.UpdateChannels(channels);
+            }
+            catch (Exception ex)
+            {
+                anyFailure = true;
+                _viewModel.MarkChannelsUnreachable();
+                _viewModel.LastDashboardError = $"Canais: {ex.Message}";
             }
 
-            _wasReachable = true;
-        }
-        catch
-        {
-            _viewModel.MarkChannelsUnreachable();
-
-            if (_wasReachable != false)
+            try
             {
-                ConnectionLost?.Invoke();
+                var metrics = await _api.GetMetricsAsync();
+                _viewModel.UpdateMetrics(metrics);
+            }
+            catch (Exception ex)
+            {
+                anyFailure = true;
+                _viewModel.LastDashboardError = $"Métricas: {ex.Message}";
             }
 
-            _wasReachable = false;
+            try
+            {
+                var labels = await _api.GetLabelsAsync();
+                _viewModel.ReplaceLabels(labels);
+                _viewModel.LastLabelsError = null;
+            }
+            catch (Exception ex)
+            {
+                anyFailure = true;
+                _viewModel.LastLabelsError = ex.Message;
+            }
+
+            if (!anyFailure)
+            {
+                if (_wasReachable == false)
+                {
+                    ConnectionRestored?.Invoke();
+                }
+
+                _wasReachable = true;
+                _viewModel.LastDashboardError = null;
+            }
+            else
+            {
+                if (_wasReachable != false)
+                {
+                    ConnectionLost?.Invoke();
+                }
+
+                _wasReachable = false;
+            }
         }
         finally
         {

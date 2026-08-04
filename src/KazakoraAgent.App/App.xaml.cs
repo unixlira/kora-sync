@@ -80,13 +80,21 @@ public partial class App : System.Windows.Application
 
         var mainViewModel = new MainViewModel(api, queueEngine);
 
+        // Painel tem que parecer "tempo real" (pedido explícito 2026-08-04)
+        // — 2s fixo aqui, não lido de settings.DashboardPollSeconds: quem já
+        // tinha um settings.json salvo (de configurar token/impressora antes)
+        // teria o valor antigo (5s) persistido e o novo default no código não
+        // faria efeito nenhum. Não existe tela de configuração pra esse
+        // campo específico, então travar direto no ponto de uso é a forma
+        // confiável de garantir os 2s pra todo mundo, independente do que
+        // já estava salvo.
         var poller = new DashboardPoller(
             api,
             _jobStore,
             queueEngine,
             mainViewModel,
             TimeSpan.FromSeconds(Math.Max(1, settings.QueuePollSeconds)),
-            TimeSpan.FromSeconds(Math.Max(1, settings.DashboardPollSeconds)));
+            TimeSpan.FromSeconds(2));
         _poller = poller;
 
         var tray = new TrayIconService();

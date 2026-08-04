@@ -20,7 +20,12 @@ public sealed class AppSettings
 
     public int QueuePollSeconds { get; set; } = 1;
 
-    public int DashboardPollSeconds { get; set; } = 5;
+    // Não lido em App.xaml.cs hoje (o intervalo do painel está fixo em 2s
+    // direto lá, ver comentário lá) — sem tela de configuração pra esse
+    // campo, um settings.json antigo salvo com 5 nunca seria sobrescrito
+    // só por mudar o default aqui. Mantido no modelo por enquanto, mas não
+    // é mais a fonte de verdade real.
+    public int DashboardPollSeconds { get; set; } = 2;
 
     public bool NotificationsEnabled { get; set; } = true;
 
