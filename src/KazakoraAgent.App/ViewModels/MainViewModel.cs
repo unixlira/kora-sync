@@ -27,6 +27,16 @@ public partial class MainViewModel : ObservableObject
     /// sempre que UpdateMetrics roda (ver DashboardTickAsync no poller).
     public ObservableCollection<MetricCardViewModel> MetricCards { get; }
 
+    /// 5º card do topo — "Pedidos por canal", atualizado junto com
+    /// UpdateChannels (mesmo tick, mesma fonte de dados).
+    public ChannelOrdersCardViewModel ChannelOrdersCard { get; } = new();
+
+    /// União ordenada dos 4 MetricCardViewModel + o ChannelOrdersCard, na
+    /// ordem exata em que devem aparecer na UniformGrid do topo — a XAML
+    /// usa DataTemplate implícito por tipo (sem ItemTemplate fixo) pra
+    /// renderizar os dois tipos misturados na mesma linha.
+    public ObservableCollection<object> TopCards { get; }
+
     /// Lista de etiquetas (produto/SKU/pedido), mais recentes no topo —
     /// populada por ReplaceLabels a cada tick do dashboard (ver
     /// DashboardPoller). Uma linha por produto, não por PrintJob.
@@ -93,6 +103,8 @@ public partial class MainViewModel : ObservableObject
             new MetricCardViewModel { Label = "Pedidos hoje", NumberBrush = neutralBrush, AccentBrush = purpleBrush, IconKind = PackIconMaterialKind.PackageVariantClosed, VariationSuffix = "vs ontem" },
             new MetricCardViewModel { Label = "Devoluções do mês", NumberBrush = neutralBrush, AccentBrush = errorBrush, IconKind = PackIconMaterialKind.KeyboardReturn },
         ];
+
+        TopCards = [.. MetricCards, ChannelOrdersCard];
 
         QueueStatusCards =
         [
@@ -182,6 +194,8 @@ public partial class MainViewModel : ObservableObject
     public void UpdateChannels(IReadOnlyList<ChannelStatusDto> statuses)
     {
         var byChannel = statuses.ToDictionary(s => s.Channel);
+
+        ChannelOrdersCard.UpdateFrom(statuses);
 
         foreach (var card in Channels)
         {

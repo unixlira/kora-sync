@@ -13,9 +13,15 @@
         <!-- Card de métrica (topo): ícone numa bolha colorida + rótulo (com
              período real vindo do servidor) + número grande + variação
              percentual colorida (verde alta, vermelha queda), quando houver
-             base de comparação. -->
-        <DataTemplate x:Key="MetricCardTemplate">
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,16,16" MinWidth="264" Padding="26">
+             base de comparação. Sem x:Key de propósito — é resolvido
+             implicitamente pelo DataType (mesmo padrão já usado pros cards
+             de canal/fila), pra poder conviver com ChannelOrdersCardTemplate
+             na mesma UniformGrid (ver TopCards no MainViewModel). Sem
+             largura/margem fixa: a UniformGrid do container é quem garante
+             que todo card do topo tenha exatamente o mesmo tamanho,
+             adaptável a qualquer largura de janela/monitor. -->
+        <DataTemplate DataType="{x:Type vm:MetricCardViewModel}">
+            <Border Style="{StaticResource CardStyle}" Margin="8" Padding="22">
                 <StackPanel Orientation="Horizontal">
                     <Grid Width="56" Height="56" Margin="0,0,16,0" VerticalAlignment="Top">
                         <Ellipse Fill="{Binding AccentBrush}" Opacity="0.16" />
@@ -24,13 +30,49 @@
                                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Style="{StaticResource SecondaryTextStyle}">
+                        <TextBlock Style="{StaticResource SecondaryTextStyle}" TextWrapping="Wrap">
                             <Run Text="{Binding Label, Mode=OneWay}" /><Run Text=" — " /><Run Text="{Binding PeriodLabel, Mode=OneWay}" />
                         </TextBlock>
                         <TextBlock Text="{Binding Value}" Style="{StaticResource MetricValueTextStyle}"
-                                   FontSize="38" Foreground="{Binding NumberBrush}" Margin="0,4,0,0" />
+                                   FontSize="30" Foreground="{Binding NumberBrush}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
                         <TextBlock Text="{Binding VariationText}" Foreground="{Binding VariationBrush}"
                                    Visibility="{Binding VariationVisibility}" FontWeight="Bold" FontSize="12" Margin="0,4,0,0" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- 5º card do topo — "Pedidos por canal, hoje". Mesmo visual dos
+             outros 4 (ícone em bolha + rótulo), mas o "valor" é uma lista
+             de chips "Nome: total", um por canal com pedido > 0 hoje —
+             canal zerado/sem pedido simplesmente não aparece na lista. -->
+        <DataTemplate DataType="{x:Type vm:ChannelOrdersCardViewModel}">
+            <Border Style="{StaticResource CardStyle}" Margin="8" Padding="22">
+                <StackPanel Orientation="Horizontal">
+                    <Grid Width="56" Height="56" Margin="0,0,16,0" VerticalAlignment="Top">
+                        <Ellipse Fill="{DynamicResource BrandPrimaryBrush}" Opacity="0.16" />
+                        <iconPacks:PackIconMaterial Kind="{Binding IconKind}" Width="28" Height="28"
+                                                     Foreground="{DynamicResource BrandPrimaryBrush}"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Label}" Style="{StaticResource SecondaryTextStyle}" TextWrapping="Wrap" />
+                        <ItemsControl ItemsSource="{Binding Entries}" Margin="0,6,0,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{Binding AccentBrush}" Opacity="0.85" CornerRadius="10" Padding="8,3" Margin="0,0,6,6">
+                                        <TextBlock Text="{Binding Text}" FontSize="12" FontWeight="Bold" Foreground="White" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="Nenhum pedido ainda hoje." Style="{StaticResource SecondaryTextStyle}" Margin="0,6,0,0"
+                                   Visibility="{Binding HasNoOrdersToday, Converter={StaticResource BoolToVisibility}}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -337,11 +379,18 @@
         <!-- Conteúdo principal -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <!-- Métricas do dia -->
-                <ItemsControl ItemsSource="{Binding MetricCards}" ItemTemplate="{StaticResource MetricCardTemplate}">
+                <!-- Métricas do topo (visão geral) — UniformGrid garante que
+                     os 5 cards tenham exatamente o mesmo tamanho e dividam
+                     igualmente a largura disponível, se adaptando sozinha a
+                     qualquer largura de janela/monitor (sem WrapPanel, sem
+                     largura fixa por card). ItemTemplate não é setado de
+                     propósito — TopCards mistura MetricCardViewModel e
+                     ChannelOrdersCardViewModel, resolvidos cada um pelo seu
+                     DataTemplate implícito (ver Window.Resources). -->
+                <ItemsControl ItemsSource="{Binding TopCards}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" />
+                            <UniformGrid Rows="1" Columns="5" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                 </ItemsControl>
