@@ -229,11 +229,19 @@
 
             <!-- Texto diário — só aparece quando o servidor já tem algum
                  (HasDailyTextVisibility, ver MainViewModel), itálico pra
-                 marcar visualmente que é uma citação. -->
-            <TextBlock Grid.Column="1" Text="{Binding DailyTextQuote}" Style="{StaticResource SecondaryTextStyle}"
-                       FontStyle="Italic" TextAlignment="Center" TextWrapping="Wrap"
-                       HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="480" Margin="16,0"
-                       Visibility="{Binding HasDailyTextVisibility}" />
+                 marcar visualmente que é uma citação, mesma cor verde da
+                 marca/logo (BrandPrimaryBrush, também usada no relógio) e
+                 a referência bíblica sempre na linha de baixo — pedido
+                 explícito 2026-08-04. -->
+            <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="480" Margin="16,0"
+                        Visibility="{Binding HasDailyTextVisibility}">
+                <TextBlock Text="{Binding DailyTextQuote}" Style="{StaticResource SecondaryTextStyle}"
+                           Foreground="{DynamicResource BrandPrimaryBrush}"
+                           FontStyle="Italic" TextAlignment="Center" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding DailyTextReference}" Style="{StaticResource SecondaryTextStyle}"
+                           Foreground="{DynamicResource BrandPrimaryBrush}"
+                           FontWeight="Bold" TextAlignment="Center" Margin="0,2,0,0" />
+            </StackPanel>
 
             <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="16,0" HorizontalAlignment="Right">
                 <TextBlock Text="ADM KazaKora" Style="{StaticResource TitleTextStyle}" HorizontalAlignment="Right" />

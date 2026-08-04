@@ -66,12 +66,17 @@ public partial class MainViewModel : ObservableObject
 
     /// Texto diário das Testemunhas de Jeová — null até o primeiro fetch
     /// (DashboardPoller busca já na inicialização, ver Start()) ou se o
-    /// servidor ainda não tem nenhuma linha salva. Mostra o versículo (que
-    /// já inclui a referência embutida, ver DailyTextFetcherService no
+    /// servidor ainda não tem nenhuma linha salva. Mostra o versículo em
+    /// si (DailyTextQuote) com a referência bíblica sempre na linha de
+    /// baixo (DailyTextReference, pedido explícito 2026-08-04 — os dois
+    /// já vêm separados do servidor, ver DailyTextFetcherService no
     /// Laravel) — não a data (isso já aparece no relógio à direita) nem o
     /// comentário completo (fonte pequena no meio do cabeçalho, não cabe).
     [ObservableProperty]
     private string? _dailyTextQuote;
+
+    [ObservableProperty]
+    private string? _dailyTextReference;
 
     public Visibility HasDailyTextVisibility => DailyTextQuote is null ? Visibility.Collapsed : Visibility.Visible;
 
@@ -202,6 +207,7 @@ public partial class MainViewModel : ObservableObject
     public void UpdateDailyText(DailyTextDto? dto)
     {
         DailyTextQuote = dto?.ScriptureQuote;
+        DailyTextReference = dto?.ScriptureReference;
     }
 
     public void UpdateChannels(IReadOnlyList<ChannelStatusDto> statuses)
