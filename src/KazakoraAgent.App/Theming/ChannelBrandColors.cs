@@ -51,4 +51,15 @@ public static class ChannelBrandColors
         MarketplaceChannel.Shein => "Shein",
         _ => channel,
     };
+
+    /// Nome curto pra contextos apertados (badges do card "Pedidos por
+    /// canal") — só Mercado Livre e TikTok Shop têm abreviação real
+    /// (pedido explícito 2026-08-04: "MeLi"); os demais já são curtos o
+    /// bastante no nome de exibição normal.
+    public static string ShortDisplayNameFor(string channel) => channel switch
+    {
+        MarketplaceChannel.MercadoLivre => "MeLi",
+        MarketplaceChannel.TikTokShop => "TikTok",
+        _ => DisplayNameFor(channel),
+    };
 }

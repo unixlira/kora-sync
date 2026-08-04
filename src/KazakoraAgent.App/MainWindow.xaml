@@ -57,6 +57,11 @@
                     </Grid>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="{Binding Label}" Style="{StaticResource SecondaryTextStyle}" TextWrapping="Wrap" />
+                        <!-- Badges pequenas de propósito (pedido explícito
+                             2026-08-04) — as 5 integrações precisam caber
+                             sem fazer esse card (e por tabela os outros 4 da
+                             mesma UniformGrid, que têm altura sincronizada)
+                             crescerem de tamanho. -->
                         <ItemsControl ItemsSource="{Binding Entries}" Margin="0,6,0,0">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -65,14 +70,12 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="{Binding AccentBrush}" Opacity="0.85" CornerRadius="10" Padding="8,3" Margin="0,0,6,6">
-                                        <TextBlock Text="{Binding Text}" FontSize="12" FontWeight="Bold" Foreground="White" />
+                                    <Border Background="{Binding AccentBrush}" Opacity="0.85" CornerRadius="7" Padding="6,2" Margin="0,0,4,4">
+                                        <TextBlock Text="{Binding Text}" FontSize="10" FontWeight="Bold" Foreground="{Binding TextBrush}" />
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock Text="Nenhum pedido ainda hoje." Style="{StaticResource SecondaryTextStyle}" Margin="0,6,0,0"
-                                   Visibility="{Binding HasNoOrdersToday, Converter={StaticResource BoolToVisibility}}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
