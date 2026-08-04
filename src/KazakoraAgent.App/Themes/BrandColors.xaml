@@ -7,11 +7,19 @@
         trocado pela troca de tema.
     -->
 
-    <Color x:Key="BrandPrimaryColor">#00E676</Color>
-    <Color x:Key="BrandHoverColor">#00C853</Color>
+    <!-- Verde correto da marca/logo, pedido explícito 2026-08-04 (o
+         #00E676 anterior não batia com o logo real). StatusSuccessColor
+         é mantido sincronizado de propósito — ver mesmo valor replicado
+         em Theming/ChannelBrandColors.cs (Store) e
+         Theming/QueueStatusColors.cs (Success), documentado lá como
+         "mesmos valores de Themes/BrandColors.xaml". BrandHoverColor é um
+         escurecimento proporcional (~15%) do novo primário, já que não
+         foi especificado um tom de hover próprio. -->
+    <Color x:Key="BrandPrimaryColor">#04D7B6</Color>
+    <Color x:Key="BrandHoverColor">#03B79B</Color>
     <Color x:Key="SuccessBackgroundColor">#1B3A2B</Color>
 
-    <Color x:Key="StatusSuccessColor">#00E676</Color>
+    <Color x:Key="StatusSuccessColor">#04D7B6</Color>
     <Color x:Key="StatusWarningColor">#FFB74D</Color>
     <Color x:Key="StatusErrorColor">#FF5252</Color>
     <Color x:Key="StatusProcessingColor">#40C4FF</Color>
@@ -41,8 +49,8 @@
     <Color x:Key="StatusWarningSoftBorderColor">#66FFB74D</Color>
     <Color x:Key="StatusProcessingSoftColor">#2640C4FF</Color>
     <Color x:Key="StatusProcessingSoftBorderColor">#6640C4FF</Color>
-    <Color x:Key="StatusSuccessSoftColor">#2600E676</Color>
-    <Color x:Key="StatusSuccessSoftBorderColor">#6600E676</Color>
+    <Color x:Key="StatusSuccessSoftColor">#2604D7B6</Color>
+    <Color x:Key="StatusSuccessSoftBorderColor">#6604D7B6</Color>
     <Color x:Key="StatusErrorSoftColor">#26FF5252</Color>
     <Color x:Key="StatusErrorSoftBorderColor">#66FF5252</Color>
 

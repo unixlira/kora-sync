@@ -12,7 +12,9 @@ namespace KazakoraAgent.App.Theming;
 /// </summary>
 public static class ChannelBrandColors
 {
-    public static readonly Color Store = (Color) ColorConverter.ConvertFromString("#00E676")!;
+    // Verde correto da marca/logo (pedido explícito 2026-08-04) — mantido
+    // sincronizado com BrandPrimaryColor em Themes/BrandColors.xaml.
+    public static readonly Color Store = (Color) ColorConverter.ConvertFromString("#04D7B6")!;
 
     public static readonly Color MercadoLivre = (Color) ColorConverter.ConvertFromString("#FFE600")!;
 

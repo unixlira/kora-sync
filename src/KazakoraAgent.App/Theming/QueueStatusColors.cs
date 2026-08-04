@@ -20,7 +20,9 @@ public static class QueueStatusColors
 
     public static readonly QueueStatusColorSet Processing = Build("#40C4FF", "#2640C4FF", "#6640C4FF");
 
-    public static readonly QueueStatusColorSet Success = Build("#00E676", "#2600E676", "#6600E676");
+    // Verde correto da marca/logo (pedido explícito 2026-08-04) — mantido
+    // sincronizado com Themes/BrandColors.xaml.
+    public static readonly QueueStatusColorSet Success = Build("#04D7B6", "#2604D7B6", "#6604D7B6");
 
     public static readonly QueueStatusColorSet Error = Build("#FF5252", "#26FF5252", "#66FF5252");
 
