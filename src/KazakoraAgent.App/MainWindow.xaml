@@ -352,7 +352,7 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Image Source="{DynamicResource LogoImageSource}" Height="94" />
+                <Image Source="{DynamicResource LogoImageSource}" Height="{DynamicResource LogoHeight}" />
                 <StackPanel VerticalAlignment="Center" Margin="16,0,0,0">
                     <TextBlock Text="PAINEL DE IMPRESSÃO" Style="{StaticResource EyebrowTextStyle}" />
                     <TextBlock Text="Acompanhe pedidos e etiquetas em tempo real" Style="{StaticResource SecondaryTextStyle}" Margin="0,2,0,0" />
