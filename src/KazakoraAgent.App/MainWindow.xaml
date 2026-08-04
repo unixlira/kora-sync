@@ -411,7 +411,17 @@
         </Border>
 
         <!-- Conteúdo principal -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <!-- HorizontalScrollBarVisibility="Disabled" explícito é a correção
+             de verdade — o default do ScrollViewer é "Hidden", que (mesmo
+             sem barra visível) mede o conteúdo com LARGURA INFINITA no eixo
+             horizontal, porque ele "pode" rolar nesse eixo. Isso se
+             propagava por toda a árvore abaixo (UniformGrid dos cards do
+             topo incluso — ela divide a própria largura recebida pelas 5
+             colunas, e se recebe infinito, cada card também mede como se
+             tivesse espaço infinito) — por isso o Grid com coluna "*" dentro
+             do card sozinho não resolvia: nunca havia uma largura real pra
+             constranger nada, em lugar nenhum da árvore. -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
                 <!-- Métricas do topo (visão geral) — UniformGrid garante que
                      os 5 cards tenham exatamente o mesmo tamanho e dividam
