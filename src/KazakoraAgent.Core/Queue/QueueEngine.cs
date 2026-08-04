@@ -76,36 +76,6 @@ public sealed class QueueEngine
         }
     }
 
-    /// Ação manual do botão "Imprimir etiqueta" na lista de etiquetas —
-    /// pula o backoff de um job em espera/retentativa/falha permanente,
-    /// marcando NextAttemptAt como agora (falha permanente também ganha um
-    /// novo orçamento de tentativas, já que "tentar de novo" é exatamente
-    /// o que o clique pediu). Não processa na hora — só torna o job
-    /// elegível pro próximo tick de ProcessNextDueJobAsync, que já roda a
-    /// cada poucos segundos. Retorna false se o job não existe localmente
-    /// (ex: de outra máquina) ou já está em Processing/Printed (nada a
-    /// fazer/reprocessar).
-    public async Task<bool> RequestImmediateRetryAsync(long serverJobId, CancellationToken ct = default)
-    {
-        var job = await _store.GetByServerJobIdAsync(serverJobId, ct);
-
-        if (job is null || job.Status is QueuedJobStatus.Processing or QueuedJobStatus.Printed)
-        {
-            return false;
-        }
-
-        if (job.Status == QueuedJobStatus.FailedPermanently)
-        {
-            job.Status = QueuedJobStatus.WaitingRetry;
-            job.AttemptCount = 0;
-        }
-
-        job.NextAttemptAt = _timeProvider.GetUtcNow();
-        await _store.UpsertAsync(job, ct);
-
-        return true;
-    }
-
     /// Processa um único job pronto (o mais antigo dentre os devidos), se
     /// houver. Retorna false se a fila local não tem nada pronto agora.
     public async Task<bool> ProcessNextDueJobAsync(CancellationToken ct = default)

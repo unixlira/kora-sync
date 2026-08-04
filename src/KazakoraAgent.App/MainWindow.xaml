@@ -224,13 +224,13 @@
             </Border>
         </DataTemplate>
 
-        <!-- Card da lista de etiquetas (produto/SKU/pedido) — controle de
-             empacotamento: um funcionário olha canal+produto+quantidade+SKU,
-             empacota, e fecha no X (some da tela, o PrintJob continua no
-             banco — ver MainViewModel.DismissLabel). Se tiver dúvida, o
+        <!-- Card da lista de etiquetas (produto/SKU/pedido) — lista de
+             checagem pra empacotamento, não dispara nada (a impressão em si
+             já é automática): um funcionário olha canal+produto+quantidade+
+             SKU, empacota, e fecha no X (some da tela, o PrintJob continua
+             no banco — ver MainViewModel.DismissLabel). Se tiver dúvida, o
              pedido no canal (ExternalOrderId) está ali pra conferir na
-             própria plataforma do marketplace. "Imprimir etiqueta" só fica
-             habilitado em pendente/erro (ver LabelItemViewModel.CanPrint). -->
+             própria plataforma do marketplace. -->
         <DataTemplate x:Key="LabelItemTemplate" DataType="{x:Type vm:LabelItemViewModel}">
             <Border Style="{StaticResource CardStyle}" Padding="14" Margin="0,0,0,10">
                 <Grid>
@@ -270,10 +270,7 @@
                                 <TextBlock Text="{Binding StatusLabel, Mode=OneWay}" Style="{StaticResource SecondaryTextStyle}" />
                             </StackPanel>
                             <TextBlock Text="{Binding Timestamp.LocalDateTime, StringFormat='dd/MM HH:mm'}"
-                                        Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,8" HorizontalAlignment="Right" />
-                            <Button Content="Imprimir etiqueta" Padding="10,5" HorizontalAlignment="Right"
-                                    Command="{Binding PrintCommand}" IsEnabled="{Binding CanPrint}"
-                                    Background="{DynamicResource BrandPrimaryBrush}" Foreground="White" BorderThickness="0" />
+                                        Style="{StaticResource SecondaryTextStyle}" HorizontalAlignment="Right" />
                         </StackPanel>
                     </Grid>
 

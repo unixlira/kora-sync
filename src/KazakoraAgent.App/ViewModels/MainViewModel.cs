@@ -7,7 +7,6 @@ using CommunityToolkit.Mvvm.Input;
 using KazakoraAgent.App.Theming;
 using KazakoraAgent.Core.Api;
 using KazakoraAgent.Core.Models;
-using KazakoraAgent.Core.Queue;
 using MahApps.Metro.IconPacks;
 
 namespace KazakoraAgent.App.ViewModels;
@@ -17,7 +16,6 @@ public partial class MainViewModel : ObservableObject
     private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
 
     private readonly IKazakoraApiClient _api;
-    private readonly QueueEngine _queueEngine;
 
     public MetricsViewModel Metrics { get; } = new();
 
@@ -95,10 +93,9 @@ public partial class MainViewModel : ObservableObject
 
     public IRelayCommand CloseQueueDetailCommand { get; }
 
-    public MainViewModel(IKazakoraApiClient api, QueueEngine queueEngine)
+    public MainViewModel(IKazakoraApiClient api)
     {
         _api = api;
-        _queueEngine = queueEngine;
 
         Channels = new ObservableCollection<ChannelCardViewModel>(
             MarketplaceChannel.All.Select(channel => new ChannelCardViewModel(channel, OpenChannelDetail)));
@@ -212,7 +209,7 @@ public partial class MainViewModel : ObservableObject
                 continue;
             }
 
-            foreach (var item in LabelItemViewModel.FromDto(dto, RequestPrintAsync, DismissLabel))
+            foreach (var item in LabelItemViewModel.FromDto(dto, DismissLabel))
             {
                 Labels.Add(item);
             }
@@ -234,8 +231,6 @@ public partial class MainViewModel : ObservableObject
             Labels.Remove(item);
         }
     }
-
-    private Task<bool> RequestPrintAsync(long jobId) => _queueEngine.RequestImmediateRetryAsync(jobId);
 
     public void UpdateChannels(IReadOnlyList<ChannelStatusDto> statuses)
     {

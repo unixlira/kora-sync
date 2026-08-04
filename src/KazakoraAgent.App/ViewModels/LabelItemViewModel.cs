@@ -11,6 +11,8 @@ namespace KazakoraAgent.App.ViewModels;
 /// Uma linha por produto (não por PrintJob) — um pedido com 2 produtos vira
 /// 2 cards na lista, cada um repetindo marketplace/pedido/status, pra bater
 /// com o pedido literal de "quantidade + nome do produto + SKU" por card.
+/// Lista de checagem pra empacotamento — não dispara nada, só informa (a
+/// impressão em si já é automática, ver QueueEngine/DashboardPoller).
 /// </summary>
 public partial class LabelItemViewModel : ObservableObject
 {
@@ -34,10 +36,6 @@ public partial class LabelItemViewModel : ObservableObject
 
     public string? Sku { get; init; }
 
-    /// Vocabulário cru do servidor (queued/claimed/printed/failed) — usado
-    /// só pra decidir CanPrint, a exibição usa StatusLabel/StatusBrush.
-    public required string Status { get; init; }
-
     public required string StatusLabel { get; init; }
 
     public required Brush StatusBrush { get; init; }
@@ -46,48 +44,18 @@ public partial class LabelItemViewModel : ObservableObject
 
     public required DateTimeOffset Timestamp { get; init; }
 
-    /// Só pendente/com erro pode ser (re)enfileirado manualmente — uma
-    /// etiqueta já impressa não tem reimpressão sob demanda ainda (gasta
-    /// etiqueta física de verdade, decisão deliberada de não religar isso
-    /// sem um endpoint dedicado no servidor).
-    public bool CanPrint => Status is "queued" or "claimed" or "failed";
-
-    [ObservableProperty]
-    private bool _isPrintRequested;
-
-    public IAsyncRelayCommand PrintCommand { get; }
-
     /// Controle de empacotamento (pedido explícito 2026-08-04): funcionário
     /// bateu o olho, empacotou o produto certo na quantidade certa, marca
     /// como resolvido — some da lista, mas o PrintJob no servidor continua
     /// intacto (isso é só um "já vi" local, ver MainViewModel.DismissLabel).
     public IRelayCommand DismissCommand { get; }
 
-    public LabelItemViewModel(Func<long, Task<bool>> onPrint, Action<long> onDismiss)
+    public LabelItemViewModel(Action<long> onDismiss)
     {
-        PrintCommand = new AsyncRelayCommand(async () =>
-        {
-            if (!CanPrint || IsPrintRequested)
-            {
-                return;
-            }
-
-            IsPrintRequested = true;
-
-            try
-            {
-                await onPrint(JobId);
-            }
-            finally
-            {
-                IsPrintRequested = false;
-            }
-        });
-
         DismissCommand = new RelayCommand(() => onDismiss(JobId));
     }
 
-    public static IEnumerable<LabelItemViewModel> FromDto(LabelDto dto, Func<long, Task<bool>> onPrint, Action<long> onDismiss)
+    public static IEnumerable<LabelItemViewModel> FromDto(LabelDto dto, Action<long> onDismiss)
     {
         var (label, brush) = Describe(dto.Status);
 
@@ -100,7 +68,7 @@ public partial class LabelItemViewModel : ObservableObject
 
         foreach (var product in products)
         {
-            yield return new LabelItemViewModel(onPrint, onDismiss)
+            yield return new LabelItemViewModel(onDismiss)
             {
                 JobId = dto.Id,
                 OrderId = dto.OrderId,
@@ -109,7 +77,6 @@ public partial class LabelItemViewModel : ObservableObject
                 ProductName = product.Name,
                 Quantity = product.Quantity,
                 Sku = product.Sku,
-                Status = dto.Status,
                 StatusLabel = label,
                 StatusBrush = brush,
                 ErrorMessage = dto.ErrorMessage,

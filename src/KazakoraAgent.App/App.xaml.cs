@@ -78,7 +78,7 @@ public partial class App : System.Windows.Application
             settings.AgentId,
             _ => settings.PrinterName);
 
-        var mainViewModel = new MainViewModel(api, queueEngine);
+        var mainViewModel = new MainViewModel(api);
 
         // Painel tem que parecer "tempo real" (pedido explícito 2026-08-04)
         // — 2s fixo aqui, não lido de settings.DashboardPollSeconds: quem já
