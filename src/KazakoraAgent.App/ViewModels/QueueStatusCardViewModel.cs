@@ -1,6 +1,5 @@
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using MahApps.Metro.IconPacks;
 
 namespace KazakoraAgent.App.ViewModels;
@@ -8,8 +7,9 @@ namespace KazakoraAgent.App.ViewModels;
 /// <summary>
 /// Card de status da fila de impressão — mesmo padrão visual dos cards de
 /// "Impressões" do painel Casa Cora (fundo e borda tingidos na cor do
-/// status, ícone em bolha, contagem em destaque). Clicar abre a listagem
-/// completa daquele status (ver MainViewModel.OpenQueueDetail).
+/// status, ícone em bolha, contagem em destaque). Só exibe, não é mais
+/// clicável (removido pedido explícito 2026-08-04 — nenhum card do
+/// dashboard abre janela/overlay de detalhe).
 /// </summary>
 public partial class QueueStatusCardViewModel : ObservableObject
 {
@@ -24,8 +24,6 @@ public partial class QueueStatusCardViewModel : ObservableObject
     public required Brush CardBackgroundBrush { get; init; }
 
     public required Brush CardBorderBrush { get; init; }
-
-    public required IRelayCommand OpenCommand { get; init; }
 
     [ObservableProperty]
     private int _count;

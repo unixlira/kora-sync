@@ -22,6 +22,12 @@ public partial class MainWindow : Window
         {
             ToggleFullScreen();
         }
+        else if (e.Key == Key.Escape && _isFullScreen)
+        {
+            // Esc só sai do fullscreen — nunca entra (diferente do F11, que
+            // alterna os dois sentidos).
+            ToggleFullScreen();
+        }
     }
 
     private void ToggleFullScreen()
@@ -29,7 +35,11 @@ public partial class MainWindow : Window
         if (_isFullScreen)
         {
             WindowStyle = WindowStyle.SingleBorderWindow;
-            ResizeMode = ResizeMode.CanResize;
+            // Fora do fullscreen a janela continua fixa (sem redimensionar
+            // manualmente) — só o F11 muda o tamanho, pedido explícito
+            // 2026-08-04. Ver também Window.ResizeMode no XAML (estado
+            // inicial, antes de qualquer toggle).
+            ResizeMode = ResizeMode.NoResize;
             WindowState = _windowStateBeforeFullScreen;
         }
         else

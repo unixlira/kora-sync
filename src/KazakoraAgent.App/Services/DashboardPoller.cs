@@ -139,7 +139,6 @@ public sealed class DashboardPoller : IDisposable
             catch (Exception ex)
             {
                 anyFailure = true;
-                _viewModel.MarkChannelsUnreachable();
                 _viewModel.LastDashboardError = $"Canais: {ex.Message}";
             }
 

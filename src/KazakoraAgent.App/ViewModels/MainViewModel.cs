@@ -3,9 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using KazakoraAgent.App.Theming;
-using KazakoraAgent.Core.Api;
 using KazakoraAgent.Core.Models;
 using MahApps.Metro.IconPacks;
 
@@ -14,12 +12,6 @@ namespace KazakoraAgent.App.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
-
-    private readonly IKazakoraApiClient _api;
-
-    public MetricsViewModel Metrics { get; } = new();
-
-    public ObservableCollection<ChannelCardViewModel> Channels { get; }
 
     /// Um card por métrica do topo — mantido em sincronia com Metrics
     /// sempre que UpdateMetrics roda (ver DashboardTickAsync no poller).
@@ -50,7 +42,7 @@ public partial class MainViewModel : ObservableObject
 
     /// Um card por status da fila (mesmo padrão visual do painel de
     /// Impressões do Casa Cora) — Count é sincronizado com as 4 coleções
-    /// acima toda vez que ReplaceQueueItems roda.
+    /// acima toda vez que ReplaceQueueItems roda. Só exibe, não abre nada.
     public ObservableCollection<QueueStatusCardViewModel> QueueStatusCards { get; }
 
     /// Mensagem da última falha ao buscar canais/métricas — null quando o
@@ -72,34 +64,8 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnLastLabelsErrorChanged(string? value) => OnPropertyChanged(nameof(HasLabelsErrorVisibility));
 
-    [ObservableProperty]
-    private bool _isShowingDetail;
-
-    [ObservableProperty]
-    private ChannelDetailViewModel? _selectedDetail;
-
-    public IRelayCommand CloseDetailCommand { get; }
-
-    /// Aponta pra uma das 4 coleções acima (mesma instância, não uma cópia)
-    /// — assim a listagem de detalhe continua ao vivo enquanto está aberta.
-    [ObservableProperty]
-    private ObservableCollection<QueueItemViewModel>? _selectedQueueItems;
-
-    [ObservableProperty]
-    private string? _queueDetailTitle;
-
-    [ObservableProperty]
-    private bool _isShowingQueueDetail;
-
-    public IRelayCommand CloseQueueDetailCommand { get; }
-
-    public MainViewModel(IKazakoraApiClient api)
+    public MainViewModel()
     {
-        _api = api;
-
-        Channels = new ObservableCollection<ChannelCardViewModel>(
-            MarketplaceChannel.All.Select(channel => new ChannelCardViewModel(channel, OpenChannelDetail)));
-
         var resources = Application.Current.Resources;
 
         var successBrush = (Brush) resources["StatusSuccessBrush"];
@@ -130,7 +96,6 @@ public partial class MainViewModel : ObservableObject
                 IconKind = PackIconMaterialKind.TrayFull, AccentBrush = QueueStatusColors.Warning.Accent,
                 CardBackgroundBrush = QueueStatusColors.Warning.SoftBackground,
                 CardBorderBrush = QueueStatusColors.Warning.SoftBorder,
-                OpenCommand = new RelayCommand(() => OpenQueueDetail(QueueWaiting, "Na fila")),
             },
             new QueueStatusCardViewModel
             {
@@ -138,7 +103,6 @@ public partial class MainViewModel : ObservableObject
                 IconKind = PackIconMaterialKind.Printer, AccentBrush = QueueStatusColors.Processing.Accent,
                 CardBackgroundBrush = QueueStatusColors.Processing.SoftBackground,
                 CardBorderBrush = QueueStatusColors.Processing.SoftBorder,
-                OpenCommand = new RelayCommand(() => OpenQueueDetail(QueueProcessing, "Imprimindo")),
             },
             new QueueStatusCardViewModel
             {
@@ -146,7 +110,6 @@ public partial class MainViewModel : ObservableObject
                 IconKind = PackIconMaterialKind.CheckCircleOutline, AccentBrush = QueueStatusColors.Success.Accent,
                 CardBackgroundBrush = QueueStatusColors.Success.SoftBackground,
                 CardBorderBrush = QueueStatusColors.Success.SoftBorder,
-                OpenCommand = new RelayCommand(() => OpenQueueDetail(QueueCompletedToday, "Concluídas hoje")),
             },
             new QueueStatusCardViewModel
             {
@@ -154,27 +117,12 @@ public partial class MainViewModel : ObservableObject
                 IconKind = PackIconMaterialKind.AlertCircleOutline, AccentBrush = QueueStatusColors.Error.Accent,
                 CardBackgroundBrush = QueueStatusColors.Error.SoftBackground,
                 CardBorderBrush = QueueStatusColors.Error.SoftBorder,
-                OpenCommand = new RelayCommand(() => OpenQueueDetail(QueueFailedOrRetrying, "Falharam")),
             },
         ];
-
-        CloseDetailCommand = new RelayCommand(() =>
-        {
-            IsShowingDetail = false;
-            SelectedDetail = null;
-        });
-
-        CloseQueueDetailCommand = new RelayCommand(() =>
-        {
-            IsShowingQueueDetail = false;
-            SelectedQueueItems = null;
-        });
     }
 
     public void UpdateMetrics(DashboardMetricsDto dto)
     {
-        Metrics.UpdateFrom(dto);
-
         MetricCards[0].Value = dto.RevenueMonth.ToString("C2", PtBr);
         MetricCards[0].PeriodLabel = dto.MonthLabel;
         MetricCards[0].VariationPct = dto.RevenueMonthVariationPct;
@@ -197,7 +145,7 @@ public partial class MainViewModel : ObservableObject
     /// intacto no banco do Kazakora, isso só filtra o que aparece na tela.
     private readonly HashSet<long> _dismissedLabelJobIds = [];
 
-    /// <summary>Mais recentes no topo — LabelDto já vem ordenado assim do servidor (latest('id')).</summary>
+    /// <summary>A última impressa de verdade fica no topo — LabelDto já vem ordenado assim do servidor (COALESCE(printed_at, created_at) DESC).</summary>
     public void ReplaceLabels(IEnumerable<LabelDto> labels)
     {
         Labels.Clear();
@@ -234,29 +182,7 @@ public partial class MainViewModel : ObservableObject
 
     public void UpdateChannels(IReadOnlyList<ChannelStatusDto> statuses)
     {
-        var byChannel = statuses.ToDictionary(s => s.Channel);
-
         ChannelOrdersCard.UpdateFrom(statuses);
-
-        foreach (var card in Channels)
-        {
-            if (byChannel.TryGetValue(card.Channel, out var dto))
-            {
-                card.UpdateFrom(dto);
-            }
-            else
-            {
-                card.MarkUnreachable();
-            }
-        }
-    }
-
-    public void MarkChannelsUnreachable()
-    {
-        foreach (var card in Channels)
-        {
-            card.MarkUnreachable();
-        }
     }
 
     public void ReplaceQueueItems(IEnumerable<QueueItemViewModel> items)
@@ -285,43 +211,6 @@ public partial class MainViewModel : ObservableObject
         foreach (var item in items)
         {
             target.Add(item);
-        }
-    }
-
-    private void OpenQueueDetail(ObservableCollection<QueueItemViewModel> source, string title)
-    {
-        QueueDetailTitle = title;
-        SelectedQueueItems = source;
-        IsShowingQueueDetail = true;
-    }
-
-    private async void OpenChannelDetail(string channel)
-    {
-        var detail = new ChannelDetailViewModel(channel) { IsLoading = true };
-        SelectedDetail = detail;
-        IsShowingDetail = true;
-
-        try
-        {
-            var orders = await _api.GetChannelOrdersAsync(channel);
-
-            detail.ReplaceOrders(orders.Select(o => new ChannelOrderRowViewModel
-            {
-                Id = o.Id,
-                ExternalOrderId = o.ExternalOrderId,
-                CustomerName = o.CustomerName,
-                ProductsSummary = string.Join(", ", o.Products.Select(p => p.Quantity > 1 ? $"{p.Name} (x{p.Quantity})" : p.Name)),
-                StatusLabel = o.Status,
-                GrossAmount = o.GrossAmount,
-                FeeAmount = o.FeeAmount,
-                NetAmount = o.NetAmount,
-                ShippingMethod = o.ShippingMethod,
-                CreatedAt = o.CreatedAt,
-            }));
-        }
-        finally
-        {
-            detail.IsLoading = false;
         }
     }
 }
