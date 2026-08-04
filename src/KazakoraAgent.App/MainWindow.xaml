@@ -22,14 +22,26 @@
              adaptável a qualquer largura de janela/monitor. -->
         <DataTemplate DataType="{x:Type vm:MetricCardViewModel}">
             <Border Style="{StaticResource CardStyle}" Margin="8" Padding="22">
-                <StackPanel Orientation="Horizontal">
-                    <Grid Width="56" Height="56" Margin="0,0,16,0" VerticalAlignment="Top">
+                <!-- Grid, não StackPanel horizontal — mesma correção do
+                     ChannelOrdersCardTemplate (ver comentário lá): StackPanel
+                     horizontal dá largura infinita pro filho, o que quebra
+                     TextWrapping/TextTrimming (o texto nunca sabe onde
+                     cortar/quebrar de verdade). Coluna "*" constrange o
+                     espaço disponível de verdade. -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0" Width="56" Height="56" Margin="0,0,16,0" VerticalAlignment="Top">
                         <Ellipse Fill="{Binding AccentBrush}" Opacity="0.16" />
                         <iconPacks:PackIconMaterial Kind="{Binding IconKind}" Width="28" Height="28"
                                                      Foreground="{Binding AccentBrush}"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
-                    <StackPanel VerticalAlignment="Center">
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Style="{StaticResource SecondaryTextStyle}" TextWrapping="Wrap">
                             <Run Text="{Binding Label, Mode=OneWay}" /><Run Text=" — " /><Run Text="{Binding PeriodLabel, Mode=OneWay}" />
                         </TextBlock>
@@ -38,7 +50,7 @@
                         <TextBlock Text="{Binding VariationText}" Foreground="{Binding VariationBrush}"
                                    Visibility="{Binding VariationVisibility}" FontWeight="Bold" FontSize="12" Margin="0,4,0,0" />
                     </StackPanel>
-                </StackPanel>
+                </Grid>
             </Border>
         </DataTemplate>
 
@@ -48,14 +60,27 @@
              canal zerado/sem pedido simplesmente não aparece na lista. -->
         <DataTemplate DataType="{x:Type vm:ChannelOrdersCardViewModel}">
             <Border Style="{StaticResource CardStyle}" Margin="8" Padding="22">
-                <StackPanel Orientation="Horizontal">
-                    <Grid Width="56" Height="56" Margin="0,0,16,0" VerticalAlignment="Top">
+                <!-- Grid, não StackPanel horizontal: um StackPanel horizontal
+                     dá largura INFINITA pro filho, então o WrapPanel das
+                     badges nunca detectava que precisava quebrar (só
+                     descobria o limite real, tarde demais, na hora de
+                     desenhar — daí o corte). A coluna "*" aqui constrange de
+                     verdade o espaço disponível, então o WrapPanel quebra
+                     pra segunda linha de verdade quando não couber mais. -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0" Width="56" Height="56" Margin="0,0,16,0" VerticalAlignment="Top">
                         <Ellipse Fill="{DynamicResource BrandPrimaryBrush}" Opacity="0.16" />
                         <iconPacks:PackIconMaterial Kind="{Binding IconKind}" Width="28" Height="28"
                                                      Foreground="{DynamicResource BrandPrimaryBrush}"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
-                    <StackPanel VerticalAlignment="Center">
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Label}" Style="{StaticResource SecondaryTextStyle}" TextWrapping="Wrap" />
                         <!-- Badges pequenas de propósito (pedido explícito
                              2026-08-04) — as 5 integrações precisam caber
@@ -77,7 +102,7 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
-                </StackPanel>
+                </Grid>
             </Border>
         </DataTemplate>
 
