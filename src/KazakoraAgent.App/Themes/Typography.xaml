@@ -40,4 +40,14 @@
         <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
     </Style>
 
+    <!-- Relógio em tempo real do cabeçalho — fonte grande e cor de destaque
+         de propósito (pedido explícito 2026-08-04: "fonte que seja boa
+         visível"), bem maior que o texto normal do app. -->
+    <Style x:Key="ClockTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="Foreground" Value="{DynamicResource BrandPrimaryBrush}" />
+    </Style>
+
 </ResourceDictionary>

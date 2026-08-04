@@ -6,14 +6,15 @@ using KazakoraAgent.Core.Queue;
 namespace KazakoraAgent.App.Services;
 
 /// <summary>
-/// Dois timers de cadência diferente, de propósito (ver conversa sobre
+/// Três timers de cadência diferente, de propósito (ver conversa sobre
 /// tempo real vs polling): a fila de impressão usa um intervalo curto
 /// (padrão 1s — velocidade importa, é dinheiro/pedido esperando), o
-/// dashboard (métricas/cards) usa um intervalo mais espaçado (padrão 5s —
-/// é só visual, bater 1x/s nisso o dia todo é carga desnecessária no banco
-/// numa hospedagem compartilhada). Ambos rodam na thread de UI
-/// (DispatcherTimer), então atualizar as ObservableCollections aqui é
-/// seguro sem Dispatcher.Invoke manual.
+/// dashboard (métricas/cards/etiquetas) usa um intervalo mais espaçado
+/// (padrão 2s — é só visual), e o texto diário usa um intervalo bem mais
+/// longo (padrão 30min — o texto só muda 1x por dia no servidor, não faz
+/// sentido nem consultar isso na mesma cadência do resto). Todos rodam na
+/// thread de UI (DispatcherTimer), então atualizar as ObservableCollections
+/// aqui é seguro sem Dispatcher.Invoke manual.
 /// </summary>
 public sealed class DashboardPoller : IDisposable
 {
@@ -23,9 +24,11 @@ public sealed class DashboardPoller : IDisposable
     private readonly MainViewModel _viewModel;
     private readonly DispatcherTimer _queueTimer;
     private readonly DispatcherTimer _dashboardTimer;
+    private readonly DispatcherTimer _dailyTextTimer;
 
     private bool _queueTickRunning;
     private bool _dashboardTickRunning;
+    private bool _dailyTextTickRunning;
     private bool? _wasReachable;
 
     /// Pausada via bandeja ("Pausar Fila") — o timer continua rodando (a
@@ -44,7 +47,8 @@ public sealed class DashboardPoller : IDisposable
         QueueEngine queueEngine,
         MainViewModel viewModel,
         TimeSpan? queueInterval = null,
-        TimeSpan? dashboardInterval = null)
+        TimeSpan? dashboardInterval = null,
+        TimeSpan? dailyTextInterval = null)
     {
         _api = api;
         _jobStore = jobStore;
@@ -56,18 +60,27 @@ public sealed class DashboardPoller : IDisposable
 
         _dashboardTimer = new DispatcherTimer { Interval = dashboardInterval ?? TimeSpan.FromSeconds(5) };
         _dashboardTimer.Tick += async (_, _) => await DashboardTickAsync();
+
+        _dailyTextTimer = new DispatcherTimer { Interval = dailyTextInterval ?? TimeSpan.FromMinutes(30) };
+        _dailyTextTimer.Tick += async (_, _) => await DailyTextTickAsync();
     }
 
     public void Start()
     {
         _queueTimer.Start();
         _dashboardTimer.Start();
+        _dailyTextTimer.Start();
+        // Busca já na inicialização, sem esperar o primeiro intervalo de
+        // 30min — senão o texto ficaria em branco por meia hora toda vez
+        // que o app abre.
+        _ = DailyTextTickAsync();
     }
 
     public void Stop()
     {
         _queueTimer.Stop();
         _dashboardTimer.Stop();
+        _dailyTextTimer.Stop();
     }
 
     private async Task QueueTickAsync()
@@ -188,6 +201,32 @@ public sealed class DashboardPoller : IDisposable
         finally
         {
             _dashboardTickRunning = false;
+        }
+    }
+
+    private async Task DailyTextTickAsync()
+    {
+        if (_dailyTextTickRunning)
+        {
+            return;
+        }
+
+        _dailyTextTickRunning = true;
+
+        try
+        {
+            var dailyText = await _api.GetDailyTextAsync();
+            _viewModel.UpdateDailyText(dailyText);
+        }
+        catch
+        {
+            // Falha aqui não é crítica (não é dado operacional) — mantém o
+            // último texto já mostrado em vez de sumir/mostrar erro; o
+            // próximo tick de 30min tenta de novo.
+        }
+        finally
+        {
+            _dailyTextTickRunning = false;
         }
     }
 

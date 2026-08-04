@@ -22,4 +22,7 @@ public interface IKazakoraApiClient
     Task<DashboardMetricsDto> GetMetricsAsync(CancellationToken ct = default);
 
     Task<IReadOnlyList<LabelDto>> GetLabelsAsync(CancellationToken ct = default);
+
+    /// Null quando o servidor ainda não tem nenhum texto diário salvo.
+    Task<DailyTextDto?> GetDailyTextAsync(CancellationToken ct = default);
 }

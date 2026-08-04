@@ -81,10 +81,24 @@ public sealed class KazakoraApiClient : IKazakoraApiClient
         return response.Labels;
     }
 
+    public async Task<DailyTextDto?> GetDailyTextAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetFromJsonAsync<DailyTextResponse>("dashboard/daily-text", JsonOptions, ct)
+            ?? throw new InvalidOperationException("Resposta vazia de GET dashboard/daily-text.");
+
+        return response.DailyText;
+    }
+
     private sealed class LabelsResponse
     {
         [JsonPropertyName("labels")]
         public required List<LabelDto> Labels { get; init; }
+    }
+
+    private sealed class DailyTextResponse
+    {
+        [JsonPropertyName("daily_text")]
+        public DailyTextDto? DailyText { get; init; }
     }
 
     private sealed class JobsIndexResponse

@@ -64,6 +64,25 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnLastLabelsErrorChanged(string? value) => OnPropertyChanged(nameof(HasLabelsErrorVisibility));
 
+    /// Texto diário das Testemunhas de Jeová — null até o primeiro fetch
+    /// (DashboardPoller busca já na inicialização, ver Start()) ou se o
+    /// servidor ainda não tem nenhuma linha salva. Mostra o versículo (que
+    /// já inclui a referência embutida, ver DailyTextFetcherService no
+    /// Laravel) — não a data (isso já aparece no relógio à direita) nem o
+    /// comentário completo (fonte pequena no meio do cabeçalho, não cabe).
+    [ObservableProperty]
+    private string? _dailyTextQuote;
+
+    public Visibility HasDailyTextVisibility => DailyTextQuote is null ? Visibility.Collapsed : Visibility.Visible;
+
+    partial void OnDailyTextQuoteChanged(string? value) => OnPropertyChanged(nameof(HasDailyTextVisibility));
+
+    /// Relógio em tempo real do cabeçalho — atualizado a cada segundo por
+    /// um DispatcherTimer dedicado em MainWindow.xaml.cs (puramente local,
+    /// sem chamada de rede, por isso não faz parte do DashboardPoller).
+    [ObservableProperty]
+    private string _currentDateTimeText = string.Empty;
+
     public MainViewModel()
     {
         var resources = Application.Current.Resources;
@@ -178,6 +197,11 @@ public partial class MainViewModel : ObservableObject
         {
             Labels.Remove(item);
         }
+    }
+
+    public void UpdateDailyText(DailyTextDto? dto)
+    {
+        DailyTextQuote = dto?.ScriptureQuote;
     }
 
     public void UpdateChannels(IReadOnlyList<ChannelStatusDto> statuses)
