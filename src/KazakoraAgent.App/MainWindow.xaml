@@ -224,16 +224,20 @@
             </Border>
         </DataTemplate>
 
-        <!-- Card da lista de etiquetas (produto/SKU/pedido) — uma linha por
-             produto, mais recentes no topo. Botão "Imprimir etiqueta" só
-             habilitado em pendente/erro (ver LabelItemViewModel.CanPrint);
-             "Ver detalhes" abre a listagem de pedidos daquele canal. -->
+        <!-- Card da lista de etiquetas (produto/SKU/pedido) — controle de
+             empacotamento: um funcionário olha canal+produto+quantidade+SKU,
+             empacota, e fecha no X (some da tela, o PrintJob continua no
+             banco — ver MainViewModel.DismissLabel). Se tiver dúvida, o
+             pedido no canal (ExternalOrderId) está ali pra conferir na
+             própria plataforma do marketplace. "Imprimir etiqueta" só fica
+             habilitado em pendente/erro (ver LabelItemViewModel.CanPrint). -->
         <DataTemplate x:Key="LabelItemTemplate" DataType="{x:Type vm:LabelItemViewModel}">
             <Border Style="{StaticResource CardStyle}" Padding="14" Margin="0,0,0,10">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="4" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" CornerRadius="3" Margin="0,0,14,0" />
@@ -267,16 +271,21 @@
                             </StackPanel>
                             <TextBlock Text="{Binding Timestamp.LocalDateTime, StringFormat='dd/MM HH:mm'}"
                                         Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,8" HorizontalAlignment="Right" />
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="Imprimir etiqueta" Padding="10,5" Margin="0,0,6,0"
-                                        Command="{Binding PrintCommand}" IsEnabled="{Binding CanPrint}"
-                                        Background="{DynamicResource BrandPrimaryBrush}" Foreground="White" BorderThickness="0" />
-                                <Button Content="Ver detalhes" Padding="10,5" Command="{Binding DetailsCommand}"
-                                        Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}" />
-                            </StackPanel>
+                            <Button Content="Imprimir etiqueta" Padding="10,5" HorizontalAlignment="Right"
+                                    Command="{Binding PrintCommand}" IsEnabled="{Binding CanPrint}"
+                                    Background="{DynamicResource BrandPrimaryBrush}" Foreground="White" BorderThickness="0" />
                         </StackPanel>
                     </Grid>
+
+                    <!-- X — conferido/empacotado, some da tela (não apaga o
+                         registro). Fica no canto superior direito do card,
+                         separado do resto pra não ser confundido com uma
+                         ação sobre a etiqueta em si. -->
+                    <Button Grid.Column="2" Content="✕" Command="{Binding DismissCommand}"
+                            ToolTip="Já empacotado — remover da lista"
+                            Width="26" Height="26" Padding="0" VerticalAlignment="Top" Margin="8,0,0,0"
+                            Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextSecondaryBrush}"
+                            FontSize="14" Cursor="Hand" />
                 </Grid>
             </Border>
         </DataTemplate>

@@ -57,9 +57,13 @@ public partial class LabelItemViewModel : ObservableObject
 
     public IAsyncRelayCommand PrintCommand { get; }
 
-    public IRelayCommand DetailsCommand { get; }
+    /// Controle de empacotamento (pedido explícito 2026-08-04): funcionário
+    /// bateu o olho, empacotou o produto certo na quantidade certa, marca
+    /// como resolvido — some da lista, mas o PrintJob no servidor continua
+    /// intacto (isso é só um "já vi" local, ver MainViewModel.DismissLabel).
+    public IRelayCommand DismissCommand { get; }
 
-    public LabelItemViewModel(Func<long, Task<bool>> onPrint, Action<string> onDetails)
+    public LabelItemViewModel(Func<long, Task<bool>> onPrint, Action<long> onDismiss)
     {
         PrintCommand = new AsyncRelayCommand(async () =>
         {
@@ -80,16 +84,10 @@ public partial class LabelItemViewModel : ObservableObject
             }
         });
 
-        DetailsCommand = new RelayCommand(() =>
-        {
-            if (Channel is not null)
-            {
-                onDetails(Channel);
-            }
-        });
+        DismissCommand = new RelayCommand(() => onDismiss(JobId));
     }
 
-    public static IEnumerable<LabelItemViewModel> FromDto(LabelDto dto, Func<long, Task<bool>> onPrint, Action<string> onDetails)
+    public static IEnumerable<LabelItemViewModel> FromDto(LabelDto dto, Func<long, Task<bool>> onPrint, Action<long> onDismiss)
     {
         var (label, brush) = Describe(dto.Status);
 
@@ -102,7 +100,7 @@ public partial class LabelItemViewModel : ObservableObject
 
         foreach (var product in products)
         {
-            yield return new LabelItemViewModel(onPrint, onDetails)
+            yield return new LabelItemViewModel(onPrint, onDismiss)
             {
                 JobId = dto.Id,
                 OrderId = dto.OrderId,

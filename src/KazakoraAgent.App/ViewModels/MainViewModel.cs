@@ -194,6 +194,12 @@ public partial class MainViewModel : ObservableObject
         MetricCards[3].PeriodLabel = dto.MonthLabel;
     }
 
+    /// Controle de empacotamento: PrintJob.Id de cada etiqueta já conferida
+    /// pelo funcionário (botão X) — só existe em memória (some ao reabrir o
+    /// KoraSync), nunca é enviado pro servidor. O registro real continua
+    /// intacto no banco do Kazakora, isso só filtra o que aparece na tela.
+    private readonly HashSet<long> _dismissedLabelJobIds = [];
+
     /// <summary>Mais recentes no topo — LabelDto já vem ordenado assim do servidor (latest('id')).</summary>
     public void ReplaceLabels(IEnumerable<LabelDto> labels)
     {
@@ -201,10 +207,31 @@ public partial class MainViewModel : ObservableObject
 
         foreach (var dto in labels)
         {
-            foreach (var item in LabelItemViewModel.FromDto(dto, RequestPrintAsync, OpenChannelDetail))
+            if (_dismissedLabelJobIds.Contains(dto.Id))
+            {
+                continue;
+            }
+
+            foreach (var item in LabelItemViewModel.FromDto(dto, RequestPrintAsync, DismissLabel))
             {
                 Labels.Add(item);
             }
+        }
+    }
+
+    /// Chamado pelo botão X de cada etiqueta — some da tela imediatamente
+    /// (sem esperar o próximo tick de 2s) e fica marcado pra não voltar a
+    /// aparecer nos próximos ciclos, mesmo que o servidor continue
+    /// devolvendo o mesmo PrintJob (que nunca é apagado por isso).
+    private void DismissLabel(long jobId)
+    {
+        _dismissedLabelJobIds.Add(jobId);
+
+        var toRemove = Labels.Where(l => l.JobId == jobId).ToList();
+
+        foreach (var item in toRemove)
+        {
+            Labels.Remove(item);
         }
     }
 
