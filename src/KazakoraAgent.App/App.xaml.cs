@@ -90,7 +90,6 @@ public partial class App : System.Windows.Application
         // já estava salvo.
         var poller = new DashboardPoller(
             api,
-            _jobStore,
             queueEngine,
             mainViewModel,
             TimeSpan.FromSeconds(Math.Max(1, settings.QueuePollSeconds)),

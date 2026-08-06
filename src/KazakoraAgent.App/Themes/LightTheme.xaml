@@ -24,7 +24,9 @@
     <!-- Versão do logo com cores que ficam legíveis sobre fundo claro. -->
     <imaging:BitmapImage x:Key="LogoImageSource" UriSource="/Assets/logo_light.png" />
 
-    <!-- Tamanho original — só o do tema escuro ficou 10px maior, pedido explícito 2026-08-04. -->
-    <sys:Double x:Key="LogoHeight">94</sys:Double>
+    <!-- Só o do tema escuro ficou 10px maior, pedido explícito 2026-08-04.
+         Reduzido de 94 pra 60 em 2026-08-06 (cabeçalho mais fino, pedido
+         explícito). -->
+    <sys:Double x:Key="LogoHeight">60</sys:Double>
 
 </ResourceDictionary>

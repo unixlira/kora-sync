@@ -9,7 +9,7 @@ namespace KazakoraAgent.App.Services;
 /// Três timers de cadência diferente, de propósito (ver conversa sobre
 /// tempo real vs polling): a fila de impressão usa um intervalo curto
 /// (padrão 1s — velocidade importa, é dinheiro/pedido esperando), o
-/// dashboard (métricas/cards/etiquetas) usa um intervalo mais espaçado
+/// dashboard (métricas/cards do topo) usa um intervalo mais espaçado
 /// (padrão 2s — é só visual), e o texto diário usa um intervalo bem mais
 /// longo (padrão 30min — o texto só muda 1x por dia no servidor, não faz
 /// sentido nem consultar isso na mesma cadência do resto). Todos rodam na
@@ -19,7 +19,6 @@ namespace KazakoraAgent.App.Services;
 public sealed class DashboardPoller : IDisposable
 {
     private readonly IKazakoraApiClient _api;
-    private readonly IJobStore _jobStore;
     private readonly QueueEngine _queueEngine;
     private readonly MainViewModel _viewModel;
     private readonly DispatcherTimer _queueTimer;
@@ -31,9 +30,11 @@ public sealed class DashboardPoller : IDisposable
     private bool _dailyTextTickRunning;
     private bool? _wasReachable;
 
-    /// Pausada via bandeja ("Pausar Fila") — o timer continua rodando (a
-    /// tela de fila segue atualizando visualmente), só não sincroniza nem
-    /// processa novos jobs enquanto pausado.
+    /// Pausada via bandeja ("Pausar Fila") — o timer continua rodando (o
+    /// processamento em si é quem para; não há mais lista visual pra
+    /// atualizar aqui desde que a fila/etiquetas saíram do layout,
+    /// 2026-08-06), só não sincroniza nem processa novos jobs enquanto
+    /// pausado.
     public bool IsPaused { get; set; }
 
     /// Perda de conectividade com a API detectada (dispara notificação do Windows).
@@ -43,7 +44,6 @@ public sealed class DashboardPoller : IDisposable
 
     public DashboardPoller(
         IKazakoraApiClient api,
-        IJobStore jobStore,
         QueueEngine queueEngine,
         MainViewModel viewModel,
         TimeSpan? queueInterval = null,
@@ -51,7 +51,6 @@ public sealed class DashboardPoller : IDisposable
         TimeSpan? dailyTextInterval = null)
     {
         _api = api;
-        _jobStore = jobStore;
         _queueEngine = queueEngine;
         _viewModel = viewModel;
 
@@ -107,9 +106,6 @@ public sealed class DashboardPoller : IDisposable
                 {
                 }
             }
-
-            var jobs = await _jobStore.GetAllAsync();
-            _viewModel.ReplaceQueueItems(jobs.Select(QueueItemViewModel.FromDomain));
         }
         catch
         {
@@ -135,13 +131,14 @@ public sealed class DashboardPoller : IDisposable
         try
         {
             // Uma chamada por bloco try/catch, de propósito — antes uma
-            // única exceção em qualquer uma das 3 (ex: GetLabelsAsync)
-            // derrubava o tick inteiro sem sinalizar nada além da bolinha
-            // de status ficar amarela, deixando a lista de etiquetas
-            // travada/vazia silenciosamente mesmo com canais e métricas
-            // funcionando. Cada falha agora fica registrada em
-            // LastDashboardError/LastLabelsError (exibido na tela, ver
-            // MainWindow.xaml) em vez de sumir sem explicação.
+            // única exceção em qualquer uma delas derrubava o tick inteiro
+            // sem sinalizar nada além da bolinha de status ficar amarela.
+            // Cada falha agora fica registrada em LastDashboardError
+            // (exibido na tela, ver MainWindow.xaml) em vez de sumir sem
+            // explicação. (A busca de etiquetas que existia aqui saiu
+            // junto com a lista "ETIQUETAS" do layout, 2026-08-06 — não
+            // faz mais sentido consultar esse endpoint a cada tick sem
+            // nada na tela pra mostrar o resultado.)
             var anyFailure = false;
 
             try
@@ -164,18 +161,6 @@ public sealed class DashboardPoller : IDisposable
             {
                 anyFailure = true;
                 _viewModel.LastDashboardError = $"Métricas: {ex.Message}";
-            }
-
-            try
-            {
-                var labels = await _api.GetLabelsAsync();
-                _viewModel.ReplaceLabels(labels);
-                _viewModel.LastLabelsError = null;
-            }
-            catch (Exception ex)
-            {
-                anyFailure = true;
-                _viewModel.LastLabelsError = ex.Message;
             }
 
             if (!anyFailure)

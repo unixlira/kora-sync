@@ -107,102 +107,6 @@
             </Border>
         </DataTemplate>
 
-        <!-- Card de status da fila (Na fila/Imprimindo/Concluídas/Falharam) — mesmo
-             padrão visual dos cards de "Impressões" do painel Casa Cora: fundo e
-             borda tingidos na cor do status, ícone em bolha, contagem em destaque.
-             Só exibe — não abre janela/overlay nenhum (removido pedido
-             explícito 2026-08-04). -->
-        <DataTemplate DataType="{x:Type vm:QueueStatusCardViewModel}">
-            <Border Style="{StaticResource StatusCardStyle}" Background="{Binding CardBackgroundBrush}"
-                    BorderBrush="{Binding CardBorderBrush}" Width="270" Margin="0,0,16,16">
-                <StackPanel>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid Grid.Column="0" Width="44" Height="44" HorizontalAlignment="Left">
-                            <Ellipse Fill="{Binding AccentBrush}" Opacity="0.18" />
-                            <iconPacks:PackIconMaterial Kind="{Binding IconKind}" Width="22" Height="22"
-                                                         Foreground="{Binding AccentBrush}"
-                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Grid>
-                        <TextBlock Grid.Column="1" Text="{Binding Count}" Style="{StaticResource MetricValueTextStyle}"
-                                    Foreground="{Binding AccentBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                    </Grid>
-                    <TextBlock Text="{Binding Label}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,14,0,0" />
-                    <TextBlock Text="{Binding Description}" Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,0" TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
-        </DataTemplate>
-
-
-        <!-- Card da lista de etiquetas (produto/SKU/pedido) — lista de
-             checagem pra empacotamento, não dispara nada (a impressão em si
-             já é automática): um funcionário olha canal+produto+quantidade+
-             SKU, empacota, e fecha no X (some da tela, o PrintJob continua
-             no banco — ver MainViewModel.DismissLabel). Se tiver dúvida, o
-             pedido no canal (ExternalOrderId) está ali pra conferir na
-             própria plataforma do marketplace. Tamanho reduzido de propósito
-             (pedido explícito 2026-08-04) — padding/margem/fonte menores que
-             o resto dos cards do app, pra caber mais linhas visíveis dentro
-             do scroll próprio da lista (ver MainWindow.xaml). -->
-        <DataTemplate x:Key="LabelItemTemplate" DataType="{x:Type vm:LabelItemViewModel}">
-            <Border Style="{StaticResource CardStyle}" Padding="10" Margin="0,0,0,6">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="3" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" CornerRadius="2" Margin="0,0,10,0" />
-
-                    <Grid Grid.Column="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding ChannelDisplayName}" Style="{StaticResource SecondaryTextStyle}" FontSize="10" FontWeight="Bold" />
-                                <TextBlock Text=" • Pedido " Style="{StaticResource SecondaryTextStyle}" FontSize="10" />
-                                <TextBlock Text="{Binding ExternalOrderId, TargetNullValue='—'}" Style="{StaticResource SecondaryTextStyle}" FontSize="10" FontWeight="Bold" />
-                            </StackPanel>
-                            <TextBlock Style="{StaticResource BodyTextStyle}" FontSize="13" FontWeight="Bold" Margin="0,2,0,0" TextWrapping="Wrap">
-                                <Run Text="{Binding QuantityLabel, Mode=OneWay}" /><Run Text=" " /><Run Text="{Binding ProductName, Mode=OneWay}" />
-                            </TextBlock>
-                            <TextBlock Style="{StaticResource SecondaryTextStyle}" FontSize="10" Margin="0,1,0,0">
-                                <Run Text="SKU: " /><Run Text="{Binding Sku, Mode=OneWay, TargetNullValue='—'}" />
-                            </TextBlock>
-                            <TextBlock Text="{Binding ErrorMessage}" Style="{StaticResource SecondaryTextStyle}" FontSize="10"
-                                        Foreground="{DynamicResource StatusErrorBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Ellipse Style="{StaticResource StatusDotStyle}" Width="8" Height="8" Fill="{Binding StatusBrush}" VerticalAlignment="Center" Margin="0,0,4,0" />
-                                <TextBlock Text="{Binding StatusLabel, Mode=OneWay}" Style="{StaticResource SecondaryTextStyle}" FontSize="10" />
-                            </StackPanel>
-                            <TextBlock Text="{Binding Timestamp.LocalDateTime, StringFormat='dd/MM HH:mm'}"
-                                        Style="{StaticResource SecondaryTextStyle}" FontSize="10" HorizontalAlignment="Right" />
-                        </StackPanel>
-                    </Grid>
-
-                    <!-- X — conferido/empacotado, some da tela (não apaga o
-                         registro). Fica no canto superior direito do card,
-                         separado do resto pra não ser confundido com uma
-                         ação sobre a etiqueta em si. -->
-                    <Button Grid.Column="2" Content="✕" Command="{Binding DismissCommand}"
-                            ToolTip="Já empacotado — remover da lista"
-                            Width="20" Height="20" Padding="0" VerticalAlignment="Top" Margin="6,0,0,0"
-                            Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextSecondaryBrush}"
-                            FontSize="11" Cursor="Hand" />
-                </Grid>
-            </Border>
-        </DataTemplate>
-
     </Window.Resources>
 
     <Grid Margin="24">
@@ -216,7 +120,16 @@
              pequena) e "ADM KazaKora" + relógio em tempo real à direita —
              layout pedido explícito 2026-08-04, substitui o antigo título
              "PAINEL DE IMPRESSÃO" + subtítulo. -->
-        <Border Grid.Row="0" Margin="0,0,0,24" Padding="0,0,0,20" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource BorderBrush}">
+        <!-- Cabeçalho encolhido por pedido explícito 2026-08-06 ("está muito
+             alta, diminuir a altura") — mesmo conteúdo, só ocupando menos
+             espaço vertical: Margin/Padding externos cortados por mais da
+             metade, logo ~35% menor (LogoHeight em Dark/LightTheme.xaml,
+             recurso exclusivo desse cabeçalho), fonte do título/relógio
+             reduzida (FontSize inline em vez de mexer no TitleTextStyle/
+             ClockTextStyle compartilhados — TitleTextStyle também é usado
+             no About/Configurações, não podia encolher pra todo mundo) e
+             botão de tema um pouco menor. -->
+        <Border Grid.Row="0" Margin="0,0,0,12" Padding="0,0,0,10" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource BorderBrush}">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -237,23 +150,23 @@
                         Visibility="{Binding HasDailyTextVisibility}">
                 <TextBlock Text="{Binding DailyTextQuote}" Style="{StaticResource SecondaryTextStyle}"
                            Foreground="{DynamicResource BrandPrimaryBrush}"
-                           FontStyle="Italic" TextAlignment="Center" TextWrapping="Wrap" />
+                           FontSize="11" FontStyle="Italic" TextAlignment="Center" TextWrapping="Wrap" />
                 <TextBlock Text="{Binding DailyTextReference}" Style="{StaticResource SecondaryTextStyle}"
                            Foreground="{DynamicResource BrandPrimaryBrush}"
-                           FontWeight="Bold" TextAlignment="Center" Margin="0,2,0,0" />
+                           FontSize="11" FontWeight="Bold" TextAlignment="Center" Margin="0,1,0,0" />
             </StackPanel>
 
             <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="16,0" HorizontalAlignment="Right">
-                <TextBlock Text="ADM KazaKora" Style="{StaticResource TitleTextStyle}" HorizontalAlignment="Right" />
+                <TextBlock Text="ADM KazaKora" Style="{StaticResource TitleTextStyle}" FontSize="14" HorizontalAlignment="Right" />
                 <!-- CurrentDateTimeText atualizado a cada 1s por um
                      DispatcherTimer dedicado (MainWindow.xaml.cs), local,
                      sem chamada de rede. -->
-                <TextBlock Text="{Binding CurrentDateTimeText}" Style="{StaticResource ClockTextStyle}" HorizontalAlignment="Right" Margin="0,2,0,0" />
+                <TextBlock Text="{Binding CurrentDateTimeText}" Style="{StaticResource ClockTextStyle}" FontSize="16" HorizontalAlignment="Right" Margin="0,1,0,0" />
             </StackPanel>
 
-            <Button Grid.Column="3" Click="ThemeToggleButton_Click" Padding="8"
+            <Button Grid.Column="3" Click="ThemeToggleButton_Click" Padding="6"
                     Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                    Width="36" Height="36" ToolTip="Alternar tema">
+                    Width="30" Height="30" ToolTip="Alternar tema">
                 <Grid Width="18" Height="18">
                     <!-- Sol — visível no tema escuro (clicar troca pra claro) -->
                     <Grid x:Name="SunIcon">
@@ -316,56 +229,13 @@
                      (removidos por outro pedido explícito, mesmo dia:
                      "remove a função de clicar nos cards e abrir outra
                      janela") — nenhum card do dashboard abre janela/overlay
-                     mais, todos só exibem. -->
-
-                <!-- Fila de impressão (contadores por status) — centralizada
-                     na página, não colada na borda esquerda. -->
-                <StackPanel Orientation="Horizontal" Margin="0,32,0,14" HorizontalAlignment="Center">
-                    <Border Style="{StaticResource SectionAccentBarStyle}" />
-                    <TextBlock Text="FILA DE IMPRESSÃO" Style="{StaticResource EyebrowTextStyle}" VerticalAlignment="Center" />
-                </StackPanel>
-                <ItemsControl ItemsSource="{Binding QueueStatusCards}" HorizontalAlignment="Center">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                </ItemsControl>
-
-                <!-- Lista de etiquetas (canal, produto, quantidade, SKU,
-                     pedido no canal, status) — centralizada num container de
-                     largura máxima 1100, uma etiqueta por linha ocupando a
-                     largura inteira desse container
-                     (HorizontalContentAlignment=Stretch + Border com
-                     HorizontalAlignment=Stretch no template), mais recentes
-                     no topo (Labels já vem ordenada assim de
-                     MainViewModel.ReplaceLabels, que preserva a ordem de
-                     LabelDto — servidor ordena por COALESCE(printed_at,
-                     created_at) DESC, então a última IMPRESSA de verdade
-                     fica no topo, não só a criada mais recentemente). Sem
-                     etiqueta de agradecimento — já filtrada no servidor
-                     (is_thank_you=false).
-
-                     Scroll PRÓPRIO (não o da página inteira, pedido
-                     explícito 2026-08-04): MaxHeight fixo + seu próprio
-                     ScrollViewer, com a scrollbar temática de
-                     Themes/Controls.xaml (não o cinza padrão do Windows).
-                     Isso é o oposto do comentário antigo que dizia "evita
-                     scroll aninhado" — agora o aninhamento é intencional,
-                     pra essa lista específica poder rolar sem mexer no
-                     resto da página. -->
-                <StackPanel Orientation="Horizontal" Margin="0,32,0,14" HorizontalAlignment="Center">
-                    <Border Style="{StaticResource SectionAccentBarStyle}" />
-                    <TextBlock Text="ETIQUETAS" Style="{StaticResource EyebrowTextStyle}" VerticalAlignment="Center" />
-                </StackPanel>
-                <TextBlock Text="{Binding LastLabelsError, StringFormat='Falha ao carregar a lista de etiquetas: {0}'}"
-                           Foreground="{DynamicResource StatusErrorBrush}" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"
-                           Visibility="{Binding HasLabelsErrorVisibility}" TextWrapping="Wrap" />
-                <ScrollViewer HorizontalAlignment="Center" MaxWidth="1100" MaxHeight="420"
-                              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding Labels}" ItemTemplate="{StaticResource LabelItemTemplate}"
-                                  HorizontalContentAlignment="Stretch" />
-                </ScrollViewer>
+                     mais, todos só exibem. Mesmo padrão repetido em
+                     2026-08-06: a seção "FILA DE IMPRESSÃO" (contadores por
+                     status) e a lista "ETIQUETAS" (checagem de
+                     empacotamento) saíram completamente do layout por
+                     pedido explícito — não é visibilidade condicional, o
+                     conteúdo nem existe mais na árvore visual. O painel
+                     ficou só com os 5 cards de visão gerencial do topo. -->
             </StackPanel>
         </ScrollViewer>
 

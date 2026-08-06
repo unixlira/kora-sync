@@ -31,7 +31,9 @@
     <!-- Versão do logo com cores que ficam legíveis sobre fundo escuro. -->
     <imaging:BitmapImage x:Key="LogoImageSource" UriSource="/Assets/logo_dark.png" />
 
-    <!-- 10px maior que o do tema claro (94), pedido explícito 2026-08-04. -->
-    <sys:Double x:Key="LogoHeight">104</sys:Double>
+    <!-- 10px maior que o do tema claro, pedido explícito 2026-08-04.
+         Reduzido de 104 pra 70 em 2026-08-06 (cabeçalho mais fino, pedido
+         explícito). -->
+    <sys:Double x:Key="LogoHeight">70</sys:Double>
 
 </ResourceDictionary>
