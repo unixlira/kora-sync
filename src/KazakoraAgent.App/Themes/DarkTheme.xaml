@@ -37,9 +37,8 @@
          do arquivo logo_dark.png (agora vindo de
          storage/app/public/images/LOGO_DARK_MINUS.png do Kazakora, formato
          410x219 — bem mais "paisagem" que o PNG quadrado 1024x1024
-         anterior, então a largura renderizada aumenta proporcionalmente
-         mais que os 50px pedidos na altura; a coluna do logo no cabeçalho
-         é Width="Auto", acomoda sem quebrar o layout). -->
-    <sys:Double x:Key="LogoHeight">120</sys:Double>
+         anterior). Reduzido de 120 pra 78 no mesmo dia (-35%, pedido
+         explícito depois de ver o resultado ao vivo). -->
+    <sys:Double x:Key="LogoHeight">78</sys:Double>
 
 </ResourceDictionary>
