@@ -6,7 +6,7 @@
         Title="KoraSync" Height="820" Width="1360"
         Background="{DynamicResource WindowBackgroundBrush}"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         KeyDown="MainWindow_KeyDown">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
@@ -253,8 +253,6 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <Image Grid.Column="0" Source="{DynamicResource LogoImageSource}" Height="{DynamicResource LogoHeight}" VerticalAlignment="Center" />
@@ -283,27 +281,14 @@
                 <TextBlock Text="{Binding CurrentDateTimeText}" Style="{StaticResource ClockTextStyle}" FontSize="16" HorizontalAlignment="Right" Margin="0,1,0,0" />
             </StackPanel>
 
-            <!-- Minimizar/Maximizar (pedido explícito 2026-08-06) — botões
-                 próprios além do F11 (tela cheia sem bordas)/Esc já
-                 existentes: WindowState funciona normal mesmo com
-                 ResizeMode=NoResize (esse modo só tira a borda de
-                 redimensionar e o botão de maximizar da barra de título do
-                 Windows, não impede setar o estado programaticamente).
-                 Maximizar aqui mantém a barra de título (SingleBorderWindow)
-                 — diferente do F11, que remove tudo. -->
-            <Button Grid.Column="3" Click="MinimizeButton_Click" Padding="6" Margin="0,0,8,0"
-                    Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                    Width="30" Height="30" ToolTip="Minimizar">
-                <iconPacks:PackIconMaterial Kind="WindowMinimize" Width="16" Height="16" Foreground="{DynamicResource TextPrimaryBrush}" />
-            </Button>
-
-            <Button x:Name="MaximizeButtonElement" Grid.Column="4" Click="MaximizeButton_Click" Padding="6" Margin="0,0,8,0"
-                    Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                    Width="30" Height="30" ToolTip="Maximizar">
-                <iconPacks:PackIconMaterial x:Name="MaximizeIcon" Kind="WindowMaximize" Width="15" Height="15" Foreground="{DynamicResource TextPrimaryBrush}" />
-            </Button>
-
-            <Button Grid.Column="5" Click="ThemeToggleButton_Click" Padding="6"
+            <!-- Minimizar/Maximizar: pedido explícito 2026-08-06 era usar os
+                 controles NATIVOS da barra de título do Windows, não botões
+                 dentro do app — versão anterior desta tela tinha botões
+                 próprios aqui, removidos a pedido. O que faz os nativos
+                 funcionarem é o Window.ResizeMode lá em cima (CanResize
+                 agora, era NoResize — esse modo escondia os dois botões da
+                 barra de título por padrão do WPF). -->
+            <Button Grid.Column="3" Click="ThemeToggleButton_Click" Padding="6"
                     Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
                     Width="30" Height="30" ToolTip="Alternar tema">
                 <Grid Width="18" Height="18">

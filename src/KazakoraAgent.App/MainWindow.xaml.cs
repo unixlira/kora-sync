@@ -5,7 +5,6 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using KazakoraAgent.App.Theming;
 using KazakoraAgent.App.ViewModels;
-using MahApps.Metro.IconPacks;
 
 namespace KazakoraAgent.App;
 
@@ -73,11 +72,15 @@ public partial class MainWindow : Window
         if (_isFullScreen)
         {
             WindowStyle = WindowStyle.SingleBorderWindow;
-            // Fora do fullscreen a janela continua fixa (sem redimensionar
-            // manualmente) — só o F11 muda o tamanho, pedido explícito
-            // 2026-08-04. Ver também Window.ResizeMode no XAML (estado
-            // inicial, antes de qualquer toggle).
-            ResizeMode = ResizeMode.NoResize;
+            // Fora do fullscreen a janela volta a ser redimensionável e com
+            // os botões nativos de minimizar/maximizar da barra de título
+            // (pedido explícito 2026-08-06 — antes era NoResize/"janela
+            // fixa", que também escondia os dois botões nativos; antes
+            // disso tinha botões próprios dentro do app pra compensar,
+            // removidos porque não era isso que tinha sido pedido). F11
+            // continua sendo o único jeito de entrar em tela cheia de
+            // verdade (sem borda nenhuma).
+            ResizeMode = ResizeMode.CanResize;
             WindowState = _windowStateBeforeFullScreen;
         }
         else
@@ -89,35 +92,6 @@ public partial class MainWindow : Window
         }
 
         _isFullScreen = !_isFullScreen;
-    }
-
-    /// Pedido explícito 2026-08-06 — botão próprio além do F11 (que também
-    /// já minimiza pro tray via TrayIconService quando fechado, mas isso é
-    /// outro fluxo, ver App.xaml.cs). WindowState.Minimized funciona igual
-    /// com ResizeMode=NoResize.
-    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
-    {
-        WindowState = WindowState.Minimized;
-    }
-
-    /// Diferente do F11 (ToggleFullScreen — tela cheia sem borda nenhuma):
-    /// isso é o "maximizar" comum, mantendo a barra de título/borda
-    /// (WindowStyle não muda). Ícone alterna maximizar/restaurar igual ao
-    /// padrão nativo do Windows.
-    private void MaximizeButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (WindowState == WindowState.Maximized)
-        {
-            WindowState = WindowState.Normal;
-            MaximizeIcon.Kind = PackIconMaterialKind.WindowMaximize;
-            MaximizeButtonElement.ToolTip = "Maximizar";
-        }
-        else
-        {
-            WindowState = WindowState.Maximized;
-            MaximizeIcon.Kind = PackIconMaterialKind.WindowRestore;
-            MaximizeButtonElement.ToolTip = "Restaurar";
-        }
     }
 
     private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)

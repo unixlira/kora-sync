@@ -9,12 +9,15 @@ namespace KazakoraAgent.App.ViewModels;
 
 /// <summary>
 /// Card do topo "Pedidos por canal" — uma badge "Nome: total" por
-/// integração de marketplace, sempre as 5 (pedido explícito 2026-08-04:
-/// mostrar todas mesmo zerada, não só quem vendeu hoje) — a própria loja
-/// (site) fica de fora, esse card é especificamente sobre os canais
-/// externos. Visualmente é o mesmo card de métrica dos outros 4 do topo,
-/// só que o "valor" é essa lista em vez de um número único — ver
-/// DataTemplate próprio (ChannelOrdersCardTemplate).
+/// integração de marketplace, sempre as 4 externas (pedido explícito
+/// 2026-08-04: mostrar todas mesmo zerada, não só quem vendeu hoje) — a
+/// própria loja (site) fica de fora, esse card é especificamente sobre os
+/// canais externos. Shein também fica de fora (pedido explícito
+/// 2026-08-06), mesmo critério já usado no card equivalente do painel web
+/// (PrintJobController::CHANNEL_QUEUE_ORDER no Kazakora). Visualmente é o
+/// mesmo card de métrica dos outros 4 do topo, só que o "valor" é essa
+/// lista em vez de um número único — ver DataTemplate próprio
+/// (ChannelOrdersCardTemplate).
 /// </summary>
 public partial class ChannelOrdersCardViewModel : ObservableObject
 {
@@ -29,7 +32,7 @@ public partial class ChannelOrdersCardViewModel : ObservableObject
         var byChannel = statuses.ToDictionary(s => s.Channel);
 
         var ordered = MarketplaceChannel.All
-            .Where(channel => channel != MarketplaceChannel.Store)
+            .Where(channel => channel != MarketplaceChannel.Store && channel != MarketplaceChannel.Shein)
             .Select(channel => new ChannelOrderCountViewModel
             {
                 DisplayName = ChannelBrandColors.ShortDisplayNameFor(channel),
