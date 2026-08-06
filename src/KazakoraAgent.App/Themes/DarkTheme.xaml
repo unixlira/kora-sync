@@ -33,7 +33,13 @@
 
     <!-- 10px maior que o do tema claro, pedido explícito 2026-08-04.
          Reduzido de 104 pra 70 em 2026-08-06 (cabeçalho mais fino, pedido
-         explícito). -->
-    <sys:Double x:Key="LogoHeight">70</sys:Double>
+         explícito). Aumentado de 70 pra 120 no mesmo dia, junto com a troca
+         do arquivo logo_dark.png (agora vindo de
+         storage/app/public/images/LOGO_DARK_MINUS.png do Kazakora, formato
+         410x219 — bem mais "paisagem" que o PNG quadrado 1024x1024
+         anterior, então a largura renderizada aumenta proporcionalmente
+         mais que os 50px pedidos na altura; a coluna do logo no cabeçalho
+         é Width="Auto", acomoda sem quebrar o layout). -->
+    <sys:Double x:Key="LogoHeight">120</sys:Double>
 
 </ResourceDictionary>
