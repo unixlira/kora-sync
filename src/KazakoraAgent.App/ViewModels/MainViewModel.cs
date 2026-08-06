@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -25,6 +26,20 @@ public partial class MainViewModel : ObservableObject
     /// usa DataTemplate implícito por tipo (sem ItemTemplate fixo) pra
     /// renderizar os dois tipos misturados na mesma linha.
     public ObservableCollection<object> TopCards { get; }
+
+    /// Os 2 cards em destaque da fila de expedição de hoje — pedido mais
+    /// recente (QueueCard1) e o segundo mais recente (QueueCard2), pedido
+    /// explícito 2026-08-06. Instâncias fixas (não uma ObservableCollection
+    /// de 2 itens) porque a XAML liga cada uma direto num Border próprio,
+    /// não via ItemsControl — mais simples de posicionar um "quadrado" fixo
+    /// em cima e outro embaixo. Ver UpdateOrderQueue.
+    public OrderQueueCardViewModel QueueCard1 { get; } = new();
+
+    public OrderQueueCardViewModel QueueCard2 { get; } = new();
+
+    /// 3º pedido do dia em diante, mesma ordem decrescente — lista com
+    /// scroll próprio (coluna da direita, ver MainWindow.xaml).
+    public ObservableCollection<OrderQueueCardViewModel> QueueRest { get; } = [];
 
     /// Mensagem da última falha ao buscar canais/métricas — null quando o
     /// último tick foi bem-sucedido. Ver DashboardPoller.DashboardTickAsync.
@@ -111,5 +126,43 @@ public partial class MainViewModel : ObservableObject
     public void UpdateChannels(IReadOnlyList<ChannelStatusDto> statuses)
     {
         ChannelOrdersCard.UpdateFrom(statuses);
+    }
+
+    /// <summary>
+    /// items já vem do servidor em ordem decrescente (ver
+    /// DashboardAgentController::queue, orderByDesc('id')). QueueCard1/
+    /// QueueCard2 são reaproveitados em vez de recriados a cada tick — só
+    /// os campos mudam — pra não perder o estado de scroll/seleção de
+    /// nada que dependa de identidade de objeto no futuro; QueueRest é
+    /// reconstruída (mais simples, e a lista muda de tamanho a cada
+    /// pedido novo/enviado de qualquer forma).
+    /// </summary>
+    public void UpdateOrderQueue(IReadOnlyList<OrderQueueItemDto> items)
+    {
+        if (items.Count > 0)
+        {
+            QueueCard1.UpdateFrom(items[0]);
+        }
+        else
+        {
+            QueueCard1.Clear();
+        }
+
+        if (items.Count > 1)
+        {
+            QueueCard2.UpdateFrom(items[1]);
+        }
+        else
+        {
+            QueueCard2.Clear();
+        }
+
+        QueueRest.Clear();
+        foreach (var dto in items.Skip(2))
+        {
+            var item = new OrderQueueCardViewModel();
+            item.UpdateFrom(dto);
+            QueueRest.Add(item);
+        }
     }
 }

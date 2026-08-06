@@ -81,6 +81,14 @@ public sealed class KazakoraApiClient : IKazakoraApiClient
         return response.Labels;
     }
 
+    public async Task<IReadOnlyList<OrderQueueItemDto>> GetOrderQueueAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetFromJsonAsync<QueueResponse>("dashboard/queue", JsonOptions, ct)
+            ?? throw new InvalidOperationException("Resposta vazia de GET dashboard/queue.");
+
+        return response.Queue;
+    }
+
     public async Task<DailyTextDto?> GetDailyTextAsync(CancellationToken ct = default)
     {
         var response = await _http.GetFromJsonAsync<DailyTextResponse>("dashboard/daily-text", JsonOptions, ct)
@@ -93,6 +101,12 @@ public sealed class KazakoraApiClient : IKazakoraApiClient
     {
         [JsonPropertyName("labels")]
         public required List<LabelDto> Labels { get; init; }
+    }
+
+    private sealed class QueueResponse
+    {
+        [JsonPropertyName("queue")]
+        public required List<OrderQueueItemDto> Queue { get; init; }
     }
 
     private sealed class DailyTextResponse

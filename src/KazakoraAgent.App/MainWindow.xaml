@@ -107,6 +107,123 @@
             </Border>
         </DataTemplate>
 
+        <!-- Card de pedido em destaque (os 2 "quadrados" da esquerda,
+             pedido explícito 2026-08-06) — número grande + QTD em badge na
+             mesma linha, TODOS os produtos do pedido (nunca só o primeiro,
+             ver comentário em OrderQueueCardViewModel) e o nome do cliente,
+             ambos dentro de um Viewbox: a fonte cresce até preencher a
+             linha inteira quando cabe (1 produto, nome curto) e encolhe
+             sozinha quando não cabe (vários produtos, nome longo) — nunca
+             corta, sempre do maior tamanho possível, exatamente o pedido
+             ("fonte grande, mas garanta que nada seja cortado"). Canal/id
+             externo pequenos embaixo. Estado vazio (menos de 2 pedidos
+             hoje) mostra um placeholder em vez de um card em branco. -->
+        <DataTemplate x:Key="OrderQueueBigCardTemplate" DataType="{x:Type vm:OrderQueueCardViewModel}">
+            <Grid>
+                <StackPanel Visibility="{Binding EmptyStateVisibility}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <iconPacks:PackIconMaterial Kind="TrayFull" Width="36" Height="36" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="Nenhum pedido" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,8,0,0" HorizontalAlignment="Center" />
+                </StackPanel>
+
+                <Grid Visibility="{Binding HasOrderVisibility}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="90" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Viewbox Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center" StretchDirection="DownOnly">
+                            <TextBlock Text="{Binding OrderNumberText}" Style="{StaticResource MetricValueTextStyle}" FontSize="64" />
+                        </Viewbox>
+
+                        <Border Grid.Column="1" Background="{DynamicResource BrandPrimaryBrush}" Opacity="0.16" CornerRadius="8" Padding="14,8" VerticalAlignment="Top">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="QTD " Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding UnitsCount}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="22"
+                                           Foreground="{DynamicResource BrandPrimaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Produto(s) — pedido explícito: lista TODOS, fonte
+                         menor automaticamente quando tem mais de um (Viewbox
+                         encolhe o bloco inteiro pra caber na linha "*"). -->
+                    <Viewbox Grid.Row="1" Margin="0,2,0,0">
+                        <StackPanel>
+                            <ItemsControl ItemsSource="{Binding ProductLines}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="28" TextWrapping="Wrap" Margin="0,1" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Viewbox>
+
+                    <Viewbox Grid.Row="2" HorizontalAlignment="Left" Margin="0,2,0,0">
+                        <TextBlock Text="{Binding CustomerName}" Style="{StaticResource BodyTextStyle}" FontSize="26" TextWrapping="Wrap" />
+                    </Viewbox>
+
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0">
+                        <Border Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
+                            <TextBlock Text="{Binding ChannelDisplayName}" FontSize="11" FontWeight="Bold" Foreground="White" />
+                        </Border>
+                        <TextBlock Text="Pedido " Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding ExternalOrderId, TargetNullValue='—'}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+
+        <!-- Versão compacta do mesmo card, pra lista com scroll da direita
+             (3º pedido do dia em diante) — mesmos dados, sem Viewbox (fonte
+             fixa pequena, é só uma lista de checagem, não precisa crescer). -->
+        <DataTemplate x:Key="OrderQueueRestItemTemplate" DataType="{x:Type vm:OrderQueueCardViewModel}">
+            <Border Style="{StaticResource CardStyle}" Padding="10" Margin="0,0,0,6">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" CornerRadius="2" Margin="0,0,10,0" />
+
+                    <StackPanel Grid.Column="1">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding OrderNumberText}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="14" />
+                            <TextBlock Text=" • " Style="{StaticResource SecondaryTextStyle}" FontSize="10" />
+                            <TextBlock Text="{Binding ChannelDisplayName}" Style="{StaticResource SecondaryTextStyle}" FontSize="10" FontWeight="Bold" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding CustomerName}" Style="{StaticResource BodyTextStyle}" FontSize="13" FontWeight="Bold" Margin="0,2,0,0" TextWrapping="Wrap" />
+                        <ItemsControl ItemsSource="{Binding ProductLines}" Margin="0,2,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Style="{StaticResource SecondaryTextStyle}" FontSize="11" TextWrapping="Wrap" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Style="{StaticResource SecondaryTextStyle}" FontSize="10" Margin="0,2,0,0">
+                            <Run Text="Pedido " /><Run Text="{Binding ExternalOrderId, Mode=OneWay, TargetNullValue='—'}" FontWeight="Bold" />
+                        </TextBlock>
+                    </StackPanel>
+
+                    <Border Grid.Column="2" Background="{DynamicResource BrandPrimaryBrush}" Opacity="0.16" CornerRadius="6" Padding="8,3" VerticalAlignment="Top">
+                        <TextBlock Foreground="{DynamicResource BrandPrimaryBrush}" FontWeight="Bold" FontSize="12">
+                            <Run Text="{Binding UnitsCount, Mode=OneWay}" /><Run Text=" un." />
+                        </TextBlock>
+                    </Border>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
     </Window.Resources>
 
     <Grid Margin="24">
@@ -134,6 +251,8 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
@@ -164,7 +283,27 @@
                 <TextBlock Text="{Binding CurrentDateTimeText}" Style="{StaticResource ClockTextStyle}" FontSize="16" HorizontalAlignment="Right" Margin="0,1,0,0" />
             </StackPanel>
 
-            <Button Grid.Column="3" Click="ThemeToggleButton_Click" Padding="6"
+            <!-- Minimizar/Maximizar (pedido explícito 2026-08-06) — botões
+                 próprios além do F11 (tela cheia sem bordas)/Esc já
+                 existentes: WindowState funciona normal mesmo com
+                 ResizeMode=NoResize (esse modo só tira a borda de
+                 redimensionar e o botão de maximizar da barra de título do
+                 Windows, não impede setar o estado programaticamente).
+                 Maximizar aqui mantém a barra de título (SingleBorderWindow)
+                 — diferente do F11, que remove tudo. -->
+            <Button Grid.Column="3" Click="MinimizeButton_Click" Padding="6" Margin="0,0,8,0"
+                    Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                    Width="30" Height="30" ToolTip="Minimizar">
+                <iconPacks:PackIconMaterial Kind="WindowMinimize" Width="16" Height="16" Foreground="{DynamicResource TextPrimaryBrush}" />
+            </Button>
+
+            <Button x:Name="MaximizeButtonElement" Grid.Column="4" Click="MaximizeButton_Click" Padding="6" Margin="0,0,8,0"
+                    Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                    Width="30" Height="30" ToolTip="Maximizar">
+                <iconPacks:PackIconMaterial x:Name="MaximizeIcon" Kind="WindowMaximize" Width="15" Height="15" Foreground="{DynamicResource TextPrimaryBrush}" />
+            </Button>
+
+            <Button Grid.Column="5" Click="ThemeToggleButton_Click" Padding="6"
                     Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
                     Width="30" Height="30" ToolTip="Alternar tema">
                 <Grid Width="18" Height="18">
@@ -230,12 +369,63 @@
                      "remove a função de clicar nos cards e abrir outra
                      janela") — nenhum card do dashboard abre janela/overlay
                      mais, todos só exibem. Mesmo padrão repetido em
-                     2026-08-06: a seção "FILA DE IMPRESSÃO" (contadores por
-                     status) e a lista "ETIQUETAS" (checagem de
-                     empacotamento) saíram completamente do layout por
-                     pedido explícito — não é visibilidade condicional, o
-                     conteúdo nem existe mais na árvore visual. O painel
-                     ficou só com os 5 cards de visão gerencial do topo. -->
+                     2026-08-06: a antiga seção "FILA DE IMPRESSÃO"
+                     (contadores por status) e a lista "ETIQUETAS" (checagem
+                     de empacotamento) saíram completamente do layout —
+                     substituídas pela fila de expedição do dia abaixo. -->
+
+                <!-- Fila de expedição de HOJE (pedido explícito 2026-08-06,
+                     estilo "chamada de senha"): 2 cards em destaque (mais
+                     recente + segundo mais recente) à esquerda + lista com
+                     scroll do resto à direita, tudo em ordem decrescente —
+                     ver MainViewModel.UpdateOrderQueue, alimentado por
+                     DashboardPoller a cada 2s. Height fixo (420) porque os
+                     dois cards usam RowDefinition="*" internamente (Viewbox
+                     precisa de uma altura real pra encolher/crescer contra
+                     — ver os templates em Window.Resources); esse valor foi
+                     calculado pelo espaço restante da janela (820px), não
+                     verificado visualmente numa tela Windows real nesta
+                     sessão — pode precisar de ajuste fino ao abrir de
+                     verdade. -->
+                <Grid Margin="0,20,0,0" Height="420">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="420" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0" Margin="0,0,16,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="24" Margin="0,0,0,8">
+                            <ContentControl Content="{Binding QueueCard1}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
+                        </Border>
+
+                        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="24" Margin="0,8,0,0">
+                            <ContentControl Content="{Binding QueueCard2}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
+                        </Border>
+                    </Grid>
+
+                    <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,16,16,10">
+                                <Border Style="{StaticResource SectionAccentBarStyle}" />
+                                <TextBlock Text="RESTANTE DO DIA" Style="{StaticResource EyebrowTextStyle}" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <ScrollViewer Grid.Row="1" Margin="16,0,16,16" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding QueueRest}" ItemTemplate="{StaticResource OrderQueueRestItemTemplate}" />
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Grid>
             </StackPanel>
         </ScrollViewer>
 

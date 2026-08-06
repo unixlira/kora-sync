@@ -163,6 +163,21 @@ public sealed class DashboardPoller : IDisposable
                 _viewModel.LastDashboardError = $"Métricas: {ex.Message}";
             }
 
+            try
+            {
+                // Fila de expedição de hoje (pedido explícito 2026-08-06) —
+                // mesma cadência de 2s do resto do dashboard, não a de 1s
+                // do QueueTickAsync (que é sobre PROCESSAR/imprimir, não
+                // sobre o que aparece na tela).
+                var queue = await _api.GetOrderQueueAsync();
+                _viewModel.UpdateOrderQueue(queue);
+            }
+            catch (Exception ex)
+            {
+                anyFailure = true;
+                _viewModel.LastDashboardError = $"Fila do dia: {ex.Message}";
+            }
+
             if (!anyFailure)
             {
                 if (_wasReachable == false)

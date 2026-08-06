@@ -23,6 +23,12 @@ public interface IKazakoraApiClient
 
     Task<IReadOnlyList<LabelDto>> GetLabelsAsync(CancellationToken ct = default);
 
+    /// Fila de expedição de HOJE (pedido explícito 2026-08-06) — pedido
+    /// pago, ainda não embalado/enviado, ordem decrescente (mais recente
+    /// primeiro). Alimenta os 2 cards em destaque + a lista com scroll do
+    /// resto do dia.
+    Task<IReadOnlyList<OrderQueueItemDto>> GetOrderQueueAsync(CancellationToken ct = default);
+
     /// Null quando o servidor ainda não tem nenhum texto diário salvo.
     Task<DailyTextDto?> GetDailyTextAsync(CancellationToken ct = default);
 }
