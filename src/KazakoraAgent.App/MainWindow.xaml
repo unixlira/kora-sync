@@ -273,10 +273,10 @@
                         Visibility="{Binding HasDailyTextVisibility}">
                 <TextBlock Text="{Binding DailyTextQuote}" Style="{StaticResource SecondaryTextStyle}"
                            Foreground="{DynamicResource BrandPrimaryBrush}"
-                           FontSize="11" FontStyle="Italic" TextAlignment="Center" TextWrapping="Wrap" />
+                           FontSize="16" FontStyle="Italic" TextAlignment="Center" TextWrapping="Wrap" />
                 <TextBlock Text="{Binding DailyTextReference}" Style="{StaticResource SecondaryTextStyle}"
                            Foreground="{DynamicResource BrandPrimaryBrush}"
-                           FontSize="11" FontWeight="Bold" TextAlignment="Center" Margin="0,1,0,0" />
+                           FontSize="16" FontWeight="Bold" TextAlignment="Center" Margin="0,1,0,0" />
             </StackPanel>
 
             <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="16,0" HorizontalAlignment="Right">
