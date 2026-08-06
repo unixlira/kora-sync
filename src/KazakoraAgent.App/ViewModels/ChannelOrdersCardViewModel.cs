@@ -21,7 +21,9 @@ namespace KazakoraAgent.App.ViewModels;
 /// </summary>
 public partial class ChannelOrdersCardViewModel : ObservableObject
 {
-    public string Label => "Pedidos por canal — hoje";
+    // "mês/hoje" — pedido explícito 2026-08-06 ("MELI: 4/0"): era só
+    // "hoje", agora mostra os dois números juntos, mês primeiro.
+    public string Label => "Pedidos por canal — mês/hoje";
 
     public PackIconMaterialKind IconKind => PackIconMaterialKind.ChartBoxOutline;
 
@@ -33,17 +35,23 @@ public partial class ChannelOrdersCardViewModel : ObservableObject
 
         var ordered = MarketplaceChannel.All
             .Where(channel => channel != MarketplaceChannel.Store && channel != MarketplaceChannel.Shein)
-            .Select(channel => new ChannelOrderCountViewModel
+            .Select(channel =>
             {
-                DisplayName = ChannelBrandColors.ShortDisplayNameFor(channel),
-                AccentBrush = ChannelBrandColors.BrushFor(channel),
-                // Fundo amarelo do Mercado Livre é claro demais pra texto
-                // branco ficar legível — só essa badge usa texto preto,
-                // pedido explícito 2026-08-04.
-                TextBrush = channel == MarketplaceChannel.MercadoLivre ? System.Windows.Media.Brushes.Black : System.Windows.Media.Brushes.White,
-                Count = byChannel.TryGetValue(channel, out var dto) ? dto.OrdersToday : 0,
+                var dto = byChannel.GetValueOrDefault(channel);
+
+                return new ChannelOrderCountViewModel
+                {
+                    DisplayName = ChannelBrandColors.ShortDisplayNameFor(channel),
+                    AccentBrush = ChannelBrandColors.BrushFor(channel),
+                    // Fundo amarelo do Mercado Livre é claro demais pra texto
+                    // branco ficar legível — só essa badge usa texto preto,
+                    // pedido explícito 2026-08-04.
+                    TextBrush = channel == MarketplaceChannel.MercadoLivre ? System.Windows.Media.Brushes.Black : System.Windows.Media.Brushes.White,
+                    MonthCount = dto?.SalesMonth ?? 0,
+                    Count = dto?.OrdersToday ?? 0,
+                };
             })
-            .OrderByDescending(entry => entry.Count);
+            .OrderByDescending(entry => entry.MonthCount);
 
         Entries.Clear();
 
@@ -62,7 +70,10 @@ public sealed class ChannelOrderCountViewModel
 
     public required Brush TextBrush { get; init; }
 
+    public required int MonthCount { get; init; }
+
     public required int Count { get; init; }
 
-    public string Text => $"{DisplayName}: {Count}";
+    // "MELI: 4/0" — mês/hoje, pedido explícito 2026-08-06.
+    public string Text => $"{DisplayName}: {MonthCount}/{Count}";
 }

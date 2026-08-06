@@ -55,10 +55,11 @@
             </Border>
         </DataTemplate>
 
-        <!-- 5º card do topo — "Pedidos por canal, hoje". Mesmo visual dos
-             outros 4 (ícone em bolha + rótulo), mas o "valor" é uma lista
-             de chips "Nome: total", um por canal com pedido > 0 hoje —
-             canal zerado/sem pedido simplesmente não aparece na lista. -->
+        <!-- 5º card do topo — "Pedidos por canal, mês/hoje". Mesmo visual
+             dos outros 4 (ícone em bolha + rótulo), mas o "valor" é uma
+             lista de chips "Nome: mês/hoje" (ex: "MeLi: 4/0"), sempre as 4
+             integrações externas, mesmo zeradas (0/0) — ver
+             ChannelOrdersCardViewModel. -->
         <DataTemplate DataType="{x:Type vm:ChannelOrdersCardViewModel}">
             <Border Style="{StaticResource CardStyle}" Margin="8" Padding="22">
                 <!-- Grid, não StackPanel horizontal: um StackPanel horizontal
