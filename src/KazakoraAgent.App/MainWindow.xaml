@@ -126,9 +126,20 @@
                     <TextBlock Text="Nenhum pedido" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,8,0,0" HorizontalAlignment="Center" />
                 </StackPanel>
 
+                <!-- Achado real 2026-08-07 (segunda rodada — "ainda está
+                     pequeno"): mesmo com StretchDirection=DownOnly correto,
+                     o texto continuava pequeno porque a LINHA em si
+                     (Row0="90", fixa) sobrava espaço demais pro id/QTD
+                     (ambos 30pt agora, não precisam de 90px de altura) e
+                     roubava quase todo o espaço restante das linhas "*" de
+                     produto/nome — a conta real: card de ~154px de altura
+                     útil menos 90 da linha 0 menos ~34 da linha 3 (badge)
+                     sobrava só ~15px pra CADA uma das linhas "*", por isso
+                     o DownOnly encolhia tudo de volta pra quase nada. Row0
+                     90->52 devolve esse espaço pra quem precisa. -->
                 <Grid Visibility="{Binding HasOrderVisibility}">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="90" />
+                        <RowDefinition Height="52" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
@@ -192,7 +203,7 @@
                         <TextBlock Text="{Binding CustomerName}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="56" TextWrapping="Wrap" />
                     </Viewbox>
 
-                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0">
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,4,0,0">
                         <Border Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
                             <TextBlock Text="{Binding ChannelDisplayName}" FontSize="11" FontWeight="Bold" Foreground="White" />
                         </Border>
@@ -428,11 +439,16 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="24" Margin="0,0,0,8">
+                        <!-- Padding 24->16 (2026-08-07, mesma rodada do
+                             Row0 90->52): sobrava espaço demais nas bordas
+                             enquanto nome/produto ficavam espremidos por
+                             dentro — ver comentário completo dentro do
+                             OrderQueueBigCardTemplate. -->
+                        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="16" Margin="0,0,0,8">
                             <ContentControl Content="{Binding QueueCard1}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
                         </Border>
 
-                        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="24" Margin="0,8,0,0">
+                        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="16" Margin="0,8,0,0">
                             <ContentControl Content="{Binding QueueCard2}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
                         </Border>
                     </Grid>
