@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using KazakoraAgent.App.Services;
 using KazakoraAgent.App.Theming;
 using KazakoraAgent.App.ViewModels;
+using KazakoraAgent.Core;
 using KazakoraAgent.Core.Api;
 using KazakoraAgent.Core.Printing;
 using KazakoraAgent.Core.Queue;
@@ -107,6 +108,21 @@ public partial class App : System.Windows.Application
             _isExiting = true;
             Shutdown();
         };
+
+        // Log em arquivo pra todo evento de job — achado real 2026-08-07:
+        // job.LastError já era gravado localmente em toda falha, mas nada
+        // deixava isso visível (sineta só avisa depois de esgotar as ~9min
+        // de retry, e a tela que mostrava a fila foi removida do layout
+        // 2026-08-06) — resultado era "sem erro visível, mas não imprimiu"
+        // sem jeito de saber o motivo real sem isso.
+        queueEngine.JobPrinted += job =>
+            AppLog.Info($"Job {job.ServerJobId} (pedido #{job.OrderId}) impresso com sucesso.");
+
+        queueEngine.JobRetrying += job =>
+            AppLog.Error($"Job {job.ServerJobId} (pedido #{job.OrderId}) falhou na tentativa {job.AttemptCount}, tentando de novo: {job.LastError}");
+
+        queueEngine.JobFailedPermanently += job =>
+            AppLog.Error($"Job {job.ServerJobId} (pedido #{job.OrderId}) FALHOU DEFINITIVAMENTE após {job.AttemptCount} tentativas: {job.LastError}");
 
         if (settings.NotificationsEnabled)
         {

@@ -107,11 +107,13 @@ public sealed class DashboardPoller : IDisposable
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
             // Falha de rede/API num ciclo de fila não deve derrubar o app —
             // o próximo tick tenta de novo. O card de canal já sinaliza
-            // "não alcançável" pelo lado do dashboard timer.
+            // "não alcançável" pelo lado do dashboard timer. Logada agora
+            // (2026-08-07) — antes sumia sem deixar rastro nenhum.
+            KazakoraAgent.Core.AppLog.Error($"QueueTick falhou: {ex.Message}");
         }
         finally
         {
