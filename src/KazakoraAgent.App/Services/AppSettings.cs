@@ -29,6 +29,18 @@ public sealed class AppSettings
 
     public bool NotificationsEnabled { get; set; } = true;
 
+    /// Pedido explícito 2026-08-06: cópia local de cada etiqueta impressa,
+    /// organizada em "raiz/Mês/Canal/DD" (ex: "Vendas\Agosto\Shopee\06"),
+    /// nomeada pelo código de rastreio. Default aponta pra dentro da área
+    /// de trabalho REAL do usuário — se o OneDrive já redireciona a área de
+    /// trabalho (comum em instalação padrão do Windows com conta
+    /// Microsoft), SpecialFolder.Desktop já resolve pra dentro do OneDrive
+    /// sozinho, sem precisar hard-codar caminho de usuário nenhum.
+    public string SalesArchiveRoot { get; set; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Vendas");
+
+    public bool ArchiveEnabled { get; set; } = true;
+
     public bool StartWithWindows { get; set; }
 
     public string Theme { get; set; } = "Dark";

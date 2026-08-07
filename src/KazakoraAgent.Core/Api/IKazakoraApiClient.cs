@@ -15,6 +15,13 @@ public interface IKazakoraApiClient
 
     Task<byte[]> DownloadLabelAsync(long jobId, CancellationToken ct = default);
 
+    /// Arquivo bruto do canal (zip da Shopee, pdf do Mercado Livre) — só
+    /// pra arquivamento local em disco, não usado pra imprimir. 404 é
+    /// esperado em etiqueta manual ou pedido anterior a essa feature
+    /// (2026-08-06); quem chama trata isso como "sem o que arquivar", não
+    /// como falha.
+    Task<byte[]?> DownloadArchiveAsync(long jobId, CancellationToken ct = default);
+
     Task ReportCompleteAsync(long jobId, bool success, string? errorMessage, CancellationToken ct = default);
 
     Task<IReadOnlyList<ChannelStatusDto>> GetChannelsAsync(CancellationToken ct = default);

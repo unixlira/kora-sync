@@ -77,7 +77,8 @@ public partial class App : System.Windows.Application
             printer,
             retryPolicy,
             settings.AgentId,
-            _ => settings.PrinterName);
+            _ => settings.PrinterName,
+            _ => settings.ArchiveEnabled ? settings.SalesArchiveRoot : null);
 
         var mainViewModel = new MainViewModel();
 
@@ -117,6 +118,9 @@ public partial class App : System.Windows.Application
         // sem jeito de saber o motivo real sem isso.
         queueEngine.JobPrinted += job =>
             AppLog.Info($"Job {job.ServerJobId} (pedido #{job.OrderId}) impresso com sucesso.");
+
+        queueEngine.JobArchived += (job, savedPath) =>
+            AppLog.Info($"Job {job.ServerJobId} (pedido #{job.OrderId}) arquivado em \"{savedPath}\".");
 
         queueEngine.JobRetrying += job =>
             AppLog.Error($"Job {job.ServerJobId} (pedido #{job.OrderId}) falhou na tentativa {job.AttemptCount}, tentando de novo: {job.LastError}");

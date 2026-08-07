@@ -19,6 +19,16 @@ public sealed class PrintJobDto
     [JsonPropertyName("order_id")]
     public long? OrderId { get; init; }
 
+    // Ambos nulos pra etiqueta manual (mesmo motivo do order_id acima) ou
+    // pra pedido antigo anterior ao arquivamento local por rastreio
+    // (2026-08-06) — nesse caso o agente simplesmente pula o passo de
+    // arquivar em disco, sem quebrar o resto da fila.
+    [JsonPropertyName("channel")]
+    public string? Channel { get; init; }
+
+    [JsonPropertyName("tracking_code")]
+    public string? TrackingCode { get; init; }
+
     [JsonPropertyName("created_at")]
     public required DateTimeOffset CreatedAt { get; init; }
 }

@@ -17,6 +17,12 @@ public sealed class QueuedJob
     /// "express" ou "flex" — mesmo caso, informativo.
     public string? ShippingType { get; set; }
 
+    /// Código de rastreio real do canal — usado como nome do arquivo no
+    /// arquivamento local (pasta de Vendas/Mês/Canal/Dia, pedido explícito
+    /// 2026-08-06). Nulo em etiqueta manual ou se o canal ainda não tinha
+    /// gerado o rastreio no momento da confirmação de envio.
+    public string? TrackingCode { get; set; }
+
     public required QueuedJobStatus Status { get; set; }
 
     public int AttemptCount { get; set; }

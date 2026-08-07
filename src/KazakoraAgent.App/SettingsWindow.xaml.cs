@@ -21,6 +21,8 @@ public partial class SettingsWindow : Window
         QueueRetentionDaysBox.Text = settings.QueueRetentionDays.ToString();
         NotificationsEnabledBox.IsChecked = settings.NotificationsEnabled;
         StartWithWindowsBox.IsChecked = settings.StartWithWindows;
+        ArchiveEnabledBox.IsChecked = settings.ArchiveEnabled;
+        SalesArchiveRootBox.Text = settings.SalesArchiveRoot;
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)
@@ -30,6 +32,8 @@ public partial class SettingsWindow : Window
         _settings.PrinterName = PrinterNameBox.Text.Trim();
         _settings.NotificationsEnabled = NotificationsEnabledBox.IsChecked ?? true;
         _settings.StartWithWindows = StartWithWindowsBox.IsChecked ?? false;
+        _settings.ArchiveEnabled = ArchiveEnabledBox.IsChecked ?? true;
+        _settings.SalesArchiveRoot = SalesArchiveRootBox.Text.Trim();
 
         if (int.TryParse(QueuePollSecondsBox.Text, out var queueSeconds) && queueSeconds > 0)
         {

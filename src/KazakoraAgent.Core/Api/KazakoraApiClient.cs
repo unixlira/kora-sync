@@ -48,6 +48,20 @@ public sealed class KazakoraApiClient : IKazakoraApiClient
         return await response.Content.ReadAsByteArrayAsync(ct);
     }
 
+    public async Task<byte[]?> DownloadArchiveAsync(long jobId, CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"jobs/{jobId}/archive", ct);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
     public async Task ReportCompleteAsync(long jobId, bool success, string? errorMessage, CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync($"jobs/{jobId}/complete", new

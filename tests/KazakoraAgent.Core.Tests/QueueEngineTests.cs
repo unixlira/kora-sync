@@ -34,7 +34,7 @@ public class QueueEngineTests
             new PrintJobDto { Id = 2, OrderId = 2, CreatedAt = now },
         ]);
 
-        var engine = new QueueEngine(api.Object, store, Mock.Of<IPrinter>(), new RetryPolicy(), "agent-1", _ => "printer", time);
+        var engine = new QueueEngine(api.Object, store, Mock.Of<IPrinter>(), new RetryPolicy(), "agent-1", _ => "printer", timeProvider: time);
 
         await engine.SyncFromServerAsync();
 
@@ -60,7 +60,7 @@ public class QueueEngineTests
         var printer = new Mock<IPrinter>();
         printer.Setup(p => p.PrintAsync(label, "KazaKora-Printer", It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        var engine = new QueueEngine(api.Object, store, printer.Object, new RetryPolicy(), "agent-1", _ => "KazaKora-Printer", time);
+        var engine = new QueueEngine(api.Object, store, printer.Object, new RetryPolicy(), "agent-1", _ => "KazaKora-Printer", timeProvider: time);
 
         QueuedJob? printedEvent = null;
         engine.JobPrinted += job => printedEvent = job;
@@ -77,6 +77,50 @@ public class QueueEngineTests
     }
 
     [Fact]
+    public async Task process_next_due_job_on_success_archives_the_raw_label_locally_when_archiving_is_configured()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var time = new ManualTimeProvider(now);
+        using var store = new SqliteJobStore("Data Source=:memory:");
+        var job = MakeJob(1, now);
+        job.Channel = "shopee";
+        job.TrackingCode = "BR123456789";
+        await store.UpsertAsync(job);
+
+        var label = new byte[] { 1, 2, 3 };
+        var rawZip = new byte[] { 0x50, 0x4B, 0x03, 0x04, 9, 9 };
+        var api = new Mock<IKazakoraApiClient>();
+        api.Setup(a => a.DownloadLabelAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(label);
+        api.Setup(a => a.DownloadArchiveAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(rawZip);
+
+        var archiveRoot = Path.Combine(Path.GetTempPath(), $"korasync-archive-test-{Guid.NewGuid():N}");
+
+        try
+        {
+            var engine = new QueueEngine(
+                api.Object, store, Mock.Of<IPrinter>(), new RetryPolicy(), "agent-1",
+                _ => "printer", _ => archiveRoot, timeProvider: time);
+
+            string? archivedPath = null;
+            engine.JobArchived += (_, path) => archivedPath = path;
+
+            await engine.ProcessNextDueJobAsync();
+
+            Assert.NotNull(archivedPath);
+            Assert.True(File.Exists(archivedPath));
+            Assert.EndsWith("BR123456789.zip", archivedPath);
+            Assert.Contains(Path.Combine("Shopee"), archivedPath);
+        }
+        finally
+        {
+            if (Directory.Exists(archiveRoot))
+            {
+                Directory.Delete(archiveRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task process_next_due_job_on_failure_schedules_retry_using_the_policy_and_does_not_report_to_server_yet()
     {
         var now = DateTimeOffset.UtcNow;
@@ -87,7 +131,7 @@ public class QueueEngineTests
         var api = new Mock<IKazakoraApiClient>();
         api.Setup(a => a.DownloadLabelAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(new HttpRequestException("timeout"));
 
-        var engine = new QueueEngine(api.Object, store, Mock.Of<IPrinter>(), new RetryPolicy(), "agent-1", _ => "printer", time);
+        var engine = new QueueEngine(api.Object, store, Mock.Of<IPrinter>(), new RetryPolicy(), "agent-1", _ => "printer", timeProvider: time);
 
         QueuedJob? retryingEvent = null;
         engine.JobRetrying += job => retryingEvent = job;
@@ -115,7 +159,7 @@ public class QueueEngineTests
         var api = new Mock<IKazakoraApiClient>();
         api.Setup(a => a.DownloadLabelAsync(1, It.IsAny<CancellationToken>())).ThrowsAsync(new HttpRequestException("erro definitivo"));
 
-        var engine = new QueueEngine(api.Object, store, Mock.Of<IPrinter>(), new RetryPolicy(), "agent-1", _ => "printer", time);
+        var engine = new QueueEngine(api.Object, store, Mock.Of<IPrinter>(), new RetryPolicy(), "agent-1", _ => "printer", timeProvider: time);
 
         QueuedJob? failedEvent = null;
         engine.JobFailedPermanently += job => failedEvent = job;
@@ -147,7 +191,7 @@ public class QueueEngineTests
         var api = new Mock<IKazakoraApiClient>();
         api.Setup(a => a.DownloadLabelAsync(2, It.IsAny<CancellationToken>())).ReturnsAsync([9]);
 
-        var engine = new QueueEngine(api.Object, store, Mock.Of<IPrinter>(), new RetryPolicy(), "agent-1", _ => "printer", time);
+        var engine = new QueueEngine(api.Object, store, Mock.Of<IPrinter>(), new RetryPolicy(), "agent-1", _ => "printer", timeProvider: time);
 
         // Avança só o suficiente pra job2 (devido em now+1s) ficar pronto,
         // sem chegar nos now+10s que job1 precisa pra sair do backoff.
