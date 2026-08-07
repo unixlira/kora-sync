@@ -150,42 +150,46 @@
                             <TextBlock Text="{Binding OrderNumberText}" Style="{StaticResource MetricValueTextStyle}" FontSize="30" />
                         </Viewbox>
 
-                        <!-- QTD sem badge/cor de fundo (pedido explícito
-                             2026-08-06: "remover o botão verde"), texto puro
-                             do mesmo tamanho da fonte do nome do produto
-                             (38, ver ProductLines abaixo). -->
+                        <!-- QTD do mesmo tamanho do #id (pedido explícito
+                             2026-08-07: "diminuir o QTD, deixar do mesmo
+                             tamanho do id") — antes acompanhava o produto
+                             (38), ficava maior que o id (30) e desequilibrava
+                             a linha de cima. -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                            <TextBlock Text="QTD " Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" FontSize="38" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding UnitsCount}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="38"
+                            <TextBlock Text="QTD " Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" FontSize="30" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding UnitsCount}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="30"
                                        Foreground="{DynamicResource BrandPrimaryBrush}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Grid>
 
-                    <!-- Produto(s) — pedido explícito: lista TODOS, fonte
-                         menor automaticamente quando tem mais de um (Viewbox
-                         encolhe o bloco inteiro pra caber na linha "*"). -->
-                    <Viewbox Grid.Row="1" Margin="0,2,0,0">
+                    <!-- Produto(s) — pedido explícito: lista TODOS.
+                         Achado real 2026-08-07: sem StretchDirection, o
+                         Viewbox tem Stretch="Uniform" nos dois sentidos por
+                         padrão — ele SEMPRE reescala o conteúdo pra preencher
+                         a linha "*" inteira, então mudar o FontSize base não
+                         tinha efeito visual nenhum (o resultado final era
+                         sempre "o que couber na altura da linha", não o
+                         FontSize pedido). "DownOnly" faz o FontSize valer de
+                         verdade: só encolhe se não couber, nunca estica pra
+                         preencher espaço sobrando. -->
+                    <Viewbox Grid.Row="1" HorizontalAlignment="Left" StretchDirection="DownOnly" Margin="0,2,0,0">
                         <StackPanel>
                             <ItemsControl ItemsSource="{Binding ProductLines}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="38" TextWrapping="Wrap" Margin="0,1" />
+                                        <TextBlock Text="{Binding}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="44" TextWrapping="Wrap" Margin="0,1" />
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </StackPanel>
                     </Viewbox>
 
-                    <!-- Nome do cliente maior e em negrito (pedido explícito
-                         2026-08-06: "aumentar a fonte... deixar fácil de
-                         saber quem é"; reforçado 2026-08-06 duas vezes:
-                         monitor fica na parede durante a embalagem, precisa
-                         dar pra ler de longe sem errar) — era 26 sem
-                         negrito, depois 34, depois 40, agora 48 + Bold,
-                         mesmo dentro do Viewbox que já cresce/encolhe pra
-                         caber. -->
-                    <Viewbox Grid.Row="2" HorizontalAlignment="Left" Margin="0,2,0,0">
-                        <TextBlock Text="{Binding CustomerName}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="48" TextWrapping="Wrap" />
+                    <!-- Nome do cliente — mesmo achado do produto acima
+                         (Viewbox sem StretchDirection ignorava o FontSize na
+                         prática, "não funcionou" era isso). Agora com
+                         DownOnly o FontSize de verdade manda: 48->56. -->
+                    <Viewbox Grid.Row="2" HorizontalAlignment="Left" StretchDirection="DownOnly" Margin="0,2,0,0">
+                        <TextBlock Text="{Binding CustomerName}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="56" TextWrapping="Wrap" />
                     </Viewbox>
 
                     <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0">
@@ -209,7 +213,10 @@
              ainda 2026-08-06: monitor fica na parede durante a embalagem, a
              etiqueta já saiu impressa nesse ponto — nome (18->22) e produto
              (11->14) maiores de novo, pra dar pra ler de longe sem errar na
-             separação. -->
+             separação. Reforçado 2026-08-07: o nome do canal ao lado do id
+             virou badge colorida (mesmo estilo do card em destaque) jogada
+             pro fim da linha em vez de texto solto com " • " — ver dentro
+             do template. -->
         <DataTemplate x:Key="OrderQueueRestItemTemplate" DataType="{x:Type vm:OrderQueueCardViewModel}">
             <Border Style="{StaticResource CardStyle}" Padding="8" Margin="0,0,0,4">
                 <Grid>
@@ -221,11 +228,23 @@
                     <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" CornerRadius="2" Margin="0,0,10,0" />
 
                     <StackPanel Grid.Column="1">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding OrderNumberText}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="14" />
-                            <TextBlock Text=" • " Style="{StaticResource SecondaryTextStyle}" FontSize="10" />
-                            <TextBlock Text="{Binding ChannelDisplayName}" Style="{StaticResource SecondaryTextStyle}" FontSize="10" FontWeight="Bold" />
-                        </StackPanel>
+                        <!-- Marketplace virou badge (mesma cor/estilo já
+                             usado no card em destaque) jogado pro fim da
+                             linha (pedido explícito 2026-08-07: "justify
+                             content end"), centralizado verticalmente com o
+                             id — Grid em vez de StackPanel porque
+                             StackPanel não empurra nada pro fim, só
+                             empilha. -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding OrderNumberText}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" />
+                            <Border Grid.Column="1" Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6" Padding="8,3" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding ChannelDisplayName}" FontSize="11" FontWeight="Bold" Foreground="White" />
+                            </Border>
+                        </Grid>
                         <TextBlock Text="{Binding CustomerName}" Style="{StaticResource BodyTextStyle}" FontSize="22" FontWeight="Bold" Margin="0,1,0,0" TextWrapping="Wrap" />
                         <ItemsControl ItemsSource="{Binding ProductLines}" Margin="0,1,0,0">
                             <ItemsControl.ItemTemplate>
