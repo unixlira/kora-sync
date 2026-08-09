@@ -29,6 +29,15 @@ public sealed class PrintJobDto
     [JsonPropertyName("tracking_code")]
     public string? TrackingCode { get; init; }
 
+    // orders.external_order_id (id de venda do próprio canal, ex.: order_sn
+    // da Shopee) — nulo só pra etiqueta manual sem pedido real (mesmo caso
+    // do order_id acima). Nunca nulo pra pedido de canal de verdade (2026-
+    // 08-09: confirmado 0 de 74 pedidos reais sem isso), por isso serve de
+    // fallback confiável pro nome do arquivo quando TrackingCode ainda não
+    // existe — ver SalesArchiveService.
+    [JsonPropertyName("sale_id")]
+    public string? SaleId { get; init; }
+
     [JsonPropertyName("created_at")]
     public required DateTimeOffset CreatedAt { get; init; }
 }

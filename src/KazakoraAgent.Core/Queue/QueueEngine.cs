@@ -81,6 +81,7 @@ public sealed class QueueEngine
                 OrderId = serverJob.OrderId,
                 Channel = serverJob.Channel,
                 TrackingCode = serverJob.TrackingCode,
+                SaleId = serverJob.SaleId,
                 Status = QueuedJobStatus.Queued,
                 AttemptCount = 0,
                 NextAttemptAt = now,
@@ -174,7 +175,7 @@ public sealed class QueueEngine
                 return;
             }
 
-            var savedPath = SalesArchiveService.Save(archiveRoot, job.Channel, job.TrackingCode, job.OrderId, when, contents);
+            var savedPath = SalesArchiveService.Save(archiveRoot, job.Channel, job.TrackingCode, job.SaleId, job.OrderId, when, contents);
 
             JobArchived?.Invoke(job, savedPath);
         }

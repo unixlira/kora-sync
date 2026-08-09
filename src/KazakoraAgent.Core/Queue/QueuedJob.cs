@@ -23,6 +23,13 @@ public sealed class QueuedJob
     /// gerado o rastreio no momento da confirmação de envio.
     public string? TrackingCode { get; set; }
 
+    /// Id de venda do canal (orders.external_order_id no servidor, ex.:
+    /// order_sn da Shopee) — fallback pro nome do arquivo arquivado quando
+    /// TrackingCode ainda não existe (pedido explícito 2026-08-09). Ao
+    /// contrário do rastreio, praticamente nunca falta pra pedido de canal
+    /// de verdade, só em etiqueta manual sem pedido associado.
+    public string? SaleId { get; set; }
+
     public required QueuedJobStatus Status { get; set; }
 
     public int AttemptCount { get; set; }

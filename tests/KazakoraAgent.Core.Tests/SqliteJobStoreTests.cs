@@ -19,6 +19,8 @@ public class SqliteJobStoreTests
             OrderId = 7,
             Channel = "mercado_livre",
             ShippingType = "flex",
+            TrackingCode = "BR123456789",
+            SaleId = "2000012345678",
             Status = QueuedJobStatus.Queued,
             AttemptCount = 0,
             NextAttemptAt = now,
@@ -32,6 +34,8 @@ public class SqliteJobStoreTests
         Assert.Equal(7, fetched!.OrderId);
         Assert.Equal("mercado_livre", fetched.Channel);
         Assert.Equal("flex", fetched.ShippingType);
+        Assert.Equal("BR123456789", fetched.TrackingCode);
+        Assert.Equal("2000012345678", fetched.SaleId);
         Assert.Equal(QueuedJobStatus.Queued, fetched.Status);
     }
 

@@ -16,6 +16,22 @@ public static class SalesArchiveService
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
     };
 
+    private static readonly TimeZoneInfo BrazilTimeZone = ResolveBrazilTimeZone();
+
+    private static TimeZoneInfo ResolveBrazilTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            // Ambiente sem a base de fusos IANA (raro) — não pode derrubar
+            // o arquivamento por causa disso, cai pro fuso local do SO.
+            return TimeZoneInfo.Local;
+        }
+    }
+
     /// <summary>
     /// Monta "raiz/Mês/NomeDoCanal/DD" e garante que existe — cria a
     /// árvore inteira (mês, canal e dia) se qualquer nível ainda não
@@ -23,8 +39,15 @@ public static class SalesArchiveService
     /// </summary>
     public static string EnsureFolder(string archiveRoot, string? channel, DateTimeOffset when)
     {
-        var month = MonthNames[when.Month - 1];
-        var day = when.Day.ToString("D2");
+        // Bug real encontrado 2026-08-09: "when" chega em UTC (QueueEngine
+        // usa TimeProvider.System.GetUtcNow()) — sem converter pro horário
+        // de Brasília antes de ler Month/Day, qualquer job impresso entre
+        // 21h e meia-noite (horário local) caía na pasta do dia seguinte
+        // (e, na virada do mês, na pasta do mês seguinte inteiro), fazendo
+        // a pasta do dia certo parecer que nunca foi criada.
+        var local = TimeZoneInfo.ConvertTime(when, BrazilTimeZone);
+        var month = MonthNames[local.Month - 1];
+        var day = local.Day.ToString("D2");
         var folder = Path.Combine(archiveRoot, month, ChannelDisplayName(channel), day);
 
         Directory.CreateDirectory(folder);
@@ -62,19 +85,23 @@ public static class SalesArchiveService
     }
 
     /// <summary>
-    /// Salva o arquivo e devolve o caminho final gravado (pra log). O nome
-    /// é o código de rastreio; sem ele (rastreio ainda não existia quando o
-    /// envio foi confirmado), cai pra "pedido-{id}" em vez de travar o
-    /// arquivamento por falta de nome bonito.
+    /// Salva o arquivo e devolve o caminho final gravado (pra log). Nome
+    /// segue o padrão pedido 2026-08-09: código de rastreio quando existir;
+    /// sem ele, cai pro id de venda do canal (saleId — orders.external_
+    /// order_id, praticamente nunca nulo pra pedido de canal de verdade);
+    /// só cai pro "pedido-{id interno}" antigo se nenhum dos dois existir
+    /// (etiqueta manual sem pedido associado).
     /// </summary>
-    public static string Save(string archiveRoot, string? channel, string? trackingCode, long? orderId, DateTimeOffset when, byte[] contents)
+    public static string Save(string archiveRoot, string? channel, string? trackingCode, string? saleId, long? orderId, DateTimeOffset when, byte[] contents)
     {
         var folder = EnsureFolder(archiveRoot, channel, when);
         var extension = DetectExtension(contents);
 
-        var baseName = string.IsNullOrWhiteSpace(trackingCode)
-            ? $"pedido-{orderId?.ToString() ?? "desconhecido"}"
-            : trackingCode;
+        var baseName = !string.IsNullOrWhiteSpace(trackingCode)
+            ? trackingCode
+            : !string.IsNullOrWhiteSpace(saleId)
+                ? saleId
+                : $"pedido-{orderId?.ToString() ?? "desconhecido"}";
 
         foreach (var invalidChar in Path.GetInvalidFileNameChars())
         {
