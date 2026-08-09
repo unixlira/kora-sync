@@ -30,14 +30,22 @@ public sealed class AppSettings
     public bool NotificationsEnabled { get; set; } = true;
 
     /// Pedido explícito 2026-08-06: cópia local de cada etiqueta impressa,
-    /// organizada em "raiz/Mês/Canal/DD" (ex: "Vendas\Agosto\Shopee\06"),
+    /// organizada em "raiz/Mês/Canal/DD" (ex: "B-Vendas\Agosto\Shopee\06"),
     /// nomeada pelo código de rastreio. Default aponta pra dentro da área
     /// de trabalho REAL do usuário — se o OneDrive já redireciona a área de
     /// trabalho (comum em instalação padrão do Windows com conta
     /// Microsoft), SpecialFolder.Desktop já resolve pra dentro do OneDrive
     /// sozinho, sem precisar hard-codar caminho de usuário nenhum.
+    ///
+    /// Nome "B-Vendas", não "Vendas" — pedido explícito 2026-08-06/09: é a
+    /// pasta real que o usuário já mantém manualmente na área de trabalho
+    /// (o "B-" é intencional, pra ordenar antes de outras pastas). Bug real
+    /// encontrado 2026-08-09: esse valor nunca tinha sido gravado no
+    /// settings.json de produção (criado antes desse campo existir), então
+    /// o agente sempre caía no default do código — que até então ainda
+    /// dizia "Vendas" — e passou dias arquivando na pasta errada.
     public string SalesArchiveRoot { get; set; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Vendas");
+        Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "B-Vendas");
 
     public bool ArchiveEnabled { get; set; } = true;
 
