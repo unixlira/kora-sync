@@ -41,4 +41,7 @@ public sealed class OrderQueueProductDto
 
     [JsonPropertyName("quantity")]
     public required int Quantity { get; init; }
+
+    [JsonPropertyName("sku")]
+    public string? Sku { get; init; }
 }

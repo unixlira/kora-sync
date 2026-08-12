@@ -90,7 +90,14 @@ public partial class OrderQueueCardViewModel : ObservableObject
         ProductLines.Clear();
         foreach (var product in dto.Products)
         {
-            ProductLines.Add(product.Quantity > 1 ? $"{product.Quantity}x {product.Name}" : product.Name);
+            var line = product.Quantity > 1 ? $"{product.Quantity}x {product.Name}" : product.Name;
+
+            if (!string.IsNullOrWhiteSpace(product.Sku))
+            {
+                line += $" (SKU: {product.Sku})";
+            }
+
+            ProductLines.Add(line);
         }
 
         if (ProductLines.Count == 0)
