@@ -103,6 +103,12 @@ public sealed class KazakoraApiClient : IKazakoraApiClient
         return response.Queue;
     }
 
+    public async Task PackOrderAsync(long orderId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"dashboard/queue/{orderId}/pack", content: null, ct);
+        response.EnsureSuccessStatusCode();
+    }
+
     public async Task<DailyTextDto?> GetDailyTextAsync(CancellationToken ct = default)
     {
         var response = await _http.GetFromJsonAsync<DailyTextResponse>("dashboard/daily-text", JsonOptions, ct)

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using KazakoraAgent.Core.Api;
 using KazakoraAgent.Core.Models;
 using MahApps.Metro.IconPacks;
 
@@ -12,6 +13,12 @@ namespace KazakoraAgent.App.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
+
+    /// Null só em cenário de design-time/teste sem API de verdade (ver
+    /// construtor sem argumento) — o botão "Em preparação" de cada card
+    /// (OrderQueueCardViewModel.PackRequested) simplesmente não faz nada
+    /// nesse caso, em vez de estourar NullReferenceException.
+    private readonly IKazakoraApiClient? _api;
 
     /// Um card por métrica do topo — mantido em sincronia com Metrics
     /// sempre que UpdateMetrics roda (ver DashboardTickAsync no poller).
@@ -74,8 +81,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _currentDateTimeText = string.Empty;
 
-    public MainViewModel()
+    public MainViewModel(IKazakoraApiClient? api = null)
     {
+        _api = api;
+
         var resources = Application.Current.Resources;
 
         var successBrush = (Brush) resources["StatusSuccessBrush"];
@@ -97,6 +106,12 @@ public partial class MainViewModel : ObservableObject
         ];
 
         TopCards = [.. MetricCards, ChannelOrdersCard];
+
+        // Os 2 cards fixos precisam do callback já na construção — os da
+        // QueueRest recebem o mesmo callback quando são criados, ver
+        // UpdateOrderQueue.
+        QueueCard1.PackRequested = PackOrderAsync;
+        QueueCard2.PackRequested = PackOrderAsync;
     }
 
     public void UpdateMetrics(DashboardMetricsDto dto)
@@ -160,9 +175,28 @@ public partial class MainViewModel : ObservableObject
         QueueRest.Clear();
         foreach (var dto in items.Skip(2))
         {
-            var item = new OrderQueueCardViewModel();
+            var item = new OrderQueueCardViewModel { PackRequested = PackOrderAsync };
             item.UpdateFrom(dto);
             QueueRest.Add(item);
         }
+    }
+
+    /// Callback por trás do botão "Em preparação" de todo card da fila
+    /// (pedido explícito 2026-08-13) — chamado por
+    /// OrderQueueCardViewModel.PackCommand. Depois de confirmar no
+    /// servidor, busca a fila de novo e reaplica na hora, sem esperar o
+    /// próximo tick de 2s do DashboardPoller: o operador está com a mão no
+    /// botão, o pedido embalado precisa sumir da tela imediatamente.
+    private async Task PackOrderAsync(long orderId)
+    {
+        if (_api is null)
+        {
+            return;
+        }
+
+        await _api.PackOrderAsync(orderId);
+
+        var queue = await _api.GetOrderQueueAsync();
+        UpdateOrderQueue(queue);
     }
 }

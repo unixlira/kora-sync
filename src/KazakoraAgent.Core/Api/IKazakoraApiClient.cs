@@ -36,6 +36,13 @@ public interface IKazakoraApiClient
     /// resto do dia.
     Task<IReadOnlyList<OrderQueueItemDto>> GetOrderQueueAsync(CancellationToken ct = default);
 
+    /// Botão "Em preparação" -> "Embalado" de cada card da fila (pedido
+    /// explícito 2026-08-13) — marca o pedido como embalado no servidor
+    /// (packed_at), o que já basta pra ele sair de GetOrderQueueAsync no
+    /// próximo tick (ver DashboardAgentController::packOrder no Laravel,
+    /// filtro whereNull('packed_at') em queue()).
+    Task PackOrderAsync(long orderId, CancellationToken ct = default);
+
     /// Null quando o servidor ainda não tem nenhum texto diário salvo.
     Task<DailyTextDto?> GetDailyTextAsync(CancellationToken ct = default);
 }

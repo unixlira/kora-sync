@@ -156,10 +156,17 @@
                              ajuste, só que ainda mais") — nome do cliente e
                              produto abaixo são o que realmente importa pra
                              não errar na separação/embalagem, o número em
-                             si é só referência. -->
-                        <Viewbox Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center" StretchDirection="DownOnly">
-                            <TextBlock Text="{Binding OrderNumberText}" Style="{StaticResource MetricValueTextStyle}" FontSize="30" />
-                        </Viewbox>
+                             si é só referência. Data/hora real da venda no
+                             canal (pedido explícito 2026-08-13) ao lado,
+                             fora do Viewbox — é só apoio, não precisa
+                             crescer junto com o #id. -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Viewbox HorizontalAlignment="Left" VerticalAlignment="Center" StretchDirection="DownOnly">
+                                <TextBlock Text="{Binding OrderNumberText}" Style="{StaticResource MetricValueTextStyle}" FontSize="30" />
+                            </Viewbox>
+                            <TextBlock Text="{Binding CreatedAtText}" Style="{StaticResource SecondaryTextStyle}"
+                                       VerticalAlignment="Bottom" Margin="10,0,0,4" />
+                        </StackPanel>
 
                         <!-- QTD do mesmo tamanho do #id (pedido explícito
                              2026-08-07: "diminuir o QTD, deixar do mesmo
@@ -203,13 +210,38 @@
                         <TextBlock Text="{Binding CustomerName}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="56" TextWrapping="Wrap" />
                     </Viewbox>
 
-                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,4,0,0">
-                        <Border Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
-                            <TextBlock Text="{Binding ChannelDisplayName}" FontSize="11" FontWeight="Bold" Foreground="White" />
-                        </Border>
-                        <TextBlock Text="Pedido " Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding ExternalOrderId, TargetNullValue='—'}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
-                    </StackPanel>
+                    <!-- Grid, não StackPanel: precisa empurrar o botão pro
+                         canto inferior DIREITO do card (pedido explícito
+                         2026-08-13) enquanto o badge de canal/pedido
+                         continua à esquerda — StackPanel só empilha, não
+                         separa os dois lados. -->
+                    <Grid Grid.Row="3" Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
+                                <TextBlock Text="{Binding ChannelDisplayName}" FontSize="11" FontWeight="Bold" Foreground="White" />
+                            </Border>
+                            <TextBlock Text="Pedido " Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ExternalOrderId, TargetNullValue='—'}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <!-- "Em preparação" -> clique marca embalado no
+                             servidor (OrderQueueCardViewModel.PackCommand) —
+                             desabilita e troca o texto sozinho enquanto a
+                             chamada está em voo (IsPacking/PackButtonText),
+                             ToolTip mostra o erro se a chamada falhar (o
+                             card não desaparece: só some quando o servidor
+                             confirma de verdade, ver comentário no
+                             ViewModel). -->
+                        <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
+                                ToolTip="{Binding PackErrorMessage}"
+                                Background="{DynamicResource BrandPrimaryBrush}" Foreground="White"
+                                FontSize="12" FontWeight="Bold" Padding="12,6" VerticalAlignment="Bottom" />
+                    </Grid>
                 </Grid>
             </Grid>
         </DataTemplate>
@@ -251,7 +283,11 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{Binding OrderNumberText}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <TextBlock Text="{Binding OrderNumberText}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" />
+                                <!-- Data/hora real da venda no canal, pedido explícito 2026-08-13. -->
+                                <TextBlock Text="{Binding CreatedAtText}" Style="{StaticResource SecondaryTextStyle}" FontSize="11" VerticalAlignment="Center" Margin="6,0,0,0" />
+                            </StackPanel>
                             <Border Grid.Column="1" Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6" Padding="8,3" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding ChannelDisplayName}" FontSize="11" FontWeight="Bold" Foreground="White" />
                             </Border>
@@ -264,10 +300,28 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock Style="{StaticResource SecondaryTextStyle}" FontSize="11" Margin="0,1,0,0">
-                            <Run Text="Pedido " /><Run Text="{Binding ExternalOrderId, Mode=OneWay, TargetNullValue='—'}" FontWeight="Bold" />
-                            <Run Text="  •  QTD " /><Run Text="{Binding UnitsCount, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource BrandPrimaryBrush}" />
-                        </TextBlock>
+
+                        <!-- Última linha do card: "Pedido X • QTD Y" à
+                             esquerda + botão "Em preparação" no canto
+                             inferior DIREITO (pedido explícito 2026-08-13) —
+                             Grid em vez de StackPanel pelo mesmo motivo do
+                             cabeçalho acima (empurrar pro fim de verdade). -->
+                        <Grid Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Style="{StaticResource SecondaryTextStyle}" FontSize="11" VerticalAlignment="Center">
+                                <Run Text="Pedido " /><Run Text="{Binding ExternalOrderId, Mode=OneWay, TargetNullValue='—'}" FontWeight="Bold" />
+                                <Run Text="  •  QTD " /><Run Text="{Binding UnitsCount, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource BrandPrimaryBrush}" />
+                            </TextBlock>
+
+                            <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
+                                    ToolTip="{Binding PackErrorMessage}"
+                                    Background="{DynamicResource BrandPrimaryBrush}" Foreground="White"
+                                    FontSize="10" FontWeight="Bold" Padding="8,4" />
+                        </Grid>
                     </StackPanel>
                 </Grid>
             </Border>

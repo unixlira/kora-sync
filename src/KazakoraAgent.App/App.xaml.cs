@@ -80,7 +80,7 @@ public partial class App : System.Windows.Application
             _ => settings.PrinterName,
             _ => settings.ArchiveEnabled ? settings.SalesArchiveRoot : null);
 
-        var mainViewModel = new MainViewModel();
+        var mainViewModel = new MainViewModel(api);
 
         // Painel tem que parecer "tempo real" (pedido explícito 2026-08-04)
         // — 2s fixo aqui, não lido de settings.DashboardPollSeconds: quem já
