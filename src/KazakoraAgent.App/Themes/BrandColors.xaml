@@ -24,6 +24,19 @@
     <Color x:Key="StatusErrorColor">#FF5252</Color>
     <Color x:Key="StatusProcessingColor">#40C4FF</Color>
 
+    <!-- Botão "Em preparação" / "Embalado" da fila de expedição (pedido
+         explícito 2026-08-13) — cores DEDICADAS, não reaproveitam
+         BrandPrimaryColor/StatusSuccessColor acima porque aquelas são o
+         teal da marca/logo (ver comentário deles), não o roxo/verde
+         pedidos aqui pro botão em si. PackPreparingColor é o mesmo roxo já
+         usado no card "Pedidos hoje" do topo (MainViewModel.cs, #7B61FF)
+         — reaproveitado de propósito, não um roxo novo. PackPackedColor é
+         o verde "success" padrão do Tailwind (green-500), pedido explícito
+         do usuário — deliberadamente diferente do teal da marca, pra ficar
+         óbvio à distância que o pedido já foi embalado. -->
+    <Color x:Key="PackPreparingColor">#7B61FF</Color>
+    <Color x:Key="PackPackedColor">#22C55E</Color>
+
     <!-- Preto puro pra sombra de card — a opacidade é ajustada por tema
          (mais forte no claro, mais sutil no escuro) nos Setters do Effect. -->
     <Color x:Key="ShadowColor">#000000</Color>
@@ -36,6 +49,8 @@
     <SolidColorBrush x:Key="StatusWarningBrush" Color="{StaticResource StatusWarningColor}" />
     <SolidColorBrush x:Key="StatusErrorBrush" Color="{StaticResource StatusErrorColor}" />
     <SolidColorBrush x:Key="StatusProcessingBrush" Color="{StaticResource StatusProcessingColor}" />
+    <SolidColorBrush x:Key="PackPreparingBrush" Color="{StaticResource PackPreparingColor}" />
+    <SolidColorBrush x:Key="PackPackedBrush" Color="{StaticResource PackPackedColor}" />
 
     <!--
         Variantes com alfa (fundo bem sutil ~14%, borda um pouco mais forte

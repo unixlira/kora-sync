@@ -241,10 +241,10 @@
                                 Foreground="White" FontSize="12" FontWeight="Bold" Padding="12,6" VerticalAlignment="Bottom">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                    <Setter Property="Background" Value="{DynamicResource BrandPrimaryBrush}" />
+                                    <Setter Property="Background" Value="{DynamicResource PackPreparingBrush}" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsPacked}" Value="True">
-                                            <Setter Property="Background" Value="{DynamicResource StatusSuccessBrush}" />
+                                            <Setter Property="Background" Value="{DynamicResource PackPackedBrush}" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -331,10 +331,10 @@
                                     Foreground="White" FontSize="10" FontWeight="Bold" Padding="8,4">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                        <Setter Property="Background" Value="{DynamicResource BrandPrimaryBrush}" />
+                                        <Setter Property="Background" Value="{DynamicResource PackPreparingBrush}" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsPacked}" Value="True">
-                                                <Setter Property="Background" Value="{DynamicResource StatusSuccessBrush}" />
+                                                <Setter Property="Background" Value="{DynamicResource PackPackedBrush}" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
