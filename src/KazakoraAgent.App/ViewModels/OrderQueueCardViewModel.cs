@@ -92,13 +92,23 @@ public partial class OrderQueueCardViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(PackCommand))]
     private bool _isPacking;
 
-    public string PackButtonText => IsPacking ? "Embalando..." : "Em preparação";
+    /// Vem de dto.PackedAt != null (ver UpdateFrom) OU é setado direto
+    /// depois de PackAsync ter sucesso (não espera o próximo tick de 2s pra
+    /// virar verde). Pedido explícito 2026-08-13 (revisado no mesmo dia):
+    /// embalar NÃO tira o pedido da fila — só muda a cor/texto do botão pra
+    /// "Embalado", o card continua visível igual antes, o operador usa a
+    /// tela como conferência do que já separou.
+    [ObservableProperty]
+    private bool _isPacked;
+
+    public string PackButtonText => IsPacked ? "Embalado" : (IsPacking ? "Embalando..." : "Em preparação");
 
     partial void OnIsPackingChanged(bool value) => OnPropertyChanged(nameof(PackButtonText));
 
+    partial void OnIsPackedChanged(bool value) => OnPropertyChanged(nameof(PackButtonText));
+
     /// Mensagem da última falha ao embalar (rede caiu, servidor fora) — null
-    /// quando não há erro. O card continua na fila pra tentar de novo; só
-    /// desaparece quando o servidor confirma packed_at de verdade.
+    /// quando não há erro, mostrada no ToolTip do botão (ver MainWindow.xaml).
     [ObservableProperty]
     private string? _packErrorMessage;
 
@@ -106,16 +116,19 @@ public partial class OrderQueueCardViewModel : ObservableObject
 
     partial void OnPackErrorMessageChanged(string? value) => OnPropertyChanged(nameof(HasPackErrorVisibility));
 
+    /// Continua clicável mesmo já embalado, de propósito — desabilitar via
+    /// IsEnabled=false acionaria o trigger de opacidade 0.4 do estilo padrão
+    /// de Button (Controls.xaml), lavando a cor verde que é o ponto inteiro
+    /// dessa mudança. Reclicar num pedido já embalado só reconfirma no
+    /// servidor (packOrder() é idempotente), inofensivo.
     private bool CanPack => HasOrder && !IsPacking;
 
     /// Botão "Em preparação" do card — ao clicar, pede pra quem alimentou
     /// este card (MainViewModel.PackOrderAsync) marcar o pedido como
-    /// embalado no servidor. Não some o card na hora (otimista): espera a
-    /// confirmação e deixa o próximo UpdateOrderQueue (chamado pelo próprio
-    /// PackRequested, sem esperar o tick de 2s do DashboardPoller) tirar o
-    /// card da fila de verdade — mais simples que reconciliar um estado
-    /// local com o que o servidor de fato confirmou, e evita o card sumir
-    /// e "voltar" se a chamada falhar.
+    /// embalado no servidor. IsPacked vira true assim que a chamada
+    /// confirma (otimista-mas-confirmado: só marca depois da resposta OK
+    /// do servidor, nunca antes) — não precisa esperar o próximo poll pra
+    /// virar verde.
     [RelayCommand(CanExecute = nameof(CanPack))]
     private async Task PackAsync()
     {
@@ -130,6 +143,7 @@ public partial class OrderQueueCardViewModel : ObservableObject
         try
         {
             await PackRequested(OrderId);
+            IsPacked = true;
         }
         catch (Exception ex)
         {
@@ -160,6 +174,7 @@ public partial class OrderQueueCardViewModel : ObservableObject
         UnitsCount = 0;
         CreatedAt = default;
         IsPacking = false;
+        IsPacked = false;
         PackErrorMessage = null;
         ProductLines.Clear();
     }
@@ -173,6 +188,7 @@ public partial class OrderQueueCardViewModel : ObservableObject
         CustomerName = string.IsNullOrWhiteSpace(dto.CustomerName) ? "Cliente não informado" : dto.CustomerName;
         UnitsCount = dto.UnitsCount;
         CreatedAt = dto.CreatedAt;
+        IsPacked = dto.PackedAt is not null;
 
         // Falha antiga já resolvida não deve continuar aparecendo num
         // pedido que já foi (re)carregado com sucesso da fila.

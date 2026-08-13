@@ -230,17 +230,26 @@
                         </StackPanel>
 
                         <!-- "Em preparação" -> clique marca embalado no
-                             servidor (OrderQueueCardViewModel.PackCommand) —
-                             desabilita e troca o texto sozinho enquanto a
-                             chamada está em voo (IsPacking/PackButtonText),
-                             ToolTip mostra o erro se a chamada falhar (o
-                             card não desaparece: só some quando o servidor
-                             confirma de verdade, ver comentário no
-                             ViewModel). -->
+                             servidor (OrderQueueCardViewModel.PackCommand) e
+                             o próprio botão fica VERDE + texto "Embalado"
+                             (IsPacked) — pedido explícito 2026-08-13: o
+                             pedido NÃO sai do card/da fila, o botão é só um
+                             indicador de status pra conferência visual.
+                             ToolTip mostra o erro se a chamada falhar. -->
                         <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
                                 ToolTip="{Binding PackErrorMessage}"
-                                Background="{DynamicResource BrandPrimaryBrush}" Foreground="White"
-                                FontSize="12" FontWeight="Bold" Padding="12,6" VerticalAlignment="Bottom" />
+                                Foreground="White" FontSize="12" FontWeight="Bold" Padding="12,6" VerticalAlignment="Bottom">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                    <Setter Property="Background" Value="{DynamicResource BrandPrimaryBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsPacked}" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource StatusSuccessBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </Grid>
                 </Grid>
             </Grid>
@@ -319,8 +328,18 @@
 
                             <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
                                     ToolTip="{Binding PackErrorMessage}"
-                                    Background="{DynamicResource BrandPrimaryBrush}" Foreground="White"
-                                    FontSize="10" FontWeight="Bold" Padding="8,4" />
+                                    Foreground="White" FontSize="10" FontWeight="Bold" Padding="8,4">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Setter Property="Background" Value="{DynamicResource BrandPrimaryBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsPacked}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource StatusSuccessBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </Grid>
                     </StackPanel>
                 </Grid>

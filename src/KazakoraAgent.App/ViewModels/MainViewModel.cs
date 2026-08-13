@@ -183,20 +183,10 @@ public partial class MainViewModel : ObservableObject
 
     /// Callback por trás do botão "Em preparação" de todo card da fila
     /// (pedido explícito 2026-08-13) — chamado por
-    /// OrderQueueCardViewModel.PackCommand. Depois de confirmar no
-    /// servidor, busca a fila de novo e reaplica na hora, sem esperar o
-    /// próximo tick de 2s do DashboardPoller: o operador está com a mão no
-    /// botão, o pedido embalado precisa sumir da tela imediatamente.
-    private async Task PackOrderAsync(long orderId)
-    {
-        if (_api is null)
-        {
-            return;
-        }
-
-        await _api.PackOrderAsync(orderId);
-
-        var queue = await _api.GetOrderQueueAsync();
-        UpdateOrderQueue(queue);
-    }
+    /// OrderQueueCardViewModel.PackCommand. Só confirma no servidor; o
+    /// próprio card vira "Embalado" sozinho assim que este await termina
+    /// sem erro (ver OrderQueueCardViewModel.PackAsync) — diferente da
+    /// primeira versão deste botão, o pedido NÃO sai da fila, então não há
+    /// motivo pra buscar a lista inteira de novo aqui.
+    private Task PackOrderAsync(long orderId) => _api?.PackOrderAsync(orderId) ?? Task.CompletedTask;
 }

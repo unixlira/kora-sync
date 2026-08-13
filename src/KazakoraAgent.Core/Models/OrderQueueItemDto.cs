@@ -32,6 +32,12 @@ public sealed class OrderQueueItemDto
 
     [JsonPropertyName("created_at")]
     public required DateTimeOffset CreatedAt { get; init; }
+
+    /// Null enquanto não embalado. Pedido explícito 2026-08-13 (revisado no
+    /// mesmo dia): NÃO tira o pedido da fila — só troca a cor/texto do
+    /// botão do card pra "Embalado" (ver OrderQueueCardViewModel.IsPacked).
+    [JsonPropertyName("packed_at")]
+    public DateTimeOffset? PackedAt { get; init; }
 }
 
 public sealed class OrderQueueProductDto
