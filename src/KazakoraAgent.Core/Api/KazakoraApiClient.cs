@@ -117,6 +117,14 @@ public sealed class KazakoraApiClient : IKazakoraApiClient
         return response.DailyText;
     }
 
+    public async Task<IReadOnlyList<ScheduledShipmentDto>> GetScheduledShipmentsAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetFromJsonAsync<ScheduledShipmentsResponse>("dashboard/scheduled-shipments", JsonOptions, ct)
+            ?? throw new InvalidOperationException("Resposta vazia de GET dashboard/scheduled-shipments.");
+
+        return response.ScheduledShipments;
+    }
+
     private sealed class LabelsResponse
     {
         [JsonPropertyName("labels")]
@@ -133,6 +141,12 @@ public sealed class KazakoraApiClient : IKazakoraApiClient
     {
         [JsonPropertyName("daily_text")]
         public DailyTextDto? DailyText { get; init; }
+    }
+
+    private sealed class ScheduledShipmentsResponse
+    {
+        [JsonPropertyName("scheduled_shipments")]
+        public required List<ScheduledShipmentDto> ScheduledShipments { get; init; }
     }
 
     private sealed class JobsIndexResponse

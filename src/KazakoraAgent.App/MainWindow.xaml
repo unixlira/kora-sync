@@ -469,6 +469,80 @@
                            Foreground="{DynamicResource StatusErrorBrush}" FontWeight="Bold" Margin="0,10,0,0"
                            Visibility="{Binding HasDashboardErrorVisibility}" TextWrapping="Wrap" />
 
+                <!-- Banner "Envios agendados" (pedido explícito 2026-08-14,
+                     achado no pedido #278: venda de Coleta/Places do
+                     Mercado Livre com etiqueta liberada só perto de uma
+                     data futura que o PRÓPRIO canal escolheu — parecia
+                     pedido travado, não era). Só aparece quando tem pelo
+                     menos 1 (ScheduledShipmentsVisibility) — fica num tom
+                     neutro/informativo normalmente, e muda pra vermelho só
+                     quando algum item já passou da data prometida sem
+                     liberar (HasOverdueScheduledShipments), pra não parecer
+                     alarme falso todo santo dia. -->
+                <Border Margin="0,14,0,0" Padding="14,10" CornerRadius="10" BorderThickness="1.5"
+                        Visibility="{Binding ScheduledShipmentsVisibility}">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="{DynamicResource StatusProcessingSoftBrush}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource StatusProcessingSoftBorderBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasOverdueScheduledShipments}" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource StatusErrorSoftBrush}" />
+                                    <Setter Property="BorderBrush" Value="{DynamicResource StatusErrorSoftBorderBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="CalendarClock" Width="20" Height="20"
+                                                         Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="Vendas agendadas pelo canal" Style="{StaticResource BodyTextStyle}"
+                                       FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource SecondaryTextStyle}" Margin="28,2,0,6" TextWrapping="Wrap">
+                            O próprio canal decidiu liberar a etiqueta só perto da data — não é pedido travado, é assim mesmo (Coleta/Places).
+                        </TextBlock>
+                        <ItemsControl ItemsSource="{Binding ScheduledShipments}" Margin="28,0,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6"
+                                                Padding="6,2" Margin="0,0,8,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding ChannelDisplayName}" FontSize="10" FontWeight="Bold" Foreground="White" />
+                                        </Border>
+
+                                        <TextBlock Grid.Column="1" Style="{StaticResource BodyTextStyle}" FontSize="13"
+                                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                            <Run Text="{Binding OrderNumberText}" FontWeight="Bold" /><Run Text=" — " /><Run Text="{Binding CustomerName}" />
+                                        </TextBlock>
+
+                                        <TextBlock Grid.Column="2" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"
+                                                    Text="{Binding StatusText}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOverdue}" Value="True">
+                                                            <Setter Property="Foreground" Value="{DynamicResource StatusErrorBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
                 <!-- Cards de canal (removidos da tela por pedido explícito
                      2026-08-04: "remove os cards dos canais e coloca essa
                      lista de impressão") e overlays de detalhe clicáveis

@@ -45,4 +45,10 @@ public interface IKazakoraApiClient
 
     /// Null quando o servidor ainda não tem nenhum texto diário salvo.
     Task<DailyTextDto?> GetDailyTextAsync(CancellationToken ct = default);
+
+    /// Vendas AGENDADAS pelo canal (pedido explícito 2026-08-14, achado no
+    /// pedido #278) — etiqueta liberada só perto de uma data futura
+    /// decidida pelo Mercado Livre/Shopee, não um pedido travado de
+    /// verdade. Alimenta o alerta/lista de "Envios agendados" do painel.
+    Task<IReadOnlyList<ScheduledShipmentDto>> GetScheduledShipmentsAsync(CancellationToken ct = default);
 }

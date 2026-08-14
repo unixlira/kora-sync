@@ -48,6 +48,18 @@ public partial class MainViewModel : ObservableObject
     /// scroll próprio (coluna da direita, ver MainWindow.xaml).
     public ObservableCollection<OrderQueueCardViewModel> QueueRest { get; } = [];
 
+    /// Vendas AGENDADAS pelo canal (pedido explícito 2026-08-14, achado no
+    /// pedido #278) — banner separado da fila normal, só aparece quando
+    /// tem algo (ver HasScheduledShipments/MainWindow.xaml). Já vem do
+    /// servidor ordenado pela data mais próxima primeiro.
+    public ObservableCollection<ScheduledShipmentCardViewModel> ScheduledShipments { get; } = [];
+
+    public bool HasScheduledShipments => ScheduledShipments.Count > 0;
+
+    public bool HasOverdueScheduledShipments => ScheduledShipments.Any(s => s.IsOverdue);
+
+    public Visibility ScheduledShipmentsVisibility => HasScheduledShipments ? Visibility.Visible : Visibility.Collapsed;
+
     /// Mensagem da última falha ao buscar canais/métricas — null quando o
     /// último tick foi bem-sucedido. Ver DashboardPoller.DashboardTickAsync.
     [ObservableProperty]
@@ -189,4 +201,21 @@ public partial class MainViewModel : ObservableObject
     /// primeira versão deste botão, o pedido NÃO sai da fila, então não há
     /// motivo pra buscar a lista inteira de novo aqui.
     private Task PackOrderAsync(long orderId) => _api?.PackOrderAsync(orderId) ?? Task.CompletedTask;
+
+    /// Banner "Envios agendados" (pedido explícito 2026-08-14) — reconstruída
+    /// a cada tick, mesmo padrão do QueueRest (lista muda de tamanho a
+    /// qualquer momento, mais simples que reconciliar item por item).
+    public void UpdateScheduledShipments(IReadOnlyList<ScheduledShipmentDto> items)
+    {
+        ScheduledShipments.Clear();
+
+        foreach (var dto in items)
+        {
+            ScheduledShipments.Add(ScheduledShipmentCardViewModel.FromDto(dto));
+        }
+
+        OnPropertyChanged(nameof(HasScheduledShipments));
+        OnPropertyChanged(nameof(HasOverdueScheduledShipments));
+        OnPropertyChanged(nameof(ScheduledShipmentsVisibility));
+    }
 }
