@@ -126,43 +126,6 @@
                     <TextBlock Text="Nenhum pedido" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,8,0,0" HorizontalAlignment="Center" />
                 </StackPanel>
 
-                <!-- Coluna da foto (esquerda, pedido explícito 2026-08-15) +
-                     coluna do conteúdo (direita, EXATAMENTE o layout já
-                     validado antes — id/QTD, produto, cliente, rodapé —
-                     nenhum FontSize/altura de linha mudou aqui, só ficou
-                     um pouco mais estreito). Largura fixa 70 pra foto:
-                     precisa ser real (não "*"/Auto) pra Image ter uma
-                     caixa concreta pra encaixar contra. -->
-                <Grid Visibility="{Binding HasOrderVisibility}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="70" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Foto do produto — mesma imagem publicada nos
-                         marketplaces (ver OrderImageArchiveService no
-                         Laravel). BUG REAL 2026-08-15 (achado no print real
-                         do usuário): Stretch="Uniform" numa caixa mais alta
-                         que larga deixava barra PRETA em cima/embaixo
-                         (photo real geralmente quadrada/paisagem, sobrava
-                         vazio nas pontas). Trocado por caixa QUADRADA fixa
-                         (Width=Height=64, Top em vez de esticar a coluna
-                         toda) + Stretch="UniformToFill" (preenche o
-                         quadrado inteiro, recorta o excesso) — pedido
-                         explícito: "se cortar isso dá pra diminuir o card e
-                         fica perfeito". Caixa quadrada corta bem menos que
-                         a coluna alta de antes (a maioria das fotos de
-                         produto já é ~quadrada). -->
-                    <Grid Grid.Column="0" Width="64" Height="64" Margin="0,0,10,0" VerticalAlignment="Top" HorizontalAlignment="Left">
-                        <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="8" ClipToBounds="True">
-                            <Image Source="{Binding ProductImage}" Stretch="UniformToFill" Visibility="{Binding HasProductImageVisibility}" />
-                        </Border>
-                        <iconPacks:PackIconMaterial Kind="ImageOutline" Width="22" Height="22"
-                                                     Foreground="{DynamicResource TextSecondaryBrush}" Opacity="0.5"
-                                                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                     Visibility="{Binding NoProductImageVisibility}" />
-                    </Grid>
-
                 <!-- Achado real 2026-08-07 (segunda rodada — "ainda está
                      pequeno"): mesmo com StretchDirection=DownOnly correto,
                      o texto continuava pequeno porque a LINHA em si
@@ -174,7 +137,7 @@
                      sobrava só ~15px pra CADA uma das linhas "*", por isso
                      o DownOnly encolhia tudo de volta pra quase nada. Row0
                      90->52 devolve esse espaço pra quem precisa. -->
-                <Grid Grid.Column="1">
+                <Grid Visibility="{Binding HasOrderVisibility}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="52" />
                         <RowDefinition Height="*" />
@@ -272,15 +235,9 @@
                              (IsPacked) — pedido explícito 2026-08-13: o
                              pedido NÃO sai do card/da fila, o botão é só um
                              indicador de status pra conferência visual.
-                             ToolTip mostra o erro se a chamada falhar.
-                             Visível só pra pedido PAGO (IsActionable) — BUG
-                             REAL 2026-08-15: a fila passou a trazer todo
-                             pedido do dia, e clicar "embalar" num já
-                             enviado/cancelado sempre dava 409 no servidor
-                             ("o botão não funciona"). -->
+                             ToolTip mostra o erro se a chamada falhar. -->
                         <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
                                 ToolTip="{Binding PackErrorMessage}"
-                                Visibility="{Binding PackButtonVisibility}"
                                 Foreground="White" FontSize="12" FontWeight="Bold" Padding="12,6" VerticalAlignment="Bottom">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -293,16 +250,7 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-
-                        <!-- Pedido não-acionável (já enviado, cancelado,
-                             aguardando pagamento) — mostra só o rótulo do
-                             status no lugar do botão. -->
-                        <Border Grid.Column="1" Background="{DynamicResource TextSecondaryBrush}" Opacity="0.85" CornerRadius="6"
-                                Padding="10,6" VerticalAlignment="Bottom" Visibility="{Binding StatusBadgeVisibility}">
-                            <TextBlock Text="{Binding StatusLabel}" FontSize="12" FontWeight="Bold" Foreground="White" />
-                        </Border>
                     </Grid>
-                </Grid>
                 </Grid>
             </Grid>
         </DataTemplate>
@@ -322,33 +270,16 @@
              pro fim da linha em vez de texto solto com " • " — ver dentro
              do template. -->
         <DataTemplate x:Key="OrderQueueRestItemTemplate" DataType="{x:Type vm:OrderQueueCardViewModel}">
-            <!-- Padding 8->6, Margin 4->3 (pedido explícito 2026-08-15:
-                 "diminuir o tamanho do card todos"). -->
-            <Border Style="{StaticResource CardStyle}" Padding="6" Margin="0,0,0,3">
+            <Border Style="{StaticResource CardStyle}" Padding="8" Margin="0,0,0,4">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3" />
-                        <ColumnDefinition Width="40" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" CornerRadius="2" Margin="0,0,8,0" />
+                    <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" CornerRadius="2" Margin="0,0,10,0" />
 
-                    <!-- Foto do produto (pedido explícito 2026-08-15, em
-                         TODOS os cards) — mesma lógica do card em destaque,
-                         só menor: caixa quadrada fixa + UniformToFill (ver
-                         comentário completo no card em destaque acima). -->
-                    <Grid Grid.Column="1" Width="40" Height="40" Margin="0,0,8,0" VerticalAlignment="Top" HorizontalAlignment="Left">
-                        <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="6" ClipToBounds="True">
-                            <Image Source="{Binding ProductImage}" Stretch="UniformToFill" Visibility="{Binding HasProductImageVisibility}" />
-                        </Border>
-                        <iconPacks:PackIconMaterial Kind="ImageOutline" Width="16" Height="16"
-                                                     Foreground="{DynamicResource TextSecondaryBrush}" Opacity="0.5"
-                                                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                     Visibility="{Binding NoProductImageVisibility}" />
-                    </Grid>
-
-                    <StackPanel Grid.Column="2">
+                    <StackPanel Grid.Column="1">
                         <!-- Marketplace virou badge (mesma cor/estilo já
                              usado no card em destaque) jogado pro fim da
                              linha (pedido explícito 2026-08-07: "justify
@@ -397,7 +328,6 @@
 
                             <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
                                     ToolTip="{Binding PackErrorMessage}"
-                                    Visibility="{Binding PackButtonVisibility}"
                                     Foreground="White" FontSize="10" FontWeight="Bold" Padding="8,4">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -410,11 +340,6 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
-
-                            <Border Grid.Column="1" Background="{DynamicResource TextSecondaryBrush}" Opacity="0.85" CornerRadius="6"
-                                    Padding="8,4" Visibility="{Binding StatusBadgeVisibility}">
-                                <TextBlock Text="{Binding StatusLabel}" FontSize="10" FontWeight="Bold" Foreground="White" />
-                            </Border>
                         </Grid>
                     </StackPanel>
                 </Grid>
@@ -423,25 +348,8 @@
 
     </Window.Resources>
 
-    <!-- BUG REAL 2026-08-15 (confirmado com print + captura ao vivo da
-         janela real rodando): o banner "Vendas agendadas" e os cards do
-         topo viviam dentro do MESMO Grid aninhado (um "topo" com 3 linhas
-         Auto dentro de um "wrapper" dentro do Grid raiz) — mesmo com
-         Grid.Row correto em cada um, a captura ao vivo mostrou o texto do
-         banner desenhando exatamente por cima dos cards, não abaixo (2
-         tentativas anteriores de conserto dentro dessa mesma estrutura
-         aninhada não resolveram). Causa exata não identificada com certeza
-         (suspeita: interação de medição Auto entre um ItemsControl com
-         UniformGrid e um irmão de Visibility alternante no mesmo Grid
-         aninhado) — em vez de continuar tentando entender esse
-         comportamento específico, a estrutura foi achatada: banner virou
-         uma linha PRÓPRIA e INDEPENDENTE direto no Grid raiz da janela,
-         sem nenhum Grid aninhado compartilhado com os cards do topo. -->
     <Grid Margin="24">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
@@ -539,114 +447,29 @@
              tivesse espaço infinito) — por isso o Grid com coluna "*" dentro
              do card sozinho não resolvia: nunca havia uma largura real pra
              constranger nada, em lugar nenhum da árvore. -->
-        <!-- BUG REAL 2026-08-15 (achado no print real do usuário — sobrava
-             uma faixa preta enorme embaixo da fila, mesmo com a janela
-             maximizada, e o usuário marcou "AUMENTAR" nesse vazio): tudo
-             (métricas + banner + fila) vivia dentro de UM ScrollViewer só,
-             que mede o conteúdo com altura INFINITA — dentro dele, uma
-             linha "*" (ou um Grid com Height fixo baixo, como a fila
-             estava) nunca cresce pra ocupar o espaço real da janela, só o
-             que o conteúdo pede. Reestruturado em 2 blocos: topo (métricas
-             + erro + banner, Auto — conteúdo curto, não precisa de altura
-             dinâmica) e fila (Row "*" DE VERDADE, porque agora é filho
-             direto de um Grid com altura finita, não de um ScrollViewer) —
-             a fila cresce pra preencher toda a altura sobrando da janela. -->
-        <!-- Métricas do topo (visão geral) — UniformGrid garante que os 5
-             cards tenham exatamente o mesmo tamanho e dividam igualmente a
-             largura disponível, se adaptando sozinha a qualquer largura de
-             janela/monitor (sem WrapPanel, sem largura fixa por card).
-             ItemTemplate não é setado de propósito — TopCards mistura
-             MetricCardViewModel e ChannelOrdersCardViewModel, resolvidos
-             cada um pelo seu DataTemplate implícito (ver Window.Resources).
-             Linha PRÓPRIA no Grid raiz agora (ver comentário grande lá em
-             cima) — não divide Grid nenhum com o banner de baixo. -->
-        <ItemsControl Grid.Row="1" ItemsSource="{Binding TopCards}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <UniformGrid Rows="1" Columns="5" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-        </ItemsControl>
-
-        <TextBlock Grid.Row="2" Text="{Binding LastDashboardError, StringFormat='Falha ao atualizar o painel: {0}'}"
-                   Foreground="{DynamicResource StatusErrorBrush}" FontWeight="Bold" Margin="0,10,0,0"
-                   Visibility="{Binding HasDashboardErrorVisibility}" TextWrapping="Wrap" />
-
-        <!-- Banner "Envios agendados" (pedido explícito 2026-08-14, achado
-             no pedido #278: venda de Coleta/Places do Mercado Livre com
-             etiqueta liberada só perto de uma data futura que o PRÓPRIO
-             canal escolheu — parecia pedido travado, não era). Só aparece
-             quando tem pelo menos 1 (ScheduledShipmentsVisibility) — fica
-             num tom neutro/informativo normalmente, e muda pra vermelho só
-             quando algum item já passou da data prometida sem liberar
-             (HasOverdueScheduledShipments), pra não parecer alarme falso
-             todo santo dia. Linha PRÓPRIA no Grid raiz (Grid.Row="3") —
-             ver comentário grande lá em cima do porquê disso mudou. -->
-        <Border Grid.Row="3" Margin="0,14,0,0" Padding="14,10" CornerRadius="10" BorderThickness="1.5"
-                Visibility="{Binding ScheduledShipmentsVisibility}">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="Background" Value="{DynamicResource StatusProcessingSoftBrush}" />
-                    <Setter Property="BorderBrush" Value="{DynamicResource StatusProcessingSoftBorderBrush}" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding HasOverdueScheduledShipments}" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource StatusErrorSoftBrush}" />
-                            <Setter Property="BorderBrush" Value="{DynamicResource StatusErrorSoftBorderBrush}" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <iconPacks:PackIconMaterial Kind="CalendarClock" Width="20" Height="20"
-                                                 Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                    <TextBlock Text="Vendas agendadas pelo canal" Style="{StaticResource BodyTextStyle}"
-                               FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center" />
-                </StackPanel>
-                <TextBlock Style="{StaticResource SecondaryTextStyle}" Margin="28,2,0,6" TextWrapping="Wrap">
-                    O próprio canal decidiu liberar a etiqueta só perto da data — não é pedido travado, é assim mesmo (Coleta/Places).
-                </TextBlock>
-                <ItemsControl ItemsSource="{Binding ScheduledShipments}" Margin="28,0,0,0">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Grid Margin="0,2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6"
-                                        Padding="6,2" Margin="0,0,8,0" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding ChannelDisplayName}" FontSize="10" FontWeight="Bold" Foreground="White" />
-                                </Border>
-
-                                <TextBlock Grid.Column="1" Style="{StaticResource BodyTextStyle}" FontSize="13"
-                                            VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
-                                    <Run Text="{Binding OrderNumberText}" FontWeight="Bold" /><Run Text=" — " /><Run Text="{Binding CustomerName}" />
-                                </TextBlock>
-
-                                <TextBlock Grid.Column="2" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"
-                                            Text="{Binding StatusText}">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsOverdue}" Value="True">
-                                                    <Setter Property="Foreground" Value="{DynamicResource StatusErrorBrush}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
+                <!-- Métricas do topo (visão geral) — UniformGrid garante que
+                     os 5 cards tenham exatamente o mesmo tamanho e dividam
+                     igualmente a largura disponível, se adaptando sozinha a
+                     qualquer largura de janela/monitor (sem WrapPanel, sem
+                     largura fixa por card). ItemTemplate não é setado de
+                     propósito — TopCards mistura MetricCardViewModel e
+                     ChannelOrdersCardViewModel, resolvidos cada um pelo seu
+                     DataTemplate implícito (ver Window.Resources). -->
+                <ItemsControl ItemsSource="{Binding TopCards}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1" Columns="5" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
                 </ItemsControl>
-            </StackPanel>
-        </Border>
 
-        <!-- Cards de canal (removidos da tela por pedido explícito
+                <TextBlock Text="{Binding LastDashboardError, StringFormat='Falha ao atualizar o painel: {0}'}"
+                           Foreground="{DynamicResource StatusErrorBrush}" FontWeight="Bold" Margin="0,10,0,0"
+                           Visibility="{Binding HasDashboardErrorVisibility}" TextWrapping="Wrap" />
+
+                <!-- Cards de canal (removidos da tela por pedido explícito
                      2026-08-04: "remove os cards dos canais e coloca essa
                      lista de impressão") e overlays de detalhe clicáveis
                      (removidos por outro pedido explícito, mesmo dia:
@@ -659,23 +482,25 @@
                      substituídas pela fila de expedição do dia abaixo. -->
 
                 <!-- Fila de expedição de HOJE (pedido explícito 2026-08-06,
-                     estilo "chamada de senha"): 3 cards em destaque (pedido
-                     explícito 2026-08-15, "+1 CARD" — eram 2) à esquerda +
-                     lista com scroll do resto à direita, tudo em ordem
-                     decrescente — ver MainViewModel.UpdateOrderQueueAsync,
-                     alimentado por DashboardPoller a cada 2s. Altura real
-                     agora (Grid.Row="*" do container pai, não mais um
-                     número fixo em pixel) — pedido explícito 2026-08-15
-                     ("AUMENTAR", sobrava uma faixa preta enorme embaixo com
-                     a janela maximizada porque a altura era travada em
-                     320px fixos independente do tamanho real da tela). -->
+                     estilo "chamada de senha"): 2 cards em destaque (mais
+                     recente + segundo mais recente) à esquerda + lista com
+                     scroll do resto à direita, tudo em ordem decrescente —
+                     ver MainViewModel.UpdateOrderQueue, alimentado por
+                     DashboardPoller a cada 2s. Height fixo (420) porque os
+                     dois cards usam RowDefinition="*" internamente (Viewbox
+                     precisa de uma altura real pra encolher/crescer contra
+                     — ver os templates em Window.Resources); esse valor foi
+                     calculado pelo espaço restante da janela (820px), não
+                     verificado visualmente numa tela Windows real nesta
+                     sessão — pode precisar de ajuste fino ao abrir de
+                     verdade. -->
                 <!-- Divisão 50/50 entre os cards em destaque e a lista do
                      resto do dia (pedido explícito 2026-08-06, "col-6 pra
                      cada lado") — era largura fixa de 420px pro lado
                      direito, agora as duas colunas usam Width="*" (mesmo
                      peso, dividem igual qualquer que seja a largura da
                      janela). -->
-                <Grid Grid.Row="4" Margin="0,20,0,0">
+                <Grid Margin="0,20,0,0" Height="420">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -685,7 +510,6 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
                             <RowDefinition Height="*" />
-                            <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
                         <!-- Padding 24->16 (2026-08-07, mesma rodada do
@@ -693,16 +517,12 @@
                              enquanto nome/produto ficavam espremidos por
                              dentro — ver comentário completo dentro do
                              OrderQueueBigCardTemplate. -->
-                        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="16" Margin="0,0,0,6">
+                        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="16" Margin="0,0,0,8">
                             <ContentControl Content="{Binding QueueCard1}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
                         </Border>
 
-                        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="16" Margin="0,6,0,6">
+                        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="16" Margin="0,8,0,0">
                             <ContentControl Content="{Binding QueueCard2}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
-                        </Border>
-
-                        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="16" Margin="0,6,0,0">
-                            <ContentControl Content="{Binding QueueCard3}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
                         </Border>
                     </Grid>
 
@@ -724,9 +544,11 @@
                         </Grid>
                     </Border>
                 </Grid>
+            </StackPanel>
+        </ScrollViewer>
 
         <!-- Rodapé -->
-        <Grid Grid.Row="5" Margin="0,20,0,0">
+        <Grid Grid.Row="2" Margin="0,20,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <TextBlock Text="Desenvolvido com " Style="{StaticResource SecondaryTextStyle}" />
                 <TextBlock Text="❤" Style="{StaticResource FooterLinkStyle}" MouseLeftButtonUp="DevLiraLink_Click" Margin="2,0" />

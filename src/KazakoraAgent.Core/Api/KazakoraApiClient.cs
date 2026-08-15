@@ -109,34 +109,12 @@ public sealed class KazakoraApiClient : IKazakoraApiClient
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task<byte[]?> DownloadOrderImageAsync(long orderId, CancellationToken ct = default)
-    {
-        var response = await _http.GetAsync($"dashboard/queue/{orderId}/image", ct);
-
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-        {
-            return null;
-        }
-
-        response.EnsureSuccessStatusCode();
-
-        return await response.Content.ReadAsByteArrayAsync(ct);
-    }
-
     public async Task<DailyTextDto?> GetDailyTextAsync(CancellationToken ct = default)
     {
         var response = await _http.GetFromJsonAsync<DailyTextResponse>("dashboard/daily-text", JsonOptions, ct)
             ?? throw new InvalidOperationException("Resposta vazia de GET dashboard/daily-text.");
 
         return response.DailyText;
-    }
-
-    public async Task<IReadOnlyList<ScheduledShipmentDto>> GetScheduledShipmentsAsync(CancellationToken ct = default)
-    {
-        var response = await _http.GetFromJsonAsync<ScheduledShipmentsResponse>("dashboard/scheduled-shipments", JsonOptions, ct)
-            ?? throw new InvalidOperationException("Resposta vazia de GET dashboard/scheduled-shipments.");
-
-        return response.ScheduledShipments;
     }
 
     private sealed class LabelsResponse
@@ -155,12 +133,6 @@ public sealed class KazakoraApiClient : IKazakoraApiClient
     {
         [JsonPropertyName("daily_text")]
         public DailyTextDto? DailyText { get; init; }
-    }
-
-    private sealed class ScheduledShipmentsResponse
-    {
-        [JsonPropertyName("scheduled_shipments")]
-        public required List<ScheduledShipmentDto> ScheduledShipments { get; init; }
     }
 
     private sealed class JobsIndexResponse

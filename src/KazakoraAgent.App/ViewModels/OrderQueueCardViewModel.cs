@@ -1,9 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.IO;
 using System.Windows;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using KazakoraAgent.App.Theming;
@@ -61,94 +59,8 @@ public partial class OrderQueueCardViewModel : ObservableObject
 
     public Brush ChannelAccentBrush => Channel is null ? System.Windows.Media.Brushes.Gray : ChannelBrandColors.BrushFor(Channel);
 
-    /// "paid" | "shipped" | "completed" | "cancelled" | "pending" |
-    /// "awaiting_payment" (ver OrderQueueItemDto.Status). Pedido explícito
-    /// 2026-08-15: a fila passou a trazer todo pedido de hoje, não só
-    /// pago — precisa disso pra decidir se o botão "Em preparação" faz
-    /// sentido (só pago, ver IsActionable; embalar um já enviado/cancelado
-    /// dá 409 no servidor — era a causa real do botão "não funcionar").
-    [ObservableProperty]
-    private string _status = string.Empty;
-
-    [ObservableProperty]
-    private string _statusLabel = string.Empty;
-
-    public bool IsActionable => Status == "paid";
-
-    public Visibility PackButtonVisibility => IsActionable ? Visibility.Visible : Visibility.Collapsed;
-
-    public Visibility StatusBadgeVisibility => IsActionable ? Visibility.Collapsed : Visibility.Visible;
-
-    partial void OnStatusChanged(string value)
-    {
-        OnPropertyChanged(nameof(IsActionable));
-        OnPropertyChanged(nameof(PackButtonVisibility));
-        OnPropertyChanged(nameof(StatusBadgeVisibility));
-    }
-
     [ObservableProperty]
     private string _customerName = string.Empty;
-
-    /// Foto do produto (pedido explícito 2026-08-15, em TODOS os cards —
-    /// destaque e lista compacta) — mesma imagem já publicada nos
-    /// marketplaces (ver OrderImageArchiveService no Laravel). Null
-    /// enquanto ainda não chegou/pedido sem foto — mostra o ícone
-    /// placeholder (ver HasProductImageVisibility/MainWindow.xaml) em vez
-    /// de deixar um espaço em branco. Setada de fora (MainViewModel) via
-    /// SetProductImage, nunca direto por binding: baixar a imagem é uma
-    /// chamada de rede à parte de UpdateFrom(dto).
-    [ObservableProperty]
-    private ImageSource? _productImage;
-
-    public Visibility HasProductImageVisibility => ProductImage is not null ? Visibility.Visible : Visibility.Collapsed;
-
-    public Visibility NoProductImageVisibility => ProductImage is null ? Visibility.Visible : Visibility.Collapsed;
-
-    partial void OnProductImageChanged(ImageSource? value)
-    {
-        OnPropertyChanged(nameof(HasProductImageVisibility));
-        OnPropertyChanged(nameof(NoProductImageVisibility));
-    }
-
-    /// bytes null (sem imagem disponível/falha no download) limpa pro
-    /// placeholder. BitmapCacheOption.OnLoad decodifica a imagem inteira
-    /// antes de EndInit() retornar e fecha o MemoryStream logo em seguida —
-    /// sem isso, o BitmapImage guardaria só uma referência ao stream (modo
-    /// OnDemand, padrão), que já estaria descartado (using) na hora real de
-    /// desenhar o card, resultando numa imagem quebrada. Freeze() depois
-    /// torna a instância imutável/thread-safe, necessário porque quem chama
-    /// este método (MainViewModel) faz o download em background antes de
-    /// voltar pra UI thread.
-    public void SetProductImage(byte[]? bytes)
-    {
-        if (bytes is null || bytes.Length == 0)
-        {
-            ProductImage = null;
-
-            return;
-        }
-
-        try
-        {
-            var bitmap = new BitmapImage();
-            using var stream = new MemoryStream(bytes);
-
-            bitmap.BeginInit();
-            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-            bitmap.StreamSource = stream;
-            bitmap.EndInit();
-            bitmap.Freeze();
-
-            ProductImage = bitmap;
-        }
-        catch (Exception ex)
-        {
-            // Imagem é só apoio visual — bytes corrompidos/formato
-            // inesperado não pode derrubar o card inteiro, só fica sem foto.
-            AppLog.Error($"Falha ao decodificar a imagem do pedido #{OrderId}: {ex.Message}");
-            ProductImage = null;
-        }
-    }
 
     [ObservableProperty]
     private int _unitsCount;
@@ -258,8 +170,6 @@ public partial class OrderQueueCardViewModel : ObservableObject
         OrderId = 0;
         ExternalOrderId = null;
         Channel = null;
-        Status = string.Empty;
-        StatusLabel = string.Empty;
         CustomerName = string.Empty;
         UnitsCount = 0;
         CreatedAt = default;
@@ -267,7 +177,6 @@ public partial class OrderQueueCardViewModel : ObservableObject
         IsPacked = false;
         PackErrorMessage = null;
         ProductLines.Clear();
-        ProductImage = null;
     }
 
     public void UpdateFrom(OrderQueueItemDto dto)
@@ -276,8 +185,6 @@ public partial class OrderQueueCardViewModel : ObservableObject
         OrderId = dto.Id;
         ExternalOrderId = dto.ExternalOrderId;
         Channel = dto.Channel;
-        Status = dto.Status;
-        StatusLabel = dto.StatusLabel;
         CustomerName = string.IsNullOrWhiteSpace(dto.CustomerName) ? "Cliente não informado" : dto.CustomerName;
         UnitsCount = dto.UnitsCount;
         CreatedAt = dto.CreatedAt;

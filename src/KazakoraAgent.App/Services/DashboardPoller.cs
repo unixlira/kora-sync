@@ -172,28 +172,12 @@ public sealed class DashboardPoller : IDisposable
                 // do QueueTickAsync (que é sobre PROCESSAR/imprimir, não
                 // sobre o que aparece na tela).
                 var queue = await _api.GetOrderQueueAsync();
-                await _viewModel.UpdateOrderQueueAsync(queue);
+                _viewModel.UpdateOrderQueue(queue);
             }
             catch (Exception ex)
             {
                 anyFailure = true;
                 _viewModel.LastDashboardError = $"Fila do dia: {ex.Message}";
-            }
-
-            try
-            {
-                // Vendas agendadas pelo canal (pedido explícito 2026-08-14,
-                // achado no pedido #278) — muda raramente (só quando um
-                // pedido novo agendado chega ou um agendado sai da lista),
-                // mas manter na mesma cadência de 2s do resto é mais simples
-                // que inventar um timer à parte só pra isso.
-                var scheduled = await _api.GetScheduledShipmentsAsync();
-                _viewModel.UpdateScheduledShipments(scheduled);
-            }
-            catch (Exception ex)
-            {
-                anyFailure = true;
-                _viewModel.LastDashboardError = $"Envios agendados: {ex.Message}";
             }
 
             if (!anyFailure)

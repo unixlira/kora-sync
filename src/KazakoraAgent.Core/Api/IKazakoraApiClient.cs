@@ -43,19 +43,6 @@ public interface IKazakoraApiClient
     /// filtro whereNull('packed_at') em queue()).
     Task PackOrderAsync(long orderId, CancellationToken ct = default);
 
-    /// Foto do produto do pedido (pedido explícito 2026-08-15) — mesma
-    /// imagem já publicada nos marketplaces (ver OrderImageArchiveService
-    /// no Laravel). Null quando o pedido não tem produto/imagem pra
-    /// mostrar (404 do servidor) — esperado, não é falha; mesmo padrão de
-    /// DownloadArchiveAsync.
-    Task<byte[]?> DownloadOrderImageAsync(long orderId, CancellationToken ct = default);
-
     /// Null quando o servidor ainda não tem nenhum texto diário salvo.
     Task<DailyTextDto?> GetDailyTextAsync(CancellationToken ct = default);
-
-    /// Vendas AGENDADAS pelo canal (pedido explícito 2026-08-14, achado no
-    /// pedido #278) — etiqueta liberada só perto de uma data futura
-    /// decidida pelo Mercado Livre/Shopee, não um pedido travado de
-    /// verdade. Alimenta o alerta/lista de "Envios agendados" do painel.
-    Task<IReadOnlyList<ScheduledShipmentDto>> GetScheduledShipmentsAsync(CancellationToken ct = default);
 }

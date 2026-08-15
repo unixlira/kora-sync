@@ -4,7 +4,6 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using KazakoraAgent.Core;
 using KazakoraAgent.Core.Api;
 using KazakoraAgent.Core.Models;
 using MahApps.Metro.IconPacks;
@@ -35,34 +34,19 @@ public partial class MainViewModel : ObservableObject
     /// renderizar os dois tipos misturados na mesma linha.
     public ObservableCollection<object> TopCards { get; }
 
-    /// Os 3 cards em destaque da fila de expedição de hoje (eram 2 até
-    /// 2026-08-06, "+1 CARD" pedido explícito 2026-08-15) — pedido mais
-    /// recente (QueueCard1), segundo (QueueCard2), terceiro (QueueCard3).
-    /// Instâncias fixas (não uma ObservableCollection) porque a XAML liga
-    /// cada uma direto num Border próprio, não via ItemsControl — mais
-    /// simples de posicionar 3 "quadrados" fixos empilhados. Ver
-    /// UpdateOrderQueueAsync.
+    /// Os 2 cards em destaque da fila de expedição de hoje — pedido mais
+    /// recente (QueueCard1) e o segundo mais recente (QueueCard2), pedido
+    /// explícito 2026-08-06. Instâncias fixas (não uma ObservableCollection
+    /// de 2 itens) porque a XAML liga cada uma direto num Border próprio,
+    /// não via ItemsControl — mais simples de posicionar um "quadrado" fixo
+    /// em cima e outro embaixo. Ver UpdateOrderQueue.
     public OrderQueueCardViewModel QueueCard1 { get; } = new();
 
     public OrderQueueCardViewModel QueueCard2 { get; } = new();
 
-    public OrderQueueCardViewModel QueueCard3 { get; } = new();
-
     /// 3º pedido do dia em diante, mesma ordem decrescente — lista com
     /// scroll próprio (coluna da direita, ver MainWindow.xaml).
     public ObservableCollection<OrderQueueCardViewModel> QueueRest { get; } = [];
-
-    /// Vendas AGENDADAS pelo canal (pedido explícito 2026-08-14, achado no
-    /// pedido #278) — banner separado da fila normal, só aparece quando
-    /// tem algo (ver HasScheduledShipments/MainWindow.xaml). Já vem do
-    /// servidor ordenado pela data mais próxima primeiro.
-    public ObservableCollection<ScheduledShipmentCardViewModel> ScheduledShipments { get; } = [];
-
-    public bool HasScheduledShipments => ScheduledShipments.Count > 0;
-
-    public bool HasOverdueScheduledShipments => ScheduledShipments.Any(s => s.IsOverdue);
-
-    public Visibility ScheduledShipmentsVisibility => HasScheduledShipments ? Visibility.Visible : Visibility.Collapsed;
 
     /// Mensagem da última falha ao buscar canais/métricas — null quando o
     /// último tick foi bem-sucedido. Ver DashboardPoller.DashboardTickAsync.
@@ -128,7 +112,6 @@ public partial class MainViewModel : ObservableObject
         // UpdateOrderQueue.
         QueueCard1.PackRequested = PackOrderAsync;
         QueueCard2.PackRequested = PackOrderAsync;
-        QueueCard3.PackRequested = PackOrderAsync;
     }
 
     public void UpdateMetrics(DashboardMetricsDto dto)
@@ -160,14 +143,6 @@ public partial class MainViewModel : ObservableObject
         ChannelOrdersCard.UpdateFrom(statuses);
     }
 
-    /// Cache de imagem por pedido (pedido explícito 2026-08-15: foto em
-    /// TODOS os cards, não só os 2 em destaque) — QueueRest é reconstruída
-    /// do zero a cada tick (ver UpdateOrderQueueAsync), então sem esse
-    /// cache o app rebaixaria a imagem de cada pedido da lista a cada 2s
-    /// pra sempre. null cacheado também conta ("já tentei, não tem
-    /// imagem") — não fica retentando pedido sem foto a cada tick.
-    private readonly Dictionary<long, byte[]?> _imageCache = new();
-
     /// <summary>
     /// items já vem do servidor em ordem decrescente (ver
     /// DashboardAgentController::queue, orderByDesc('id')). QueueCard1/
@@ -176,70 +151,34 @@ public partial class MainViewModel : ObservableObject
     /// nada que dependa de identidade de objeto no futuro; QueueRest é
     /// reconstruída (mais simples, e a lista muda de tamanho a cada
     /// pedido novo/enviado de qualquer forma).
-    ///
-    /// Async desde 2026-08-15 (pedido explícito, foto do produto em todo
-    /// card): busca a imagem de cada pedido visível (destaque + lista
-    /// compacta), sempre passando por _imageCache — primeira vez que um
-    /// pedido aparece custa 1 chamada de rede, depois é só leitura do
-    /// dicionário, mesmo QueueRest sendo recriada a cada tick.
     /// </summary>
-    public async Task UpdateOrderQueueAsync(IReadOnlyList<OrderQueueItemDto> items)
+    public void UpdateOrderQueue(IReadOnlyList<OrderQueueItemDto> items)
     {
-        await UpdateFeaturedCardAsync(QueueCard1, items.Count > 0 ? items[0] : null);
-        await UpdateFeaturedCardAsync(QueueCard2, items.Count > 1 ? items[1] : null);
-        await UpdateFeaturedCardAsync(QueueCard3, items.Count > 2 ? items[2] : null);
+        if (items.Count > 0)
+        {
+            QueueCard1.UpdateFrom(items[0]);
+        }
+        else
+        {
+            QueueCard1.Clear();
+        }
+
+        if (items.Count > 1)
+        {
+            QueueCard2.UpdateFrom(items[1]);
+        }
+        else
+        {
+            QueueCard2.Clear();
+        }
 
         QueueRest.Clear();
-        foreach (var dto in items.Skip(3))
+        foreach (var dto in items.Skip(2))
         {
             var item = new OrderQueueCardViewModel { PackRequested = PackOrderAsync };
             item.UpdateFrom(dto);
-            item.SetProductImage(await GetOrFetchImageAsync(dto.Id));
             QueueRest.Add(item);
         }
-    }
-
-    private async Task UpdateFeaturedCardAsync(OrderQueueCardViewModel card, OrderQueueItemDto? dto)
-    {
-        if (dto is null)
-        {
-            card.Clear();
-
-            return;
-        }
-
-        card.UpdateFrom(dto);
-        card.SetProductImage(await GetOrFetchImageAsync(dto.Id));
-    }
-
-    private async Task<byte[]?> GetOrFetchImageAsync(long orderId)
-    {
-        if (_imageCache.TryGetValue(orderId, out var cached))
-        {
-            return cached;
-        }
-
-        if (_api is null)
-        {
-            return null;
-        }
-
-        byte[]? bytes = null;
-
-        try
-        {
-            bytes = await _api.DownloadOrderImageAsync(orderId);
-        }
-        catch (Exception ex)
-        {
-            // Imagem é só apoio visual — falha de rede aqui não pode virar
-            // LastDashboardError nem derrubar o resto do tick.
-            AppLog.Error($"Falha ao baixar a imagem do pedido #{orderId}: {ex.Message}");
-        }
-
-        _imageCache[orderId] = bytes; // cacheia mesmo null, pra não retentar todo tick
-
-        return bytes;
     }
 
     /// Callback por trás do botão "Em preparação" de todo card da fila
@@ -250,21 +189,4 @@ public partial class MainViewModel : ObservableObject
     /// primeira versão deste botão, o pedido NÃO sai da fila, então não há
     /// motivo pra buscar a lista inteira de novo aqui.
     private Task PackOrderAsync(long orderId) => _api?.PackOrderAsync(orderId) ?? Task.CompletedTask;
-
-    /// Banner "Envios agendados" (pedido explícito 2026-08-14) — reconstruída
-    /// a cada tick, mesmo padrão do QueueRest (lista muda de tamanho a
-    /// qualquer momento, mais simples que reconciliar item por item).
-    public void UpdateScheduledShipments(IReadOnlyList<ScheduledShipmentDto> items)
-    {
-        ScheduledShipments.Clear();
-
-        foreach (var dto in items)
-        {
-            ScheduledShipments.Add(ScheduledShipmentCardViewModel.FromDto(dto));
-        }
-
-        OnPropertyChanged(nameof(HasScheduledShipments));
-        OnPropertyChanged(nameof(HasOverdueScheduledShipments));
-        OnPropertyChanged(nameof(ScheduledShipmentsVisibility));
-    }
 }
