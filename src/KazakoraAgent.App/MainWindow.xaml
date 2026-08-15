@@ -141,14 +141,21 @@
 
                     <!-- Foto do produto — mesma imagem publicada nos
                          marketplaces (ver OrderImageArchiveService no
-                         Laravel). Stretch="Uniform" mostra a imagem
-                         INTEIRA, no tamanho/proporção real dela (pedido
-                         explícito: "de acordo com o tamanho e a
-                         qualidade") — nunca corta, nunca distorce. Sem
-                         imagem disponível, ícone neutro no lugar. -->
-                    <Grid Grid.Column="0" Margin="0,4,10,4">
+                         Laravel). BUG REAL 2026-08-15 (achado no print real
+                         do usuário): Stretch="Uniform" numa caixa mais alta
+                         que larga deixava barra PRETA em cima/embaixo
+                         (photo real geralmente quadrada/paisagem, sobrava
+                         vazio nas pontas). Trocado por caixa QUADRADA fixa
+                         (Width=Height=64, Top em vez de esticar a coluna
+                         toda) + Stretch="UniformToFill" (preenche o
+                         quadrado inteiro, recorta o excesso) — pedido
+                         explícito: "se cortar isso dá pra diminuir o card e
+                         fica perfeito". Caixa quadrada corta bem menos que
+                         a coluna alta de antes (a maioria das fotos de
+                         produto já é ~quadrada). -->
+                    <Grid Grid.Column="0" Width="64" Height="64" Margin="0,0,10,0" VerticalAlignment="Top" HorizontalAlignment="Left">
                         <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="8" ClipToBounds="True">
-                            <Image Source="{Binding ProductImage}" Stretch="Uniform" Visibility="{Binding HasProductImageVisibility}" />
+                            <Image Source="{Binding ProductImage}" Stretch="UniformToFill" Visibility="{Binding HasProductImageVisibility}" />
                         </Border>
                         <iconPacks:PackIconMaterial Kind="ImageOutline" Width="22" Height="22"
                                                      Foreground="{DynamicResource TextSecondaryBrush}" Opacity="0.5"
@@ -314,11 +321,12 @@
                     <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" CornerRadius="2" Margin="0,0,8,0" />
 
                     <!-- Foto do produto (pedido explícito 2026-08-15, em
-                         TODOS os cards) — mesma lógica do card em
-                         destaque, só menor. -->
-                    <Grid Grid.Column="1" Margin="0,0,8,0">
+                         TODOS os cards) — mesma lógica do card em destaque,
+                         só menor: caixa quadrada fixa + UniformToFill (ver
+                         comentário completo no card em destaque acima). -->
+                    <Grid Grid.Column="1" Width="40" Height="40" Margin="0,0,8,0" VerticalAlignment="Top" HorizontalAlignment="Left">
                         <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="6" ClipToBounds="True">
-                            <Image Source="{Binding ProductImage}" Stretch="Uniform" Visibility="{Binding HasProductImageVisibility}" />
+                            <Image Source="{Binding ProductImage}" Stretch="UniformToFill" Visibility="{Binding HasProductImageVisibility}" />
                         </Border>
                         <iconPacks:PackIconMaterial Kind="ImageOutline" Width="16" Height="16"
                                                      Foreground="{DynamicResource TextSecondaryBrush}" Opacity="0.5"
@@ -495,7 +503,24 @@
              do card sozinho não resolvia: nunca havia uma largura real pra
              constranger nada, em lugar nenhum da árvore. -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel>
+            <!-- BUG REAL 2026-08-15 (achado no print real do usuário): era
+                 um StackPanel simples aqui — quando o banner "Vendas
+                 agendadas" abaixo tem conteúdo de verdade pela primeira vez
+                 (ScheduledShipmentsVisibility=Visible), ele saía desenhado
+                 SOBRE a fileira de cards do topo em vez de abaixo dela.
+                 Trocado por Grid com RowDefinitions="Auto" explícitas — cada
+                 linha reserva sua própria faixa de espaço garantida, nunca
+                 sobrepõe a vizinha, ao contrário de um StackPanel (que só
+                 empilha do jeito certo se a MEDIÇÃO de cada filho estiver
+                 correta; aqui claramente não estava). -->
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
                 <!-- Métricas do topo (visão geral) — UniformGrid garante que
                      os 5 cards tenham exatamente o mesmo tamanho e dividam
                      igualmente a largura disponível, se adaptando sozinha a
@@ -504,7 +529,7 @@
                      propósito — TopCards mistura MetricCardViewModel e
                      ChannelOrdersCardViewModel, resolvidos cada um pelo seu
                      DataTemplate implícito (ver Window.Resources). -->
-                <ItemsControl ItemsSource="{Binding TopCards}">
+                <ItemsControl Grid.Row="0" ItemsSource="{Binding TopCards}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <UniformGrid Rows="1" Columns="5" />
@@ -512,7 +537,7 @@
                     </ItemsControl.ItemsPanel>
                 </ItemsControl>
 
-                <TextBlock Text="{Binding LastDashboardError, StringFormat='Falha ao atualizar o painel: {0}'}"
+                <TextBlock Grid.Row="1" Text="{Binding LastDashboardError, StringFormat='Falha ao atualizar o painel: {0}'}"
                            Foreground="{DynamicResource StatusErrorBrush}" FontWeight="Bold" Margin="0,10,0,0"
                            Visibility="{Binding HasDashboardErrorVisibility}" TextWrapping="Wrap" />
 
@@ -526,7 +551,7 @@
                      quando algum item já passou da data prometida sem
                      liberar (HasOverdueScheduledShipments), pra não parecer
                      alarme falso todo santo dia. -->
-                <Border Margin="0,14,0,0" Padding="14,10" CornerRadius="10" BorderThickness="1.5"
+                <Border Grid.Row="2" Margin="0,14,0,0" Padding="14,10" CornerRadius="10" BorderThickness="1.5"
                         Visibility="{Binding ScheduledShipmentsVisibility}">
                     <Border.Style>
                         <Style TargetType="Border">
@@ -621,9 +646,10 @@
                      direito, agora as duas colunas usam Width="*" (mesmo
                      peso, dividem igual qualquer que seja a largura da
                      janela). -->
-                <!-- 420->380 (pedido explícito 2026-08-15: "diminuir o
-                     tamanho do card todos"). -->
-                <Grid Margin="0,20,0,0" Height="380">
+                <!-- 420->380->320 (pedido explícito 2026-08-15: "diminuir o
+                     tamanho do card todos" — segunda rodada, junto com a
+                     foto virando quadrada/cortada em vez de esticada). -->
+                <Grid Grid.Row="3" Margin="0,20,0,0" Height="320">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -667,7 +693,7 @@
                         </Grid>
                     </Border>
                 </Grid>
-            </StackPanel>
+            </Grid>
         </ScrollViewer>
 
         <!-- Rodapé -->
