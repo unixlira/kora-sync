@@ -68,6 +68,34 @@ public partial class OrderQueueCardViewModel : ObservableObject
         OnPropertyChanged(nameof(NoProductImageVisibility));
     }
 
+    /// Achado real 2026-08-15: a fila mostra todo pedido do dia, qualquer
+    /// status — sem isso, um pedido cancelado (Shopee cancela antes ou
+    /// depois de já aparecer aqui) ficava visualmente idêntico a um ativo,
+    /// risco real de embalar/despachar algo cancelado. "cancelled" é o
+    /// único valor bruto checado (vem de Order::STATUS_CANCELLED no
+    /// Laravel) — qualquer outro status mantém a tela normal de sempre.
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(PackCommand))]
+    private string? _status;
+
+    [ObservableProperty]
+    private string? _statusLabel;
+
+    public bool IsCancelled => Status == "cancelled";
+
+    public Visibility CancelledBadgeVisibility => IsCancelled ? Visibility.Visible : Visibility.Collapsed;
+
+    /// Botão "Em preparação" some inteiro pra pedido cancelado (não só
+    /// desabilita) — nada clicável que pareça uma ação válida a fazer.
+    public Visibility PackButtonVisibility => IsCancelled ? Visibility.Collapsed : Visibility.Visible;
+
+    partial void OnStatusChanged(string? value)
+    {
+        OnPropertyChanged(nameof(IsCancelled));
+        OnPropertyChanged(nameof(CancelledBadgeVisibility));
+        OnPropertyChanged(nameof(PackButtonVisibility));
+    }
+
     [ObservableProperty]
     private string? _externalOrderId;
 
@@ -140,7 +168,10 @@ public partial class OrderQueueCardViewModel : ObservableObject
     /// de Button (Controls.xaml), lavando a cor verde que é o ponto inteiro
     /// dessa mudança. Reclicar num pedido já embalado só reconfirma no
     /// servidor (packOrder() é idempotente), inofensivo.
-    private bool CanPack => HasOrder && !IsPacking;
+    /// !IsCancelled é defesa em profundidade — o botão já nem aparece
+    /// (PackButtonVisibility), isso barra o Command mesmo se algo algum
+    /// dia disparar PackAsync por outro caminho (atalho de teclado etc).
+    private bool CanPack => HasOrder && !IsPacking && !IsCancelled;
 
     /// Botão "Em preparação" do card — ao clicar, pede pra quem alimentou
     /// este card (MainViewModel.PackOrderAsync) marcar o pedido como
@@ -196,6 +227,8 @@ public partial class OrderQueueCardViewModel : ObservableObject
         IsPacked = false;
         PackErrorMessage = null;
         ProductImage = null;
+        Status = null;
+        StatusLabel = null;
         ProductLines.Clear();
     }
 
@@ -205,6 +238,8 @@ public partial class OrderQueueCardViewModel : ObservableObject
         OrderId = dto.Id;
         ExternalOrderId = dto.ExternalOrderId;
         Channel = dto.Channel;
+        Status = dto.Status;
+        StatusLabel = dto.StatusLabel;
         CustomerName = string.IsNullOrWhiteSpace(dto.CustomerName) ? "Cliente não informado" : dto.CustomerName;
         UnitsCount = dto.UnitsCount;
         CreatedAt = dto.CreatedAt;

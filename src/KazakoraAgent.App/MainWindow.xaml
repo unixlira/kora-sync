@@ -267,9 +267,13 @@
                              (IsPacked) — pedido explícito 2026-08-13: o
                              pedido NÃO sai do card/da fila, o botão é só um
                              indicador de status pra conferência visual.
-                             ToolTip mostra o erro se a chamada falhar. -->
+                             ToolTip mostra o erro se a chamada falhar.
+                             Visibility some inteiro (não só desabilita) pra
+                             pedido cancelado — ver CancelledBadge abaixo,
+                             achado real 2026-08-15. -->
                         <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
                                 ToolTip="{Binding PackErrorMessage}"
+                                Visibility="{Binding PackButtonVisibility}"
                                 Foreground="White" FontSize="12" FontWeight="Bold" Padding="12,6" VerticalAlignment="Bottom">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -282,6 +286,19 @@
                                 </Style>
                             </Button.Style>
                         </Button>
+
+                        <!-- Achado real 2026-08-15: a fila mostra todo
+                             pedido do dia, qualquer status — sem isto, um
+                             pedido cancelado (pela Shopee, antes ou depois
+                             de já aparecer aqui) ficava visualmente
+                             idêntico a um ativo, risco real de
+                             embalar/despachar algo cancelado. Vermelho
+                             sólido de propósito, não sutil. -->
+                        <Border Grid.Column="1" Background="{DynamicResource StatusErrorBrush}" CornerRadius="6"
+                                Padding="10,6" VerticalAlignment="Bottom"
+                                Visibility="{Binding CancelledBadgeVisibility}">
+                            <TextBlock Text="CANCELADO — NÃO ENVIAR" FontSize="12" FontWeight="Bold" Foreground="White" />
+                        </Border>
                     </Grid>
                     </Grid>
                 </Grid>
@@ -303,7 +320,22 @@
              pro fim da linha em vez de texto solto com " • " — ver dentro
              do template. -->
         <DataTemplate x:Key="OrderQueueRestItemTemplate" DataType="{x:Type vm:OrderQueueCardViewModel}">
-            <Border Style="{StaticResource CardStyle}" Padding="8" Margin="0,0,0,4">
+            <!-- DataContext aqui já É o card (ItemsControl gera 1 destes
+                 por item de QueueRest) — DataTrigger direto em IsCancelled,
+                 sem precisar do caminho QueueCardN.IsCancelled explícito
+                 que os 2 cards em destaque precisam (ver comentário lá). -->
+            <Border Padding="8" Margin="0,0,0,4">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsCancelled}" Value="True">
+                                <Setter Property="Background" Value="#8CFF5252" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource StatusErrorBrush}" />
+                                <Setter Property="BorderThickness" Value="2" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3" />
@@ -378,6 +410,7 @@
 
                             <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
                                     ToolTip="{Binding PackErrorMessage}"
+                                    Visibility="{Binding PackButtonVisibility}"
                                     Foreground="White" FontSize="10" FontWeight="Bold" Padding="8,4">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -390,6 +423,11 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
+
+                            <Border Grid.Column="1" Background="{DynamicResource StatusErrorBrush}" CornerRadius="6"
+                                    Padding="8,4" Visibility="{Binding CancelledBadgeVisibility}">
+                                <TextBlock Text="CANCELADO" FontSize="10" FontWeight="Bold" Foreground="White" />
+                            </Border>
                         </Grid>
                     </StackPanel>
                 </Grid>
@@ -567,11 +605,43 @@
                              enquanto nome/produto ficavam espremidos por
                              dentro — ver comentário completo dentro do
                              OrderQueueBigCardTemplate. -->
-                        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="16" Margin="0,0,0,8">
+                        <!-- Fundo do card inteiro vira vermelho (achado
+                             real 2026-08-15, pedido explícito) quando o
+                             pedido está cancelado — Opacity 0.18 (mesmo
+                             espírito das bolhas de ícone do topo) pra não
+                             lavar o texto, BorderBrush sólido pra marcar
+                             bem a borda. Não dá pra usar DataTrigger direto
+                             (Border.DataContext aqui é o MainViewModel, não
+                             o card — ContentControl.Content é quem aponta
+                             pro card) então o caminho é
+                             QueueCard1.IsCancelled explícito. -->
+                        <Border Grid.Row="0" Padding="16" Margin="0,0,0,8">
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding QueueCard1.IsCancelled}" Value="True">
+                                            <Setter Property="Background" Value="#8CFF5252" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource StatusErrorBrush}" />
+                                            <Setter Property="BorderThickness" Value="2" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <ContentControl Content="{Binding QueueCard1}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
                         </Border>
 
-                        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="16" Margin="0,8,0,0">
+                        <Border Grid.Row="1" Padding="16" Margin="0,8,0,0">
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding QueueCard2.IsCancelled}" Value="True">
+                                            <Setter Property="Background" Value="#8CFF5252" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource StatusErrorBrush}" />
+                                            <Setter Property="BorderThickness" Value="2" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <ContentControl Content="{Binding QueueCard2}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
                         </Border>
                     </Grid>

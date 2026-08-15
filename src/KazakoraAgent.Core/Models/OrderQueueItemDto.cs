@@ -38,6 +38,20 @@ public sealed class OrderQueueItemDto
     /// botão do card pra "Embalado" (ver OrderQueueCardViewModel.IsPacked).
     [JsonPropertyName("packed_at")]
     public DateTimeOffset? PackedAt { get; init; }
+
+    /// Achado real 2026-08-15: a fila mostra TODO pedido do dia, qualquer
+    /// status (ver DashboardAgentController::queue() no Laravel, sem
+    /// whereNull/whereIn de status) — inclusive cancelado. Sem este campo
+    /// (e sem tratamento nenhum na tela), um pedido cancelado DEPOIS de já
+    /// aparecer aqui ficava visualmente idêntico a um ativo, botão "Em
+    /// preparação" funcionando normal — risco real de embalar/despachar
+    /// algo que a Shopee já cancelou. status_label já vem traduzido do
+    /// servidor (mesmo texto usado no admin web), não precisa mapear aqui.
+    [JsonPropertyName("status")]
+    public string? Status { get; init; }
+
+    [JsonPropertyName("status_label")]
+    public string? StatusLabel { get; init; }
 }
 
 public sealed class OrderQueueProductDto
