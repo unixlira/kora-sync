@@ -153,7 +153,10 @@
                          de uma tentativa anterior. Ícone de placeholder
                          quando o pedido não tem imagem arquivada (ver
                          OrderQueueCardViewModel.NoProductImageVisibility). -->
-                    <Border Grid.Column="0" Width="96" Height="96" CornerRadius="10"
+                    <!-- CornerRadius=14 igual ao CardStyle (pedido explícito
+                         2026-08-15), não um valor solto — Themes/Controls.xaml
+                         é a fonte da verdade. -->
+                    <Border Grid.Column="0" Width="96" Height="96" CornerRadius="14"
                             Background="{DynamicResource WindowBackgroundBrush}"
                             VerticalAlignment="Top" Margin="0,4,14,0" ClipToBounds="True">
                         <Grid>
@@ -313,7 +316,7 @@
                     <!-- Mesma miniatura do card em destaque, menor (pedido
                          explícito 2026-08-15) — ver comentário completo no
                          OrderQueueBigCardTemplate acima. -->
-                    <Border Grid.Column="1" Width="56" Height="56" CornerRadius="8"
+                    <Border Grid.Column="1" Width="56" Height="56" CornerRadius="14"
                             Background="{DynamicResource WindowBackgroundBrush}"
                             VerticalAlignment="Center" Margin="0,0,10,0" ClipToBounds="True">
                         <Grid>
