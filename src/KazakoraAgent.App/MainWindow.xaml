@@ -423,8 +423,25 @@
 
     </Window.Resources>
 
+    <!-- BUG REAL 2026-08-15 (confirmado com print + captura ao vivo da
+         janela real rodando): o banner "Vendas agendadas" e os cards do
+         topo viviam dentro do MESMO Grid aninhado (um "topo" com 3 linhas
+         Auto dentro de um "wrapper" dentro do Grid raiz) — mesmo com
+         Grid.Row correto em cada um, a captura ao vivo mostrou o texto do
+         banner desenhando exatamente por cima dos cards, não abaixo (2
+         tentativas anteriores de conserto dentro dessa mesma estrutura
+         aninhada não resolveram). Causa exata não identificada com certeza
+         (suspeita: interação de medição Auto entre um ItemsControl com
+         UniformGrid e um irmão de Visibility alternante no mesmo Grid
+         aninhado) — em vez de continuar tentando entender esse
+         comportamento específico, a estrutura foi achatada: banner virou
+         uma linha PRÓPRIA e INDEPENDENTE direto no Grid raiz da janela,
+         sem nenhum Grid aninhado compartilhado com os cards do topo. -->
     <Grid Margin="24">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
@@ -534,125 +551,102 @@
              dinâmica) e fila (Row "*" DE VERDADE, porque agora é filho
              direto de um Grid com altura finita, não de um ScrollViewer) —
              a fila cresce pra preencher toda a altura sobrando da janela. -->
-        <Grid Grid.Row="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+        <!-- Métricas do topo (visão geral) — UniformGrid garante que os 5
+             cards tenham exatamente o mesmo tamanho e dividam igualmente a
+             largura disponível, se adaptando sozinha a qualquer largura de
+             janela/monitor (sem WrapPanel, sem largura fixa por card).
+             ItemTemplate não é setado de propósito — TopCards mistura
+             MetricCardViewModel e ChannelOrdersCardViewModel, resolvidos
+             cada um pelo seu DataTemplate implícito (ver Window.Resources).
+             Linha PRÓPRIA no Grid raiz agora (ver comentário grande lá em
+             cima) — não divide Grid nenhum com o banner de baixo. -->
+        <ItemsControl Grid.Row="1" ItemsSource="{Binding TopCards}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Rows="1" Columns="5" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
 
-            <!-- BUG REAL 2026-08-15 (achado no print real do usuário): era
-                 um StackPanel simples aqui — quando o banner "Vendas
-                 agendadas" abaixo tem conteúdo de verdade pela primeira vez
-                 (ScheduledShipmentsVisibility=Visible), ele saía desenhado
-                 SOBRE a fileira de cards do topo em vez de abaixo dela.
-                 Trocado por Grid com RowDefinitions="Auto" explícitas — cada
-                 linha reserva sua própria faixa de espaço garantida, nunca
-                 sobrepõe a vizinha, ao contrário de um StackPanel (que só
-                 empilha do jeito certo se a MEDIÇÃO de cada filho estiver
-                 correta; aqui claramente não estava). -->
-            <Grid Grid.Row="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+        <TextBlock Grid.Row="2" Text="{Binding LastDashboardError, StringFormat='Falha ao atualizar o painel: {0}'}"
+                   Foreground="{DynamicResource StatusErrorBrush}" FontWeight="Bold" Margin="0,10,0,0"
+                   Visibility="{Binding HasDashboardErrorVisibility}" TextWrapping="Wrap" />
 
-                <!-- Métricas do topo (visão geral) — UniformGrid garante que
-                     os 5 cards tenham exatamente o mesmo tamanho e dividam
-                     igualmente a largura disponível, se adaptando sozinha a
-                     qualquer largura de janela/monitor (sem WrapPanel, sem
-                     largura fixa por card). ItemTemplate não é setado de
-                     propósito — TopCards mistura MetricCardViewModel e
-                     ChannelOrdersCardViewModel, resolvidos cada um pelo seu
-                     DataTemplate implícito (ver Window.Resources). -->
-                <ItemsControl Grid.Row="0" ItemsSource="{Binding TopCards}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Rows="1" Columns="5" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
+        <!-- Banner "Envios agendados" (pedido explícito 2026-08-14, achado
+             no pedido #278: venda de Coleta/Places do Mercado Livre com
+             etiqueta liberada só perto de uma data futura que o PRÓPRIO
+             canal escolheu — parecia pedido travado, não era). Só aparece
+             quando tem pelo menos 1 (ScheduledShipmentsVisibility) — fica
+             num tom neutro/informativo normalmente, e muda pra vermelho só
+             quando algum item já passou da data prometida sem liberar
+             (HasOverdueScheduledShipments), pra não parecer alarme falso
+             todo santo dia. Linha PRÓPRIA no Grid raiz (Grid.Row="3") —
+             ver comentário grande lá em cima do porquê disso mudou. -->
+        <Border Grid.Row="3" Margin="0,14,0,0" Padding="14,10" CornerRadius="10" BorderThickness="1.5"
+                Visibility="{Binding ScheduledShipmentsVisibility}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="{DynamicResource StatusProcessingSoftBrush}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource StatusProcessingSoftBorderBrush}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasOverdueScheduledShipments}" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource StatusErrorSoftBrush}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource StatusErrorSoftBorderBrush}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="CalendarClock" Width="20" Height="20"
+                                                 Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="Vendas agendadas pelo canal" Style="{StaticResource BodyTextStyle}"
+                               FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock Style="{StaticResource SecondaryTextStyle}" Margin="28,2,0,6" TextWrapping="Wrap">
+                    O próprio canal decidiu liberar a etiqueta só perto da data — não é pedido travado, é assim mesmo (Coleta/Places).
+                </TextBlock>
+                <ItemsControl ItemsSource="{Binding ScheduledShipments}" Margin="28,0,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6"
+                                        Padding="6,2" Margin="0,0,8,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding ChannelDisplayName}" FontSize="10" FontWeight="Bold" Foreground="White" />
+                                </Border>
+
+                                <TextBlock Grid.Column="1" Style="{StaticResource BodyTextStyle}" FontSize="13"
+                                            VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                    <Run Text="{Binding OrderNumberText}" FontWeight="Bold" /><Run Text=" — " /><Run Text="{Binding CustomerName}" />
+                                </TextBlock>
+
+                                <TextBlock Grid.Column="2" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"
+                                            Text="{Binding StatusText}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOverdue}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource StatusErrorBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
                 </ItemsControl>
+            </StackPanel>
+        </Border>
 
-                <TextBlock Grid.Row="1" Text="{Binding LastDashboardError, StringFormat='Falha ao atualizar o painel: {0}'}"
-                           Foreground="{DynamicResource StatusErrorBrush}" FontWeight="Bold" Margin="0,10,0,0"
-                           Visibility="{Binding HasDashboardErrorVisibility}" TextWrapping="Wrap" />
-
-                <!-- Banner "Envios agendados" (pedido explícito 2026-08-14,
-                     achado no pedido #278: venda de Coleta/Places do
-                     Mercado Livre com etiqueta liberada só perto de uma
-                     data futura que o PRÓPRIO canal escolheu — parecia
-                     pedido travado, não era). Só aparece quando tem pelo
-                     menos 1 (ScheduledShipmentsVisibility) — fica num tom
-                     neutro/informativo normalmente, e muda pra vermelho só
-                     quando algum item já passou da data prometida sem
-                     liberar (HasOverdueScheduledShipments), pra não parecer
-                     alarme falso todo santo dia. -->
-                <Border Grid.Row="2" Margin="0,14,0,0" Padding="14,10" CornerRadius="10" BorderThickness="1.5"
-                        Visibility="{Binding ScheduledShipmentsVisibility}">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="Background" Value="{DynamicResource StatusProcessingSoftBrush}" />
-                            <Setter Property="BorderBrush" Value="{DynamicResource StatusProcessingSoftBorderBrush}" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding HasOverdueScheduledShipments}" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource StatusErrorSoftBrush}" />
-                                    <Setter Property="BorderBrush" Value="{DynamicResource StatusErrorSoftBorderBrush}" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconMaterial Kind="CalendarClock" Width="20" Height="20"
-                                                         Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            <TextBlock Text="Vendas agendadas pelo canal" Style="{StaticResource BodyTextStyle}"
-                                       FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center" />
-                        </StackPanel>
-                        <TextBlock Style="{StaticResource SecondaryTextStyle}" Margin="28,2,0,6" TextWrapping="Wrap">
-                            O próprio canal decidiu liberar a etiqueta só perto da data — não é pedido travado, é assim mesmo (Coleta/Places).
-                        </TextBlock>
-                        <ItemsControl ItemsSource="{Binding ScheduledShipments}" Margin="28,0,0,0">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,2">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6"
-                                                Padding="6,2" Margin="0,0,8,0" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding ChannelDisplayName}" FontSize="10" FontWeight="Bold" Foreground="White" />
-                                        </Border>
-
-                                        <TextBlock Grid.Column="1" Style="{StaticResource BodyTextStyle}" FontSize="13"
-                                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
-                                            <Run Text="{Binding OrderNumberText}" FontWeight="Bold" /><Run Text=" — " /><Run Text="{Binding CustomerName}" />
-                                        </TextBlock>
-
-                                        <TextBlock Grid.Column="2" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"
-                                                    Text="{Binding StatusText}">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsOverdue}" Value="True">
-                                                            <Setter Property="Foreground" Value="{DynamicResource StatusErrorBrush}" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
-            </Grid>
-
-            <!-- Cards de canal (removidos da tela por pedido explícito
+        <!-- Cards de canal (removidos da tela por pedido explícito
                      2026-08-04: "remove os cards dos canais e coloca essa
                      lista de impressão") e overlays de detalhe clicáveis
                      (removidos por outro pedido explícito, mesmo dia:
@@ -681,7 +675,7 @@
                      direito, agora as duas colunas usam Width="*" (mesmo
                      peso, dividem igual qualquer que seja a largura da
                      janela). -->
-                <Grid Grid.Row="1" Margin="0,20,0,0">
+                <Grid Grid.Row="4" Margin="0,20,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -730,10 +724,9 @@
                         </Grid>
                     </Border>
                 </Grid>
-            </Grid>
 
         <!-- Rodapé -->
-        <Grid Grid.Row="2" Margin="0,20,0,0">
+        <Grid Grid.Row="5" Margin="0,20,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <TextBlock Text="Desenvolvido com " Style="{StaticResource SecondaryTextStyle}" />
                 <TextBlock Text="❤" Style="{StaticResource FooterLinkStyle}" MouseLeftButtonUp="DevLiraLink_Click" Margin="2,0" />
