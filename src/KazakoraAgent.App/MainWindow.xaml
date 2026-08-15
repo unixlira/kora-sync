@@ -126,39 +126,33 @@
                     <TextBlock Text="Nenhum pedido" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,8,0,0" HorizontalAlignment="Center" />
                 </StackPanel>
 
-                <!-- Achado real 2026-08-07 (segunda rodada — "ainda está
-                     pequeno"): mesmo com StretchDirection=DownOnly correto,
-                     o texto continuava pequeno porque a LINHA em si
-                     (Row0="90", fixa) sobrava espaço demais pro id/QTD
-                     (ambos 30pt agora, não precisam de 90px de altura) e
-                     roubava quase todo o espaço restante das linhas "*" de
-                     produto/nome — a conta real: card de ~154px de altura
-                     útil menos 90 da linha 0 menos ~34 da linha 3 (badge)
-                     sobrava só ~15px pra CADA uma das linhas "*", por isso
-                     o DownOnly encolhia tudo de volta pra quase nada. Row0
-                     90->52 devolve esse espaço pra quem precisa. -->
+                <!-- Redesenho 2026-08-15 (pedido explícito): card horizontal
+                     compacto — imagem à esquerda, TODA a informação
+                     (id/data, produto, QTD, cliente, canal, nº do pedido,
+                     botão) alinhada verticalmente na MESMA altura da foto
+                     (VerticalAlignment=Center nos dois lados da coluna, 3
+                     linhas Auto em vez do antigo Viewbox que auto-escalava
+                     e esticava o card pra ocupar o espaço todo). Encolher
+                     o card de ~180px pra ~130px é o que abre espaço pro 3º
+                     card em destaque (QueueCard3) na mesma coluna — ver
+                     MainWindow.xaml, Grid de 3 linhas "*" em vez de 2. -->
                 <Grid Visibility="{Binding HasOrderVisibility}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- Miniatura do produto (pedido explícito 2026-08-15) —
-                         Stretch=Uniform preserva a proporção original da
-                         imagem (nunca corta nem distorce, "de acordo com o
-                         tamanho e a qualidade" da imagem real); qualquer
-                         sobra de espaço dentro do quadrado mostra o MESMO
-                         fundo do tema (WindowBackgroundBrush), não uma cor
-                         fixa — é o que evitava a faixa preta em cima/embaixo
-                         de uma tentativa anterior. Ícone de placeholder
-                         quando o pedido não tem imagem arquivada (ver
-                         OrderQueueCardViewModel.NoProductImageVisibility). -->
-                    <!-- CornerRadius=14 igual ao CardStyle (pedido explícito
-                         2026-08-15), não um valor solto — Themes/Controls.xaml
-                         é a fonte da verdade. -->
-                    <Border Grid.Column="0" Width="96" Height="96" CornerRadius="14"
+                    <!-- Miniatura do produto — Stretch=Uniform preserva a
+                         proporção original (nunca corta/distorce), fundo do
+                         quadrado usa o brush do tema (não uma cor fixa,
+                         evita faixa preta), CornerRadius=14 igual ao
+                         CardStyle (Themes/Controls.xaml é a fonte da
+                         verdade) — curva sutil nos cantos, NÃO redonda.
+                         Ícone de placeholder quando não há imagem
+                         arquivada. -->
+                    <Border Grid.Column="0" Width="100" Height="100" CornerRadius="14"
                             Background="{DynamicResource WindowBackgroundBrush}"
-                            VerticalAlignment="Top" Margin="0,4,14,0" ClipToBounds="True">
+                            VerticalAlignment="Center" Margin="0,0,14,0" ClipToBounds="True">
                         <Grid>
                             <Image Source="{Binding ProductImage}" Stretch="Uniform"
                                    Visibility="{Binding HasProductImageVisibility}" />
@@ -169,137 +163,91 @@
                         </Grid>
                     </Border>
 
-                    <Grid Grid.Column="1">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="52" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                        <!-- Linha 1: #id + data ............ canal + nº do pedido -->
+                        <Grid Grid.Row="0" Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <TextBlock Text="{Binding OrderNumberText}" Style="{StaticResource MetricValueTextStyle}" FontSize="18" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding CreatedAtText}" Style="{StaticResource SecondaryTextStyle}" FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Border Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6" Padding="7,2" Margin="0,0,6,0">
+                                    <TextBlock Text="{Binding ChannelDisplayName}" FontSize="10" FontWeight="Bold" Foreground="White" />
+                                </Border>
+                                <TextBlock Style="{StaticResource SecondaryTextStyle}" FontSize="11" VerticalAlignment="Center">
+                                    <Run Text="Pedido " /><Run Text="{Binding ExternalOrderId, Mode=OneWay, TargetNullValue='—'}" FontWeight="Bold" />
+                                </TextBlock>
+                            </StackPanel>
+                        </Grid>
 
-                        <!-- Id do pedido menor (64->44->30, pedido explícito
-                             2026-08-06, reforçado no mesmo dia: "mesmo
-                             ajuste, só que ainda mais") — nome do cliente e
-                             produto abaixo são o que realmente importa pra
-                             não errar na separação/embalagem, o número em
-                             si é só referência. Data/hora real da venda no
-                             canal (pedido explícito 2026-08-13) ao lado,
-                             fora do Viewbox — é só apoio, não precisa
-                             crescer junto com o #id. -->
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Viewbox HorizontalAlignment="Left" VerticalAlignment="Center" StretchDirection="DownOnly">
-                                <TextBlock Text="{Binding OrderNumberText}" Style="{StaticResource MetricValueTextStyle}" FontSize="30" />
-                            </Viewbox>
-                            <TextBlock Text="{Binding CreatedAtText}" Style="{StaticResource SecondaryTextStyle}"
-                                       VerticalAlignment="Bottom" Margin="10,0,0,4" />
-                        </StackPanel>
+                        <!-- Linha 2: produto(s), 1 linha só com reticências
+                             se não couber — texto completo no ToolTip (mouse
+                             parado em cima), pedido explícito 2026-08-15,
+                             troca o Viewbox+ItemsControl de antes (crescia o
+                             card pra caber tudo). QTD grande e visível ao
+                             lado, nunca cortada. -->
+                        <Grid Grid.Row="1" Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding ProductSummaryText}" Style="{StaticResource BodyTextStyle}"
+                                       FontWeight="Bold" FontSize="15" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" ToolTip="{Binding ProductSummaryText}" Margin="0,0,10,0" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <TextBlock Text="QTD " Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" FontSize="20" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding UnitsCount}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="24"
+                                           Foreground="{DynamicResource BrandPrimaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
 
-                        <!-- QTD do mesmo tamanho do #id (pedido explícito
-                             2026-08-07: "diminuir o QTD, deixar do mesmo
-                             tamanho do id") — antes acompanhava o produto
-                             (38), ficava maior que o id (30) e desequilibrava
-                             a linha de cima. -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                            <TextBlock Text="QTD " Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" FontSize="30" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding UnitsCount}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="30"
-                                       Foreground="{DynamicResource BrandPrimaryBrush}" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Grid>
+                        <!-- Linha 3: cliente (ellipsis + ToolTip, mesmo
+                             motivo do produto) ............ botão "Em
+                             preparação"->"Embalado" (PackCommand,
+                             comportamento inalterado) OU badge CANCELADO no
+                             lugar dele quando IsCancelled — mesmo padrão da
+                             lista compacta (OrderQueueRestItemTemplate),
+                             simétrico entre os dois templates. -->
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding CustomerName}" Style="{StaticResource BodyTextStyle}"
+                                       FontSize="15" FontWeight="Bold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" ToolTip="{Binding CustomerName}" Margin="0,0,10,0" />
 
-                    <!-- Produto(s) — pedido explícito: lista TODOS.
-                         Achado real 2026-08-07: sem StretchDirection, o
-                         Viewbox tem Stretch="Uniform" nos dois sentidos por
-                         padrão — ele SEMPRE reescala o conteúdo pra preencher
-                         a linha "*" inteira, então mudar o FontSize base não
-                         tinha efeito visual nenhum (o resultado final era
-                         sempre "o que couber na altura da linha", não o
-                         FontSize pedido). "DownOnly" faz o FontSize valer de
-                         verdade: só encolhe se não couber, nunca estica pra
-                         preencher espaço sobrando. -->
-                    <Viewbox Grid.Row="1" HorizontalAlignment="Left" StretchDirection="DownOnly" Margin="0,2,0,0">
-                        <StackPanel>
-                            <ItemsControl ItemsSource="{Binding ProductLines}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="44" TextWrapping="Wrap" Margin="0,1" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Viewbox>
+                            <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
+                                    ToolTip="{Binding PackErrorMessage}"
+                                    Visibility="{Binding PackButtonVisibility}"
+                                    Foreground="White" FontSize="11" FontWeight="Bold" Padding="10,5">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Setter Property="Background" Value="{DynamicResource PackPreparingBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsPacked}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource PackPackedBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
 
-                    <!-- Nome do cliente — mesmo achado do produto acima
-                         (Viewbox sem StretchDirection ignorava o FontSize na
-                         prática, "não funcionou" era isso). Agora com
-                         DownOnly o FontSize de verdade manda: 48->56. -->
-                    <Viewbox Grid.Row="2" HorizontalAlignment="Left" StretchDirection="DownOnly" Margin="0,2,0,0">
-                        <TextBlock Text="{Binding CustomerName}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="56" TextWrapping="Wrap" />
-                    </Viewbox>
-
-                    <!-- Grid, não StackPanel: precisa empurrar o botão pro
-                         canto inferior DIREITO do card (pedido explícito
-                         2026-08-13) enquanto o badge de canal/pedido
-                         continua à esquerda — StackPanel só empilha, não
-                         separa os dois lados. -->
-                    <Grid Grid.Row="3" Margin="0,6,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
-                                <TextBlock Text="{Binding ChannelDisplayName}" FontSize="11" FontWeight="Bold" Foreground="White" />
+                            <Border Grid.Column="1" Background="{DynamicResource StatusErrorBrush}" CornerRadius="6"
+                                    Padding="10,5" Visibility="{Binding CancelledBadgeVisibility}">
+                                <TextBlock Text="CANCELADO" FontSize="11" FontWeight="Bold" Foreground="White" />
                             </Border>
-                            <TextBlock Text="Pedido " Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding ExternalOrderId, TargetNullValue='—'}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
-                        </StackPanel>
-
-                        <!-- "Em preparação" -> clique marca embalado no
-                             servidor (OrderQueueCardViewModel.PackCommand) e
-                             o próprio botão fica VERDE + texto "Embalado"
-                             (IsPacked) — pedido explícito 2026-08-13: o
-                             pedido NÃO sai do card/da fila, o botão é só um
-                             indicador de status pra conferência visual.
-                             ToolTip mostra o erro se a chamada falhar.
-                             Visibility some inteiro (não só desabilita) pra
-                             pedido cancelado — ver CancelledBadge abaixo,
-                             achado real 2026-08-15. -->
-                        <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
-                                ToolTip="{Binding PackErrorMessage}"
-                                Visibility="{Binding PackButtonVisibility}"
-                                Foreground="White" FontSize="12" FontWeight="Bold" Padding="12,6" VerticalAlignment="Bottom">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                    <Setter Property="Background" Value="{DynamicResource PackPreparingBrush}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsPacked}" Value="True">
-                                            <Setter Property="Background" Value="{DynamicResource PackPackedBrush}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-
-                        <!-- Achado real 2026-08-15: a fila mostra todo
-                             pedido do dia, qualquer status — sem isto, um
-                             pedido cancelado (pela Shopee, antes ou depois
-                             de já aparecer aqui) ficava visualmente
-                             idêntico a um ativo, risco real de
-                             embalar/despachar algo cancelado. Vermelho
-                             sólido de propósito, não sutil. -->
-                        <Border Grid.Column="1" Background="{DynamicResource StatusErrorBrush}" CornerRadius="6"
-                                Padding="10,6" VerticalAlignment="Bottom"
-                                Visibility="{Binding CancelledBadgeVisibility}">
-                            <TextBlock Text="CANCELADO — NÃO ENVIAR" FontSize="12" FontWeight="Bold" Foreground="White" />
-                        </Border>
-                    </Grid>
+                        </Grid>
                     </Grid>
                 </Grid>
             </Grid>
@@ -594,28 +542,32 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
+                    <!-- 3 linhas iguais (pedido explícito 2026-08-15) — o
+                         card em destaque encolheu (~180px -> ~130px, ver
+                         comentário completo no OrderQueueBigCardTemplate)
+                         especificamente pra abrir espaço pro 3º card
+                         (QueueCard3) nesta mesma coluna, dividindo os 420px
+                         em 3 partes iguais em vez de 2. Margem 0,0,0,6 /
+                         0,6,0,6 / 0,6,0,0 — gap de 6px simétrico entre
+                         todos os cards adjacentes, não só entre os 2
+                         primeiros. -->
                     <Grid Grid.Column="0" Margin="0,0,16,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
                             <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <!-- Padding 24->16 (2026-08-07, mesma rodada do
-                             Row0 90->52): sobrava espaço demais nas bordas
-                             enquanto nome/produto ficavam espremidos por
-                             dentro — ver comentário completo dentro do
-                             OrderQueueBigCardTemplate. -->
                         <!-- Fundo do card inteiro vira vermelho (achado
                              real 2026-08-15, pedido explícito) quando o
-                             pedido está cancelado — Opacity 0.18 (mesmo
-                             espírito das bolhas de ícone do topo) pra não
-                             lavar o texto, BorderBrush sólido pra marcar
-                             bem a borda. Não dá pra usar DataTrigger direto
-                             (Border.DataContext aqui é o MainViewModel, não
-                             o card — ContentControl.Content é quem aponta
-                             pro card) então o caminho é
-                             QueueCard1.IsCancelled explícito. -->
-                        <Border Grid.Row="0" Padding="16" Margin="0,0,0,8">
+                             pedido está cancelado, BorderBrush sólido pra
+                             marcar bem a borda. Não dá pra usar DataTrigger
+                             direto (Border.DataContext aqui é o
+                             MainViewModel, não o card — ContentControl.
+                             Content é quem aponta pro card) então o
+                             caminho é QueueCardN.IsCancelled explícito, 1
+                             por card fixo. -->
+                        <Border Grid.Row="0" Padding="16" Margin="0,0,0,6">
                             <Border.Style>
                                 <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
                                     <Style.Triggers>
@@ -630,7 +582,7 @@
                             <ContentControl Content="{Binding QueueCard1}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
                         </Border>
 
-                        <Border Grid.Row="1" Padding="16" Margin="0,8,0,0">
+                        <Border Grid.Row="1" Padding="16" Margin="0,6,0,6">
                             <Border.Style>
                                 <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
                                     <Style.Triggers>
@@ -643,6 +595,21 @@
                                 </Style>
                             </Border.Style>
                             <ContentControl Content="{Binding QueueCard2}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
+                        </Border>
+
+                        <Border Grid.Row="2" Padding="16" Margin="0,6,0,0">
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding QueueCard3.IsCancelled}" Value="True">
+                                            <Setter Property="Background" Value="#8CFF5252" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource StatusErrorBrush}" />
+                                            <Setter Property="BorderThickness" Value="2" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <ContentControl Content="{Binding QueueCard3}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
                         </Border>
                     </Grid>
 

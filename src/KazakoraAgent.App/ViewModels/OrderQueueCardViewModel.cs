@@ -113,10 +113,20 @@ public partial class OrderQueueCardViewModel : ObservableObject
     private int _unitsCount;
 
     /// "{qty}x {nome}" por produto — TODOS, nunca só o primeiro (ver
-    /// comentário da classe). ItemsControl dentro de um Viewbox no card
-    /// grande encolhe a fonte junto quando há mais de um produto, pra caber
-    /// sem cortar (ver MainWindow.xaml).
+    /// comentário da classe). Usado pela lista compacta da direita
+    /// (OrderQueueRestItemTemplate, 1 linha por produto, ainda com
+    /// TextWrapping — cabe, é uma lista vertical com scroll próprio).
     public ObservableCollection<string> ProductLines { get; } = [];
+
+    /// Achado real 2026-08-15 (redesenho do card em destaque, pedido
+    /// explícito): o card compacto não tem mais altura pra uma linha por
+    /// produto — todos os produtos numa ÚNICA linha, cortada com
+    /// reticências (TextTrimming no XAML) se não couber, texto completo
+    /// disponível no ToolTip (ver MainWindow.xaml) em vez de crescer o
+    /// card. OnPropertyChanged manual em UpdateFrom() — ProductLines é uma
+    /// ObservableCollection normal, mutar ela não dispara reavaliação
+    /// automática de uma property computada que só lê o conteúdo dela.
+    public string ProductSummaryText => string.Join("  •  ", ProductLines);
 
     /// Data/hora REAL da venda no canal (created_at do pedido no Laravel —
     /// já é o placed_at do marketplace, não a hora que o webhook chegou no
@@ -230,6 +240,7 @@ public partial class OrderQueueCardViewModel : ObservableObject
         Status = null;
         StatusLabel = null;
         ProductLines.Clear();
+        OnPropertyChanged(nameof(ProductSummaryText));
     }
 
     public void UpdateFrom(OrderQueueItemDto dto)
@@ -266,5 +277,7 @@ public partial class OrderQueueCardViewModel : ObservableObject
         {
             ProductLines.Add("Produto não identificado");
         }
+
+        OnPropertyChanged(nameof(ProductSummaryText));
     }
 }

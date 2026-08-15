@@ -38,17 +38,20 @@ public partial class MainViewModel : ObservableObject
     /// renderizar os dois tipos misturados na mesma linha.
     public ObservableCollection<object> TopCards { get; }
 
-    /// Os 2 cards em destaque da fila de expedição de hoje — pedido mais
-    /// recente (QueueCard1) e o segundo mais recente (QueueCard2), pedido
-    /// explícito 2026-08-06. Instâncias fixas (não uma ObservableCollection
-    /// de 2 itens) porque a XAML liga cada uma direto num Border próprio,
-    /// não via ItemsControl — mais simples de posicionar um "quadrado" fixo
-    /// em cima e outro embaixo. Ver UpdateOrderQueue.
+    /// Os 3 cards em destaque da fila de expedição de hoje — pedido mais
+    /// recente (QueueCard1), segundo mais recente (QueueCard2) e terceiro
+    /// (QueueCard3, pedido explícito 2026-08-15 — coube depois do
+    /// redesenho compacto do card, ver MainWindow.xaml). Instâncias fixas
+    /// (não uma ObservableCollection) porque a XAML liga cada uma direto
+    /// num Border próprio, não via ItemsControl — mais simples de
+    /// posicionar 3 "quadrados" fixos em coluna. Ver UpdateOrderQueue.
     public OrderQueueCardViewModel QueueCard1 { get; } = new();
 
     public OrderQueueCardViewModel QueueCard2 { get; } = new();
 
-    /// 3º pedido do dia em diante, mesma ordem decrescente — lista com
+    public OrderQueueCardViewModel QueueCard3 { get; } = new();
+
+    /// 4º pedido do dia em diante, mesma ordem decrescente — lista com
     /// scroll próprio (coluna da direita, ver MainWindow.xaml).
     public ObservableCollection<OrderQueueCardViewModel> QueueRest { get; } = [];
 
@@ -123,6 +126,7 @@ public partial class MainViewModel : ObservableObject
         // UpdateOrderQueue.
         QueueCard1.PackRequested = PackOrderAsync;
         QueueCard2.PackRequested = PackOrderAsync;
+        QueueCard3.PackRequested = PackOrderAsync;
     }
 
     public void UpdateMetrics(DashboardMetricsDto dto)
@@ -156,12 +160,12 @@ public partial class MainViewModel : ObservableObject
 
     /// <summary>
     /// items já vem do servidor em ordem decrescente (ver
-    /// DashboardAgentController::queue, orderByDesc('id')). QueueCard1/
-    /// QueueCard2 são reaproveitados em vez de recriados a cada tick — só
-    /// os campos mudam — pra não perder o estado de scroll/seleção de
-    /// nada que dependa de identidade de objeto no futuro; QueueRest é
-    /// reconstruída (mais simples, e a lista muda de tamanho a cada
-    /// pedido novo/enviado de qualquer forma).
+    /// DashboardAgentController::queue, orderByDesc('id')). QueueCard1/2/3
+    /// são reaproveitados em vez de recriados a cada tick — só os campos
+    /// mudam — pra não perder o estado de scroll/seleção de nada que
+    /// dependa de identidade de objeto no futuro; QueueRest é reconstruída
+    /// (mais simples, e a lista muda de tamanho a cada pedido novo/enviado
+    /// de qualquer forma).
     /// </summary>
     public void UpdateOrderQueue(IReadOnlyList<OrderQueueItemDto> items)
     {
@@ -185,8 +189,18 @@ public partial class MainViewModel : ObservableObject
             QueueCard2.Clear();
         }
 
+        if (items.Count > 2)
+        {
+            QueueCard3.UpdateFrom(items[2]);
+            RequestProductImage(QueueCard3, items[2].Id);
+        }
+        else
+        {
+            QueueCard3.Clear();
+        }
+
         QueueRest.Clear();
-        foreach (var dto in items.Skip(2))
+        foreach (var dto in items.Skip(3))
         {
             var item = new OrderQueueCardViewModel { PackRequested = PackOrderAsync };
             item.UpdateFrom(dto);
