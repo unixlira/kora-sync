@@ -130,11 +130,23 @@
 
                 <!-- Coluna da foto (esquerda) + coluna do conteúdo
                      (direita) — pedido explícito 2026-08-15. Largura fixa
-                     84 pra foto: precisa ser real (não "*"/Auto) pra
-                     Stretch="UniformToFill" da Image ter uma caixa concreta
-                     pra recortar contra; a altura acompanha a linha inteira
-                     do Grid sozinha (sem RowDefinitions aqui = 1 linha só,
-                     StretchAlignment padrão já preenche a altura toda). -->
+                     84 pra foto: precisa ser real (não "*"/Auto) pra Image
+                     ter uma caixa concreta pra encaixar contra; a altura
+                     acompanha a linha inteira do Grid sozinha (sem
+                     RowDefinitions aqui = 1 linha só, StretchAlignment
+                     padrão já preenche a altura toda).
+
+                     BUG REAL 2026-08-15 (achado testando com foto real):
+                     Stretch="UniformToFill" preenche a caixa TODA cortando
+                     o que sobrar — pra foto de produto (geralmente
+                     quadrada/paisagem) numa caixa estreita e alta (84 de
+                     largura contra ~150 de altura), isso cortava a maior
+                     parte da imagem, sobrando só uma fatia vertical do
+                     meio, irreconhecível ("aparece cortada", pedido
+                     explícito). Trocado pra Stretch="Uniform": mostra a
+                     imagem INTEIRA sempre, encolhida pra caber dentro da
+                     caixa (sobra fundo neutro nas laterais/topo-baixo em
+                     vez de cortar) — nunca corta, nunca distorce. -->
                 <Grid Visibility="{Binding HasOrderVisibility}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="84" />
@@ -151,7 +163,7 @@
                          de deixar um vazio sem explicação. -->
                     <Grid Grid.Column="0" Margin="0,0,10,0">
                         <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="8" ClipToBounds="True">
-                            <Image Source="{Binding ProductImage}" Stretch="UniformToFill" Visibility="{Binding HasProductImageVisibility}" />
+                            <Image Source="{Binding ProductImage}" Stretch="Uniform" Visibility="{Binding HasProductImageVisibility}" />
                         </Border>
                         <iconPacks:PackIconMaterial Kind="ImageOutline" Width="26" Height="26"
                                                      Foreground="{DynamicResource TextSecondaryBrush}" Opacity="0.5"
