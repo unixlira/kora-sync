@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using KazakoraAgent.App.Theming;
@@ -11,7 +13,7 @@ using KazakoraAgent.Core.Models;
 namespace KazakoraAgent.App.ViewModels;
 
 /// <summary>
-/// Card de pedido na fila de expedição — usado nos 2 cards em destaque
+/// Card de pedido na fila de expedição — usado nos 3 cards em destaque
 /// (grandes, com Viewbox pra fonte crescer/encolher e nunca cortar, ver
 /// MainWindow.xaml) e reaproveitado na lista compacta do resto do dia
 /// (mesmos dados, template menor, sem Viewbox). Pedido explícito
@@ -61,6 +63,68 @@ public partial class OrderQueueCardViewModel : ObservableObject
 
     [ObservableProperty]
     private string _customerName = string.Empty;
+
+    /// Foto do produto (pedido explícito 2026-08-15) — mesma imagem já
+    /// publicada nos marketplaces (ver OrderImageArchiveService no
+    /// Laravel). Null enquanto ainda não chegou/pedido sem foto — mostra o
+    /// ícone placeholder (ver HasProductImageVisibility/MainWindow.xaml)
+    /// em vez de deixar um espaço em branco. Setada de fora
+    /// (MainViewModel, só pros 3 cards em destaque — a lista compacta da
+    /// direita não carrega imagem, ver comentário lá) via SetProductImage,
+    /// nunca direto por binding: baixar a imagem é uma chamada de rede à
+    /// parte de UpdateFrom(dto).
+    [ObservableProperty]
+    private ImageSource? _productImage;
+
+    public Visibility HasProductImageVisibility => ProductImage is not null ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility NoProductImageVisibility => ProductImage is null ? Visibility.Visible : Visibility.Collapsed;
+
+    partial void OnProductImageChanged(ImageSource? value)
+    {
+        OnPropertyChanged(nameof(HasProductImageVisibility));
+        OnPropertyChanged(nameof(NoProductImageVisibility));
+    }
+
+    /// bytes null (sem imagem disponível/falha no download) limpa pro
+    /// placeholder. BitmapCacheOption.OnLoad decodifica a imagem inteira
+    /// antes de EndInit() retornar e fecha o MemoryStream logo em seguida —
+    /// sem isso, o BitmapImage guardaria só uma referência ao stream (modo
+    /// OnDemand, padrão), que já estaria descartado (using) na hora real de
+    /// desenhar o card, resultando numa imagem quebrada. Freeze() depois
+    /// torna a instância imutável/thread-safe, necessário porque quem chama
+    /// este método (MainViewModel) faz o download em background antes de
+    /// voltar pra UI thread.
+    public void SetProductImage(byte[]? bytes)
+    {
+        if (bytes is null || bytes.Length == 0)
+        {
+            ProductImage = null;
+
+            return;
+        }
+
+        try
+        {
+            var bitmap = new BitmapImage();
+            using var stream = new MemoryStream(bytes);
+
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.StreamSource = stream;
+            bitmap.EndInit();
+            bitmap.Freeze();
+
+            ProductImage = bitmap;
+        }
+        catch (Exception ex)
+        {
+            // Imagem é só apoio visual — bytes corrompidos/formato
+            // inesperado não pode derrubar o card inteiro, só fica sem foto.
+            AppLog.Error($"Falha ao decodificar a imagem do pedido #{OrderId}: {ex.Message}");
+            ProductImage = null;
+        }
+    }
 
     [ObservableProperty]
     private int _unitsCount;
@@ -177,6 +241,7 @@ public partial class OrderQueueCardViewModel : ObservableObject
         IsPacked = false;
         PackErrorMessage = null;
         ProductLines.Clear();
+        ProductImage = null;
     }
 
     public void UpdateFrom(OrderQueueItemDto dto)

@@ -108,17 +108,19 @@
             </Border>
         </DataTemplate>
 
-        <!-- Card de pedido em destaque (os 2 "quadrados" da esquerda,
-             pedido explícito 2026-08-06) — número grande + QTD em badge na
-             mesma linha, TODOS os produtos do pedido (nunca só o primeiro,
-             ver comentário em OrderQueueCardViewModel) e o nome do cliente,
-             ambos dentro de um Viewbox: a fonte cresce até preencher a
-             linha inteira quando cabe (1 produto, nome curto) e encolhe
-             sozinha quando não cabe (vários produtos, nome longo) — nunca
-             corta, sempre do maior tamanho possível, exatamente o pedido
-             ("fonte grande, mas garanta que nada seja cortado"). Canal/id
-             externo pequenos embaixo. Estado vazio (menos de 2 pedidos
-             hoje) mostra um placeholder em vez de um card em branco. -->
+        <!-- Card de pedido em destaque (os 3 "quadrados" da esquerda,
+             pedido explícito 2026-08-06, ampliado de 2 pra 3 e com foto do
+             produto em 2026-08-15) — foto à esquerda + id/QTD, TODOS os
+             produtos do pedido (nunca só o primeiro, ver comentário em
+             OrderQueueCardViewModel) e o nome do cliente à direita dela,
+             produto/cliente dentro de um Viewbox: a fonte cresce até
+             preencher a linha inteira quando cabe (1 produto, nome curto) e
+             encolhe sozinha quando não cabe (vários produtos, nome longo) —
+             nunca corta, sempre do maior tamanho possível, exatamente o
+             pedido ("fonte grande, mas garanta que nada seja cortado").
+             Canal/id externo pequenos embaixo. Estado vazio (menos de 3
+             pedidos hoje) mostra um placeholder em vez de um card em
+             branco. -->
         <DataTemplate x:Key="OrderQueueBigCardTemplate" DataType="{x:Type vm:OrderQueueCardViewModel}">
             <Grid>
                 <StackPanel Visibility="{Binding EmptyStateVisibility}" VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -126,130 +128,161 @@
                     <TextBlock Text="Nenhum pedido" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" Margin="0,8,0,0" HorizontalAlignment="Center" />
                 </StackPanel>
 
-                <!-- Achado real 2026-08-07 (segunda rodada — "ainda está
-                     pequeno"): mesmo com StretchDirection=DownOnly correto,
-                     o texto continuava pequeno porque a LINHA em si
-                     (Row0="90", fixa) sobrava espaço demais pro id/QTD
-                     (ambos 30pt agora, não precisam de 90px de altura) e
-                     roubava quase todo o espaço restante das linhas "*" de
-                     produto/nome — a conta real: card de ~154px de altura
-                     útil menos 90 da linha 0 menos ~34 da linha 3 (badge)
-                     sobrava só ~15px pra CADA uma das linhas "*", por isso
-                     o DownOnly encolhia tudo de volta pra quase nada. Row0
-                     90->52 devolve esse espaço pra quem precisa. -->
+                <!-- Coluna da foto (esquerda) + coluna do conteúdo
+                     (direita) — pedido explícito 2026-08-15. Largura fixa
+                     84 pra foto: precisa ser real (não "*"/Auto) pra
+                     Stretch="UniformToFill" da Image ter uma caixa concreta
+                     pra recortar contra; a altura acompanha a linha inteira
+                     do Grid sozinha (sem RowDefinitions aqui = 1 linha só,
+                     StretchAlignment padrão já preenche a altura toda). -->
                 <Grid Visibility="{Binding HasOrderVisibility}">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="52" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="84" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Id do pedido menor (64->44->30, pedido explícito
-                             2026-08-06, reforçado no mesmo dia: "mesmo
-                             ajuste, só que ainda mais") — nome do cliente e
-                             produto abaixo são o que realmente importa pra
-                             não errar na separação/embalagem, o número em
-                             si é só referência. Data/hora real da venda no
-                             canal (pedido explícito 2026-08-13) ao lado,
-                             fora do Viewbox — é só apoio, não precisa
-                             crescer junto com o #id. -->
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Viewbox HorizontalAlignment="Left" VerticalAlignment="Center" StretchDirection="DownOnly">
-                                <TextBlock Text="{Binding OrderNumberText}" Style="{StaticResource MetricValueTextStyle}" FontSize="30" />
-                            </Viewbox>
-                            <TextBlock Text="{Binding CreatedAtText}" Style="{StaticResource SecondaryTextStyle}"
-                                       VerticalAlignment="Bottom" Margin="10,0,0,4" />
-                        </StackPanel>
-
-                        <!-- QTD do mesmo tamanho do #id (pedido explícito
-                             2026-08-07: "diminuir o QTD, deixar do mesmo
-                             tamanho do id") — antes acompanhava o produto
-                             (38), ficava maior que o id (30) e desequilibrava
-                             a linha de cima. -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                            <TextBlock Text="QTD " Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" FontSize="30" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding UnitsCount}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="30"
-                                       Foreground="{DynamicResource BrandPrimaryBrush}" VerticalAlignment="Center" />
-                        </StackPanel>
+                    <!-- Foto do produto — mesma imagem publicada nos
+                         marketplaces (ver OrderImageArchiveService no
+                         Laravel), pedido explícito 2026-08-15: conferência
+                         visual rápida além do texto, reduz erro de separar
+                         o produto errado. Sem imagem disponível (pedido
+                         antigo, produto sem foto cadastrada, ainda
+                         carregando), mostra um ícone neutro no lugar em vez
+                         de deixar um vazio sem explicação. -->
+                    <Grid Grid.Column="0" Margin="0,0,10,0">
+                        <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="8" ClipToBounds="True">
+                            <Image Source="{Binding ProductImage}" Stretch="UniformToFill" Visibility="{Binding HasProductImageVisibility}" />
+                        </Border>
+                        <iconPacks:PackIconMaterial Kind="ImageOutline" Width="26" Height="26"
+                                                     Foreground="{DynamicResource TextSecondaryBrush}" Opacity="0.5"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                     Visibility="{Binding NoProductImageVisibility}" />
                     </Grid>
 
-                    <!-- Produto(s) — pedido explícito: lista TODOS.
-                         Achado real 2026-08-07: sem StretchDirection, o
-                         Viewbox tem Stretch="Uniform" nos dois sentidos por
-                         padrão — ele SEMPRE reescala o conteúdo pra preencher
-                         a linha "*" inteira, então mudar o FontSize base não
-                         tinha efeito visual nenhum (o resultado final era
-                         sempre "o que couber na altura da linha", não o
-                         FontSize pedido). "DownOnly" faz o FontSize valer de
-                         verdade: só encolhe se não couber, nunca estica pra
-                         preencher espaço sobrando. -->
-                    <Viewbox Grid.Row="1" HorizontalAlignment="Left" StretchDirection="DownOnly" Margin="0,2,0,0">
-                        <StackPanel>
-                            <ItemsControl ItemsSource="{Binding ProductLines}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="44" TextWrapping="Wrap" Margin="0,1" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Viewbox>
+                    <!-- Achado real 2026-08-07 (segunda rodada — "ainda está
+                         pequeno"): mesmo com StretchDirection=DownOnly correto,
+                         o texto continuava pequeno porque a LINHA em si
+                         (Row0="52", fixa) sobrava espaço demais pro id/QTD e
+                         roubava espaço das linhas "*" de produto/nome —
+                         valores desta rodada (2026-08-15) recalculados pra
+                         card ~40px mais baixo cada (3 cards em vez de 2 na
+                         mesma altura total) E ~84px mais estreito (coluna da
+                         foto) — fontes base reduzidas de propósito (44->32
+                         produto, 56->40 cliente) pra sobrar espaço real de
+                         novo, não só depender do DownOnly encolhendo tudo. -->
+                    <Grid Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-                    <!-- Nome do cliente — mesmo achado do produto acima
-                         (Viewbox sem StretchDirection ignorava o FontSize na
-                         prática, "não funcionou" era isso). Agora com
-                         DownOnly o FontSize de verdade manda: 48->56. -->
-                    <Viewbox Grid.Row="2" HorizontalAlignment="Left" StretchDirection="DownOnly" Margin="0,2,0,0">
-                        <TextBlock Text="{Binding CustomerName}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="56" TextWrapping="Wrap" />
-                    </Viewbox>
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                    <!-- Grid, não StackPanel: precisa empurrar o botão pro
-                         canto inferior DIREITO do card (pedido explícito
-                         2026-08-13) enquanto o badge de canal/pedido
-                         continua à esquerda — StackPanel só empilha, não
-                         separa os dois lados. -->
-                    <Grid Grid.Row="3" Margin="0,6,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                            <!-- Id do pedido (64->44->30->24, cada rodada um
+                                 pedido explícito de reduzir mais) — nome do
+                                 cliente e produto abaixo são o que realmente
+                                 importa pra não errar na separação/
+                                 embalagem, o número em si é só referência.
+                                 Data/hora real da venda no canal (pedido
+                                 explícito 2026-08-13) ao lado, fora do
+                                 Viewbox — é só apoio, não precisa crescer
+                                 junto com o #id. -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Viewbox HorizontalAlignment="Left" VerticalAlignment="Center" StretchDirection="DownOnly">
+                                    <TextBlock Text="{Binding OrderNumberText}" Style="{StaticResource MetricValueTextStyle}" FontSize="24" />
+                                </Viewbox>
+                                <TextBlock Text="{Binding CreatedAtText}" Style="{StaticResource SecondaryTextStyle}" FontSize="11"
+                                           VerticalAlignment="Bottom" Margin="8,0,0,3" />
+                            </StackPanel>
 
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
-                                <TextBlock Text="{Binding ChannelDisplayName}" FontSize="11" FontWeight="Bold" Foreground="White" />
-                            </Border>
-                            <TextBlock Text="Pedido " Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding ExternalOrderId, TargetNullValue='—'}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
-                        </StackPanel>
+                            <!-- QTD do mesmo tamanho do #id (pedido explícito
+                                 2026-08-07: "diminuir o QTD, deixar do mesmo
+                                 tamanho do id") — antes acompanhava o produto,
+                                 ficava maior e desequilibrava a linha de cima. -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                                <TextBlock Text="QTD " Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" FontSize="24" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding UnitsCount}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="24"
+                                           Foreground="{DynamicResource BrandPrimaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
 
-                        <!-- "Em preparação" -> clique marca embalado no
-                             servidor (OrderQueueCardViewModel.PackCommand) e
-                             o próprio botão fica VERDE + texto "Embalado"
-                             (IsPacked) — pedido explícito 2026-08-13: o
-                             pedido NÃO sai do card/da fila, o botão é só um
-                             indicador de status pra conferência visual.
-                             ToolTip mostra o erro se a chamada falhar. -->
-                        <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
-                                ToolTip="{Binding PackErrorMessage}"
-                                Foreground="White" FontSize="12" FontWeight="Bold" Padding="12,6" VerticalAlignment="Bottom">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                    <Setter Property="Background" Value="{DynamicResource PackPreparingBrush}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsPacked}" Value="True">
-                                            <Setter Property="Background" Value="{DynamicResource PackPackedBrush}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
+                        <!-- Produto(s) — pedido explícito: lista TODOS.
+                             Achado real 2026-08-07: sem StretchDirection, o
+                             Viewbox tem Stretch="Uniform" nos dois sentidos por
+                             padrão — ele SEMPRE reescala o conteúdo pra preencher
+                             a linha "*" inteira, então mudar o FontSize base não
+                             tinha efeito visual nenhum (o resultado final era
+                             sempre "o que couber na altura da linha", não o
+                             FontSize pedido). "DownOnly" faz o FontSize valer de
+                             verdade: só encolhe se não couber, nunca estica pra
+                             preencher espaço sobrando. -->
+                        <Viewbox Grid.Row="1" HorizontalAlignment="Left" StretchDirection="DownOnly" Margin="0,2,0,0">
+                            <StackPanel>
+                                <ItemsControl ItemsSource="{Binding ProductLines}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="32" TextWrapping="Wrap" Margin="0,1" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Viewbox>
+
+                        <!-- Nome do cliente — mesmo achado do produto acima
+                             (Viewbox sem StretchDirection ignorava o FontSize na
+                             prática, "não funcionou" era isso). DownOnly faz o
+                             FontSize valer de verdade. -->
+                        <Viewbox Grid.Row="2" HorizontalAlignment="Left" StretchDirection="DownOnly" Margin="0,2,0,0">
+                            <TextBlock Text="{Binding CustomerName}" Style="{StaticResource BodyTextStyle}" FontWeight="Bold" FontSize="40" TextWrapping="Wrap" />
+                        </Viewbox>
+
+                        <!-- Grid, não StackPanel: precisa empurrar o botão pro
+                             canto inferior DIREITO do card (pedido explícito
+                             2026-08-13) enquanto o badge de canal/pedido
+                             continua à esquerda — StackPanel só empilha, não
+                             separa os dois lados. -->
+                        <Grid Grid.Row="3" Margin="0,6,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="{Binding ChannelAccentBrush}" Opacity="0.85" CornerRadius="6" Padding="8,3" Margin="0,0,8,0">
+                                    <TextBlock Text="{Binding ChannelDisplayName}" FontSize="11" FontWeight="Bold" Foreground="White" />
+                                </Border>
+                                <TextBlock Text="Pedido " Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding ExternalOrderId, TargetNullValue='—'}" Style="{StaticResource SecondaryTextStyle}" FontWeight="Bold" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- "Em preparação" -> clique marca embalado no
+                                 servidor (OrderQueueCardViewModel.PackCommand) e
+                                 o próprio botão fica VERDE + texto "Embalado"
+                                 (IsPacked) — pedido explícito 2026-08-13: o
+                                 pedido NÃO sai do card/da fila, o botão é só um
+                                 indicador de status pra conferência visual.
+                                 ToolTip mostra o erro se a chamada falhar. -->
+                            <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
+                                    ToolTip="{Binding PackErrorMessage}"
+                                    Foreground="White" FontSize="12" FontWeight="Bold" Padding="12,6" VerticalAlignment="Bottom">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Setter Property="Background" Value="{DynamicResource PackPreparingBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsPacked}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource PackPackedBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </Grid>
                     </Grid>
                 </Grid>
             </Grid>
@@ -556,12 +589,14 @@
                      substituídas pela fila de expedição do dia abaixo. -->
 
                 <!-- Fila de expedição de HOJE (pedido explícito 2026-08-06,
-                     estilo "chamada de senha"): 2 cards em destaque (mais
-                     recente + segundo mais recente) à esquerda + lista com
-                     scroll do resto à direita, tudo em ordem decrescente —
-                     ver MainViewModel.UpdateOrderQueue, alimentado por
-                     DashboardPoller a cada 2s. Height fixo (420) porque os
-                     dois cards usam RowDefinition="*" internamente (Viewbox
+                     estilo "chamada de senha"): 3 cards em destaque (pedido
+                     explícito 2026-08-15, eram 2 antes — cabe mais um card
+                     encolhendo cada um) à esquerda, agora com a foto do
+                     produto, + lista com scroll do resto à direita, tudo em
+                     ordem decrescente — ver MainViewModel.
+                     UpdateOrderQueueAsync, alimentado por DashboardPoller a
+                     cada 2s. Height fixo (480, era 420 pra 2 cards) porque
+                     os cards usam RowDefinition="*" internamente (Viewbox
                      precisa de uma altura real pra encolher/crescer contra
                      — ver os templates em Window.Resources); esse valor foi
                      calculado pelo espaço restante da janela (820px), não
@@ -574,7 +609,7 @@
                      direito, agora as duas colunas usam Width="*" (mesmo
                      peso, dividem igual qualquer que seja a largura da
                      janela). -->
-                <Grid Margin="0,20,0,0" Height="420">
+                <Grid Margin="0,20,0,0" Height="480">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -584,19 +619,24 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
                             <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <!-- Padding 24->16 (2026-08-07, mesma rodada do
-                             Row0 90->52): sobrava espaço demais nas bordas
-                             enquanto nome/produto ficavam espremidos por
-                             dentro — ver comentário completo dentro do
-                             OrderQueueBigCardTemplate. -->
-                        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="16" Margin="0,0,0,8">
+                        <!-- Padding 16->12 (2026-08-15, 3º card): 3 cards
+                             precisam de um pouco mais de espaço útil cada
+                             um que 2 cards tinham — ver comentário completo
+                             dentro do OrderQueueBigCardTemplate pro
+                             histórico anterior (24->16, 2026-08-07). -->
+                        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="12" Margin="0,0,0,6">
                             <ContentControl Content="{Binding QueueCard1}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
                         </Border>
 
-                        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="16" Margin="0,8,0,0">
+                        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="12" Margin="0,6,0,6">
                             <ContentControl Content="{Binding QueueCard2}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
+                        </Border>
+
+                        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="12" Margin="0,6,0,0">
+                            <ContentControl Content="{Binding QueueCard3}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
                         </Border>
                     </Grid>
 

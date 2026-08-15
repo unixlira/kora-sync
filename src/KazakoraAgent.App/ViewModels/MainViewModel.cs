@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using KazakoraAgent.Core;
 using KazakoraAgent.Core.Api;
 using KazakoraAgent.Core.Models;
 using MahApps.Metro.IconPacks;
@@ -34,18 +35,26 @@ public partial class MainViewModel : ObservableObject
     /// renderizar os dois tipos misturados na mesma linha.
     public ObservableCollection<object> TopCards { get; }
 
-    /// Os 2 cards em destaque da fila de expedição de hoje — pedido mais
-    /// recente (QueueCard1) e o segundo mais recente (QueueCard2), pedido
-    /// explícito 2026-08-06. Instâncias fixas (não uma ObservableCollection
-    /// de 2 itens) porque a XAML liga cada uma direto num Border próprio,
-    /// não via ItemsControl — mais simples de posicionar um "quadrado" fixo
-    /// em cima e outro embaixo. Ver UpdateOrderQueue.
+    /// Os 3 cards em destaque da fila de expedição de hoje — pedido mais
+    /// recente (QueueCard1), segundo (QueueCard2) e terceiro (QueueCard3);
+    /// eram só 2 até 2026-08-06, ampliado pra 3 em pedido explícito
+    /// 2026-08-15 junto com a foto do produto. Instâncias fixas (não uma
+    /// ObservableCollection) porque a XAML liga cada uma direto num Border
+    /// próprio, não via ItemsControl — mais simples de posicionar 3
+    /// "quadrados" fixos empilhados. Ver UpdateOrderQueueAsync.
     public OrderQueueCardViewModel QueueCard1 { get; } = new();
 
     public OrderQueueCardViewModel QueueCard2 { get; } = new();
 
-    /// 3º pedido do dia em diante, mesma ordem decrescente — lista com
-    /// scroll próprio (coluna da direita, ver MainWindow.xaml).
+    public OrderQueueCardViewModel QueueCard3 { get; } = new();
+
+    /// 4º pedido do dia em diante, mesma ordem decrescente — lista com
+    /// scroll próprio (coluna da direita, ver MainWindow.xaml). Sem foto de
+    /// produto de propósito (pedido explícito 2026-08-15): só os 3 cards em
+    /// destaque carregam imagem, esta lista compacta continua só texto —
+    /// baixar imagem pra cada item de uma lista que pode ter dezenas de
+    /// pedidos custaria banda/tempo sem ganho real (já não cabe grande o
+    /// suficiente pra ajudar na conferência visual mesmo).
     public ObservableCollection<OrderQueueCardViewModel> QueueRest { get; } = [];
 
     /// Vendas AGENDADAS pelo canal (pedido explícito 2026-08-14, achado no
@@ -119,11 +128,12 @@ public partial class MainViewModel : ObservableObject
 
         TopCards = [.. MetricCards, ChannelOrdersCard];
 
-        // Os 2 cards fixos precisam do callback já na construção — os da
+        // Os 3 cards fixos precisam do callback já na construção — os da
         // QueueRest recebem o mesmo callback quando são criados, ver
-        // UpdateOrderQueue.
+        // UpdateOrderQueueAsync.
         QueueCard1.PackRequested = PackOrderAsync;
         QueueCard2.PackRequested = PackOrderAsync;
+        QueueCard3.PackRequested = PackOrderAsync;
     }
 
     public void UpdateMetrics(DashboardMetricsDto dto)
@@ -157,39 +167,77 @@ public partial class MainViewModel : ObservableObject
 
     /// <summary>
     /// items já vem do servidor em ordem decrescente (ver
-    /// DashboardAgentController::queue, orderByDesc('id')). QueueCard1/
-    /// QueueCard2 são reaproveitados em vez de recriados a cada tick — só
-    /// os campos mudam — pra não perder o estado de scroll/seleção de
-    /// nada que dependa de identidade de objeto no futuro; QueueRest é
-    /// reconstruída (mais simples, e a lista muda de tamanho a cada
-    /// pedido novo/enviado de qualquer forma).
+    /// DashboardAgentController::queue, orderByDesc('id')). QueueCard1/2/3
+    /// são reaproveitados em vez de recriados a cada tick — só os campos
+    /// mudam — pra não perder o estado de scroll/seleção de nada que
+    /// dependa de identidade de objeto no futuro; QueueRest é reconstruída
+    /// (mais simples, e a lista muda de tamanho a cada pedido novo/enviado
+    /// de qualquer forma).
+    ///
+    /// Async desde 2026-08-15 (pedido explícito, foto do produto): cada
+    /// card em destaque baixa a imagem só quando o PEDIDO daquele slot
+    /// muda (comparação feita ANTES de UpdateFrom sobrescrever OrderId) —
+    /// sem isso, o app rebaixaria a mesma imagem a cada tick de 2s pra
+    /// sempre, puro desperdício de banda/tempo pro mesmo pedido parado no
+    /// mesmo card. Já reusado (tick anterior) continua com a imagem que já
+    /// tinha, sem re-download nem piscar.
     /// </summary>
-    public void UpdateOrderQueue(IReadOnlyList<OrderQueueItemDto> items)
+    public async Task UpdateOrderQueueAsync(IReadOnlyList<OrderQueueItemDto> items)
     {
-        if (items.Count > 0)
-        {
-            QueueCard1.UpdateFrom(items[0]);
-        }
-        else
-        {
-            QueueCard1.Clear();
-        }
-
-        if (items.Count > 1)
-        {
-            QueueCard2.UpdateFrom(items[1]);
-        }
-        else
-        {
-            QueueCard2.Clear();
-        }
+        await UpdateFeaturedCardAsync(QueueCard1, items.Count > 0 ? items[0] : null);
+        await UpdateFeaturedCardAsync(QueueCard2, items.Count > 1 ? items[1] : null);
+        await UpdateFeaturedCardAsync(QueueCard3, items.Count > 2 ? items[2] : null);
 
         QueueRest.Clear();
-        foreach (var dto in items.Skip(2))
+        foreach (var dto in items.Skip(3))
         {
             var item = new OrderQueueCardViewModel { PackRequested = PackOrderAsync };
             item.UpdateFrom(dto);
             QueueRest.Add(item);
+        }
+    }
+
+    private async Task UpdateFeaturedCardAsync(OrderQueueCardViewModel card, OrderQueueItemDto? dto)
+    {
+        if (dto is null)
+        {
+            card.Clear();
+
+            return;
+        }
+
+        var orderChanged = card.OrderId != dto.Id;
+
+        card.UpdateFrom(dto);
+
+        if (!orderChanged)
+        {
+            return;
+        }
+
+        // Limpa a foto antiga NA HORA (não espera o download terminar) —
+        // sem isso, o card mostraria a foto do pedido anterior colada no
+        // pedido novo por alguns instantes, exatamente o tipo de confusão
+        // visual que esta feature existe pra evitar.
+        card.SetProductImage(null);
+
+        if (_api is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var bytes = await _api.DownloadOrderImageAsync(dto.Id);
+            card.SetProductImage(bytes);
+        }
+        catch (Exception ex)
+        {
+            // Imagem é só apoio visual — falha de rede aqui não pode virar
+            // LastDashboardError nem derrubar o resto do tick (ver
+            // DashboardPoller.DashboardTickAsync, que já trata separado
+            // canais/métricas/fila/agendados); só fica sem foto.
+            AppLog.Error($"Falha ao baixar a imagem do pedido #{dto.Id}: {ex.Message}");
         }
     }
 
