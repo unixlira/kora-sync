@@ -279,9 +279,17 @@
                                  (IsPacked) — pedido explícito 2026-08-13: o
                                  pedido NÃO sai do card/da fila, o botão é só um
                                  indicador de status pra conferência visual.
-                                 ToolTip mostra o erro se a chamada falhar. -->
+                                 ToolTip mostra o erro se a chamada falhar.
+                                 Visível só pra pedido PAGO (IsActionable) —
+                                 pedido explícito 2026-08-15: a fila passou a
+                                 trazer todo pedido do dia, não só pago, e
+                                 "embalar" um já enviado/cancelado não faz
+                                 sentido nenhum (o servidor já rejeitava isso
+                                 com 409, aqui só evita mostrar um botão que
+                                 sempre ia dar erro). -->
                             <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
                                     ToolTip="{Binding PackErrorMessage}"
+                                    Visibility="{Binding PackButtonVisibility}"
                                     Foreground="White" FontSize="12" FontWeight="Bold" Padding="12,6" VerticalAlignment="Bottom">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -294,6 +302,15 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
+
+                            <!-- Pedido não-acionável (já enviado, cancelado,
+                                 aguardando pagamento) — mostra só o rótulo do
+                                 status no lugar do botão, sem sugerir uma
+                                 ação que não existe. -->
+                            <Border Grid.Column="1" Background="{DynamicResource TextSecondaryBrush}" Opacity="0.85" CornerRadius="6"
+                                    Padding="10,6" VerticalAlignment="Bottom" Visibility="{Binding StatusBadgeVisibility}">
+                                <TextBlock Text="{Binding StatusLabel}" FontSize="12" FontWeight="Bold" Foreground="White" />
+                            </Border>
                         </Grid>
                     </Grid>
                 </Grid>
@@ -371,8 +388,13 @@
                                 <Run Text="  •  QTD " /><Run Text="{Binding UnitsCount, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource BrandPrimaryBrush}" />
                             </TextBlock>
 
+                            <!-- Visível só pra pedido PAGO (IsActionable) —
+                                 mesmo motivo do card em destaque: "embalar"
+                                 um pedido já enviado/cancelado não faz
+                                 sentido, ver comentário completo lá. -->
                             <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
                                     ToolTip="{Binding PackErrorMessage}"
+                                    Visibility="{Binding PackButtonVisibility}"
                                     Foreground="White" FontSize="10" FontWeight="Bold" Padding="8,4">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -385,6 +407,11 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
+
+                            <Border Grid.Column="1" Background="{DynamicResource TextSecondaryBrush}" Opacity="0.85" CornerRadius="6"
+                                    Padding="8,4" Visibility="{Binding StatusBadgeVisibility}">
+                                <TextBlock Text="{Binding StatusLabel}" FontSize="10" FontWeight="Bold" Foreground="White" />
+                            </Border>
                         </Grid>
                     </StackPanel>
                 </Grid>
