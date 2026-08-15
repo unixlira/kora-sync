@@ -138,6 +138,35 @@
                      o DownOnly encolhia tudo de volta pra quase nada. Row0
                      90->52 devolve esse espaço pra quem precisa. -->
                 <Grid Visibility="{Binding HasOrderVisibility}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Miniatura do produto (pedido explícito 2026-08-15) —
+                         Stretch=Uniform preserva a proporção original da
+                         imagem (nunca corta nem distorce, "de acordo com o
+                         tamanho e a qualidade" da imagem real); qualquer
+                         sobra de espaço dentro do quadrado mostra o MESMO
+                         fundo do tema (WindowBackgroundBrush), não uma cor
+                         fixa — é o que evitava a faixa preta em cima/embaixo
+                         de uma tentativa anterior. Ícone de placeholder
+                         quando o pedido não tem imagem arquivada (ver
+                         OrderQueueCardViewModel.NoProductImageVisibility). -->
+                    <Border Grid.Column="0" Width="96" Height="96" CornerRadius="10"
+                            Background="{DynamicResource WindowBackgroundBrush}"
+                            VerticalAlignment="Top" Margin="0,4,14,0" ClipToBounds="True">
+                        <Grid>
+                            <Image Source="{Binding ProductImage}" Stretch="Uniform"
+                                   Visibility="{Binding HasProductImageVisibility}" />
+                            <iconPacks:PackIconMaterial Kind="ImageOffOutline" Width="30" Height="30"
+                                                         Foreground="{DynamicResource TextSecondaryBrush}"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                         Visibility="{Binding NoProductImageVisibility}" />
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Column="1">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="52" />
                         <RowDefinition Height="*" />
@@ -251,6 +280,7 @@
                             </Button.Style>
                         </Button>
                     </Grid>
+                    </Grid>
                 </Grid>
             </Grid>
         </DataTemplate>
@@ -274,12 +304,29 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
                     <Border Grid.Column="0" Background="{Binding ChannelAccentBrush}" CornerRadius="2" Margin="0,0,10,0" />
 
-                    <StackPanel Grid.Column="1">
+                    <!-- Mesma miniatura do card em destaque, menor (pedido
+                         explícito 2026-08-15) — ver comentário completo no
+                         OrderQueueBigCardTemplate acima. -->
+                    <Border Grid.Column="1" Width="56" Height="56" CornerRadius="8"
+                            Background="{DynamicResource WindowBackgroundBrush}"
+                            VerticalAlignment="Center" Margin="0,0,10,0" ClipToBounds="True">
+                        <Grid>
+                            <Image Source="{Binding ProductImage}" Stretch="Uniform"
+                                   Visibility="{Binding HasProductImageVisibility}" />
+                            <iconPacks:PackIconMaterial Kind="ImageOffOutline" Width="20" Height="20"
+                                                         Foreground="{DynamicResource TextSecondaryBrush}"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                         Visibility="{Binding NoProductImageVisibility}" />
+                        </Grid>
+                    </Border>
+
+                    <StackPanel Grid.Column="2">
                         <!-- Marketplace virou badge (mesma cor/estilo já
                              usado no card em destaque) jogado pro fim da
                              linha (pedido explícito 2026-08-07: "justify

@@ -43,6 +43,12 @@ public interface IKazakoraApiClient
     /// filtro whereNull('packed_at') em queue()).
     Task PackOrderAsync(long orderId, CancellationToken ct = default);
 
+    /// Imagem do produto do pedido (pedido explícito 2026-08-15), mesmo
+    /// padrão de DownloadArchiveAsync: null em 404 (pedido sem produto
+    /// mapeado com imagem, ver OrderImageArchiveService no Laravel) — quem
+    /// chama trata isso como "sem imagem pra mostrar", não como falha.
+    Task<byte[]?> DownloadOrderImageAsync(long orderId, CancellationToken ct = default);
+
     /// Null quando o servidor ainda não tem nenhum texto diário salvo.
     Task<DailyTextDto?> GetDailyTextAsync(CancellationToken ct = default);
 }

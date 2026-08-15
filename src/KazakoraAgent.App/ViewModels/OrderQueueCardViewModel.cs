@@ -49,6 +49,25 @@ public partial class OrderQueueCardViewModel : ObservableObject
 
     public string OrderNumberText => $"#{OrderId}";
 
+    /// Imagem do produto (pedido explícito 2026-08-15) — quem carrega de
+    /// verdade é o MainViewModel (fica dono do cache/chamada de rede, ver
+    /// MainViewModel.RequestProductImage); este card só expõe onde o
+    /// resultado entra e o fallback visual enquanto não tem nada (null =
+    /// ainda carregando OU pedido sem imagem, mesmo estado visual pros
+    /// dois — não precisa distinguir na tela).
+    [ObservableProperty]
+    private ImageSource? _productImage;
+
+    public Visibility HasProductImageVisibility => ProductImage is null ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility NoProductImageVisibility => ProductImage is null ? Visibility.Visible : Visibility.Collapsed;
+
+    partial void OnProductImageChanged(ImageSource? value)
+    {
+        OnPropertyChanged(nameof(HasProductImageVisibility));
+        OnPropertyChanged(nameof(NoProductImageVisibility));
+    }
+
     [ObservableProperty]
     private string? _externalOrderId;
 
@@ -176,6 +195,7 @@ public partial class OrderQueueCardViewModel : ObservableObject
         IsPacking = false;
         IsPacked = false;
         PackErrorMessage = null;
+        ProductImage = null;
         ProductLines.Clear();
     }
 

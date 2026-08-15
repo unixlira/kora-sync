@@ -173,14 +173,46 @@ public partial class App : System.Windows.Application
         _cleanupTimer.Start();
     }
 
+    private static string? _lastCrashSignature;
+    private static DateTimeOffset _lastCrashLoggedAt;
+
+    /// <summary>
+    /// Achado real 2026-08-15: um binding TwoWay numa propriedade só-leitura
+    /// (feature já removida) disparava a MESMA XamlParseException a cada
+    /// passada de layout do WPF — centenas de vezes por segundo, sem nunca
+    /// derrubar o processo (é exatamente o que DispatcherUnhandledException
+    /// faz de propósito, ver comentário lá em cima) — e como LogCrash não
+    /// tinha limite nenhum, isso sozinho gerou um crash.log de 22 GB em
+    /// poucas horas. As duas proteções abaixo (deduplicação por 2s +
+    /// teto de tamanho) valem pra QUALQUER exceção repetida no futuro, não
+    /// só essa já corrigida.
+    /// </summary>
     private static void LogCrash(Exception exception)
     {
         try
         {
+            var signature = $"{exception.GetType().FullName}:{exception.Message}";
+            var now = DateTimeOffset.Now;
+
+            if (signature == _lastCrashSignature && now - _lastCrashLoggedAt < TimeSpan.FromSeconds(2))
+            {
+                return;
+            }
+
+            _lastCrashSignature = signature;
+            _lastCrashLoggedAt = now;
+
             var logPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "KoraSync", "crash.log");
             Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
-            File.AppendAllText(logPath, $"[{DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss}] {exception}\n\n");
+
+            const long maxBytes = 5 * 1024 * 1024;
+            if (File.Exists(logPath) && new FileInfo(logPath).Length > maxBytes)
+            {
+                File.Delete(logPath);
+            }
+
+            File.AppendAllText(logPath, $"[{now:yyyy-MM-dd HH:mm:ss}] {exception}\n\n");
         }
         catch
         {

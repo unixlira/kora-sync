@@ -1,9 +1,13 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using KazakoraAgent.Core;
 using KazakoraAgent.Core.Api;
 using KazakoraAgent.Core.Models;
 using MahApps.Metro.IconPacks;
@@ -47,6 +51,13 @@ public partial class MainViewModel : ObservableObject
     /// 3º pedido do dia em diante, mesma ordem decrescente — lista com
     /// scroll próprio (coluna da direita, ver MainWindow.xaml).
     public ObservableCollection<OrderQueueCardViewModel> QueueRest { get; } = [];
+
+    /// Cache de imagem por pedido (pedido explícito 2026-08-15) — evita
+    /// baixar de novo a cada tick de 2s (DashboardTickAsync) o mesmo pedido
+    /// que já está na fila há um tempo. Guarda também o "não tem imagem"
+    /// (null) como resultado válido, pra não bater no endpoint de novo a
+    /// cada tick só pra levar 404 de novo — só reseta ao reabrir o app.
+    private readonly Dictionary<long, ImageSource?> _imageCache = new();
 
     /// Mensagem da última falha ao buscar canais/métricas — null quando o
     /// último tick foi bem-sucedido. Ver DashboardPoller.DashboardTickAsync.
@@ -157,6 +168,7 @@ public partial class MainViewModel : ObservableObject
         if (items.Count > 0)
         {
             QueueCard1.UpdateFrom(items[0]);
+            RequestProductImage(QueueCard1, items[0].Id);
         }
         else
         {
@@ -166,6 +178,7 @@ public partial class MainViewModel : ObservableObject
         if (items.Count > 1)
         {
             QueueCard2.UpdateFrom(items[1]);
+            RequestProductImage(QueueCard2, items[1].Id);
         }
         else
         {
@@ -178,7 +191,75 @@ public partial class MainViewModel : ObservableObject
             var item = new OrderQueueCardViewModel { PackRequested = PackOrderAsync };
             item.UpdateFrom(dto);
             QueueRest.Add(item);
+            RequestProductImage(item, dto.Id);
         }
+    }
+
+    /// Preenche ProductImage do card a partir do cache (síncrono — evita
+    /// mostrar por um instante a imagem do pedido ANTERIOR quando
+    /// QueueCard1/QueueCard2 são reaproveitados pra um pedido novo, já que
+    /// isso roda logo depois de UpdateFrom, no mesmo tick) ou, se ainda não
+    /// tem no cache, limpa e dispara a busca em segundo plano.
+    private void RequestProductImage(OrderQueueCardViewModel card, long orderId)
+    {
+        if (_imageCache.TryGetValue(orderId, out var cached))
+        {
+            card.ProductImage = cached;
+            return;
+        }
+
+        card.ProductImage = null;
+        _ = FetchProductImageAsync(card, orderId);
+    }
+
+    private async Task FetchProductImageAsync(OrderQueueCardViewModel card, long orderId)
+    {
+        if (_api is null)
+        {
+            return;
+        }
+
+        ImageSource? image = null;
+
+        try
+        {
+            var bytes = await _api.DownloadOrderImageAsync(orderId);
+            if (bytes is not null)
+            {
+                image = DecodeImage(bytes);
+            }
+
+            // Só entra no cache em caso de sucesso (com ou sem imagem) —
+            // uma falha de rede no meio do caminho não deve "travar" esse
+            // pedido como sem imagem pra sempre; o próximo tick tenta de
+            // novo.
+            _imageCache[orderId] = image;
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error($"Falha ao baixar imagem do pedido #{orderId}: {ex.Message}");
+            return;
+        }
+
+        // O card pode ter sido reaproveitado (QueueCard1/QueueCard2) pra um
+        // pedido diferente enquanto esse download estava em voo — só aplica
+        // o resultado se ainda for do mesmo pedido.
+        if (card.OrderId == orderId)
+        {
+            card.ProductImage = image;
+        }
+    }
+
+    private static ImageSource DecodeImage(byte[] bytes)
+    {
+        using var stream = new MemoryStream(bytes);
+        var bitmap = new BitmapImage();
+        bitmap.BeginInit();
+        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+        bitmap.StreamSource = stream;
+        bitmap.EndInit();
+        bitmap.Freeze();
+        return bitmap;
     }
 
     /// Callback por trás do botão "Em preparação" de todo card da fila
