@@ -35,15 +35,18 @@ public partial class MainViewModel : ObservableObject
     /// renderizar os dois tipos misturados na mesma linha.
     public ObservableCollection<object> TopCards { get; }
 
-    /// Os 2 cards em destaque da fila de expedição de hoje — pedido mais
-    /// recente (QueueCard1) e o segundo mais recente (QueueCard2), pedido
-    /// explícito 2026-08-06. Instâncias fixas (não uma ObservableCollection
-    /// de 2 itens) porque a XAML liga cada uma direto num Border próprio,
-    /// não via ItemsControl — mais simples de posicionar um "quadrado" fixo
-    /// em cima e outro embaixo. Ver UpdateOrderQueue.
+    /// Os 3 cards em destaque da fila de expedição de hoje (eram 2 até
+    /// 2026-08-06, "+1 CARD" pedido explícito 2026-08-15) — pedido mais
+    /// recente (QueueCard1), segundo (QueueCard2), terceiro (QueueCard3).
+    /// Instâncias fixas (não uma ObservableCollection) porque a XAML liga
+    /// cada uma direto num Border próprio, não via ItemsControl — mais
+    /// simples de posicionar 3 "quadrados" fixos empilhados. Ver
+    /// UpdateOrderQueueAsync.
     public OrderQueueCardViewModel QueueCard1 { get; } = new();
 
     public OrderQueueCardViewModel QueueCard2 { get; } = new();
+
+    public OrderQueueCardViewModel QueueCard3 { get; } = new();
 
     /// 3º pedido do dia em diante, mesma ordem decrescente — lista com
     /// scroll próprio (coluna da direita, ver MainWindow.xaml).
@@ -125,6 +128,7 @@ public partial class MainViewModel : ObservableObject
         // UpdateOrderQueue.
         QueueCard1.PackRequested = PackOrderAsync;
         QueueCard2.PackRequested = PackOrderAsync;
+        QueueCard3.PackRequested = PackOrderAsync;
     }
 
     public void UpdateMetrics(DashboardMetricsDto dto)
@@ -183,9 +187,10 @@ public partial class MainViewModel : ObservableObject
     {
         await UpdateFeaturedCardAsync(QueueCard1, items.Count > 0 ? items[0] : null);
         await UpdateFeaturedCardAsync(QueueCard2, items.Count > 1 ? items[1] : null);
+        await UpdateFeaturedCardAsync(QueueCard3, items.Count > 2 ? items[2] : null);
 
         QueueRest.Clear();
-        foreach (var dto in items.Skip(2))
+        foreach (var dto in items.Skip(3))
         {
             var item = new OrderQueueCardViewModel { PackRequested = PackOrderAsync };
             item.UpdateFrom(dto);

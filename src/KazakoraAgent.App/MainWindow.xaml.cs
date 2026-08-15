@@ -34,6 +34,20 @@ public partial class MainWindow : Window
         // agora sempre encontraria null. Loaded já garante DataContext
         // presente, evitando 1s em branco até o primeiro tick do timer.
         Loaded += (_, _) => UpdateClock();
+
+        // BUG REAL 2026-08-15 (achado no print real do usuário — texto do
+        // banner "Vendas agendadas" aparecendo colado em cima dos cards do
+        // topo): WindowState="Maximized" direto no XAML faz o WPF montar o
+        // primeiro layout/paint no tamanho RESTAURADO (Height/Width da
+        // própria tag Window) e só maximizar DEPOIS — nessa troca, alguns
+        // drivers/compositores deixam uma pintura "fantasma" daquele
+        // primeiro frame (tamanho pequeno) sobreposta ao layout maximizado
+        // real, deslocada, exatamente o efeito visto. Setar WindowState
+        // aqui, DEPOIS de Loaded (janela já com handle real, primeiro
+        // layout já assentado), é o contorno padrão pra esse problema —
+        // maximiza direto no tamanho final, sem passo intermediário
+        // visível.
+        Loaded += (_, _) => WindowState = WindowState.Maximized;
     }
 
     /// "terça-feira, 04/08/2026 15:42:07" — dddd sai em minúscula por

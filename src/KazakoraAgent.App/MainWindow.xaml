@@ -6,7 +6,6 @@
         Title="KoraSync" Height="820" Width="1360"
         Background="{DynamicResource WindowBackgroundBrush}"
         WindowStartupLocation="CenterScreen"
-        WindowState="Maximized"
         ResizeMode="CanResize"
         KeyDown="MainWindow_KeyDown">
     <Window.Resources>
@@ -523,7 +522,24 @@
              tivesse espaço infinito) — por isso o Grid com coluna "*" dentro
              do card sozinho não resolvia: nunca havia uma largura real pra
              constranger nada, em lugar nenhum da árvore. -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <!-- BUG REAL 2026-08-15 (achado no print real do usuário — sobrava
+             uma faixa preta enorme embaixo da fila, mesmo com a janela
+             maximizada, e o usuário marcou "AUMENTAR" nesse vazio): tudo
+             (métricas + banner + fila) vivia dentro de UM ScrollViewer só,
+             que mede o conteúdo com altura INFINITA — dentro dele, uma
+             linha "*" (ou um Grid com Height fixo baixo, como a fila
+             estava) nunca cresce pra ocupar o espaço real da janela, só o
+             que o conteúdo pede. Reestruturado em 2 blocos: topo (métricas
+             + erro + banner, Auto — conteúdo curto, não precisa de altura
+             dinâmica) e fila (Row "*" DE VERDADE, porque agora é filho
+             direto de um Grid com altura finita, não de um ScrollViewer) —
+             a fila cresce pra preencher toda a altura sobrando da janela. -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
             <!-- BUG REAL 2026-08-15 (achado no print real do usuário): era
                  um StackPanel simples aqui — quando o banner "Vendas
                  agendadas" abaixo tem conteúdo de verdade pela primeira vez
@@ -534,9 +550,8 @@
                  sobrepõe a vizinha, ao contrário de um StackPanel (que só
                  empilha do jeito certo se a MEDIÇÃO de cada filho estiver
                  correta; aqui claramente não estava). -->
-            <Grid>
+            <Grid Grid.Row="0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -635,8 +650,9 @@
                         </ItemsControl>
                     </StackPanel>
                 </Border>
+            </Grid>
 
-                <!-- Cards de canal (removidos da tela por pedido explícito
+            <!-- Cards de canal (removidos da tela por pedido explícito
                      2026-08-04: "remove os cards dos canais e coloca essa
                      lista de impressão") e overlays de detalhe clicáveis
                      (removidos por outro pedido explícito, mesmo dia:
@@ -649,28 +665,23 @@
                      substituídas pela fila de expedição do dia abaixo. -->
 
                 <!-- Fila de expedição de HOJE (pedido explícito 2026-08-06,
-                     estilo "chamada de senha"): 2 cards em destaque (mais
-                     recente + segundo mais recente) à esquerda + lista com
-                     scroll do resto à direita, tudo em ordem decrescente —
-                     ver MainViewModel.UpdateOrderQueue, alimentado por
-                     DashboardPoller a cada 2s. Height fixo (420) porque os
-                     dois cards usam RowDefinition="*" internamente (Viewbox
-                     precisa de uma altura real pra encolher/crescer contra
-                     — ver os templates em Window.Resources); esse valor foi
-                     calculado pelo espaço restante da janela (820px), não
-                     verificado visualmente numa tela Windows real nesta
-                     sessão — pode precisar de ajuste fino ao abrir de
-                     verdade. -->
+                     estilo "chamada de senha"): 3 cards em destaque (pedido
+                     explícito 2026-08-15, "+1 CARD" — eram 2) à esquerda +
+                     lista com scroll do resto à direita, tudo em ordem
+                     decrescente — ver MainViewModel.UpdateOrderQueueAsync,
+                     alimentado por DashboardPoller a cada 2s. Altura real
+                     agora (Grid.Row="*" do container pai, não mais um
+                     número fixo em pixel) — pedido explícito 2026-08-15
+                     ("AUMENTAR", sobrava uma faixa preta enorme embaixo com
+                     a janela maximizada porque a altura era travada em
+                     320px fixos independente do tamanho real da tela). -->
                 <!-- Divisão 50/50 entre os cards em destaque e a lista do
                      resto do dia (pedido explícito 2026-08-06, "col-6 pra
                      cada lado") — era largura fixa de 420px pro lado
                      direito, agora as duas colunas usam Width="*" (mesmo
                      peso, dividem igual qualquer que seja a largura da
                      janela). -->
-                <!-- 420->380->320 (pedido explícito 2026-08-15: "diminuir o
-                     tamanho do card todos" — segunda rodada, junto com a
-                     foto virando quadrada/cortada em vez de esticada). -->
-                <Grid Grid.Row="3" Margin="0,20,0,0" Height="320">
+                <Grid Grid.Row="1" Margin="0,20,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -680,6 +691,7 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
                             <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
                         <!-- Padding 24->16 (2026-08-07, mesma rodada do
@@ -687,12 +699,16 @@
                              enquanto nome/produto ficavam espremidos por
                              dentro — ver comentário completo dentro do
                              OrderQueueBigCardTemplate. -->
-                        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="16" Margin="0,0,0,8">
+                        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="16" Margin="0,0,0,6">
                             <ContentControl Content="{Binding QueueCard1}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
                         </Border>
 
-                        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="16" Margin="0,8,0,0">
+                        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="16" Margin="0,6,0,6">
                             <ContentControl Content="{Binding QueueCard2}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
+                        </Border>
+
+                        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="16" Margin="0,6,0,0">
+                            <ContentControl Content="{Binding QueueCard3}" ContentTemplate="{StaticResource OrderQueueBigCardTemplate}" />
                         </Border>
                     </Grid>
 
@@ -715,7 +731,6 @@
                     </Border>
                 </Grid>
             </Grid>
-        </ScrollViewer>
 
         <!-- Rodapé -->
         <Grid Grid.Row="2" Margin="0,20,0,0">
