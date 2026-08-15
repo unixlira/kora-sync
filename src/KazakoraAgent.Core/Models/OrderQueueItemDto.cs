@@ -4,10 +4,11 @@ namespace KazakoraAgent.Core.Models;
 
 /// <summary>
 /// Espelha um item de GET /api/print-agent/dashboard/queue
-/// (DashboardAgentController::queue no Laravel) — TODO pedido de hoje,
-/// qualquer status (pedido explícito 2026-08-15, era só "pago" antes).
-/// Filtrado só por data (hoje), exclusivo desse fluxo nativo (pedido
-/// explícito 2026-08-06).
+/// (DashboardAgentController::queue no Laravel) — pedido pago do dia, ainda
+/// não embalado/enviado. Mesmo conceito da fila já usada na versão web
+/// (Modules\Admin\Http\Controllers\PrintJobController::index()), mas
+/// filtrado a mais pra só hoje (pedido explícito 2026-08-06, exclusivo
+/// desse fluxo nativo).
 /// </summary>
 public sealed class OrderQueueItemDto
 {
@@ -37,19 +38,6 @@ public sealed class OrderQueueItemDto
     /// botão do card pra "Embalado" (ver OrderQueueCardViewModel.IsPacked).
     [JsonPropertyName("packed_at")]
     public DateTimeOffset? PackedAt { get; init; }
-
-    /// "paid" | "shipped" | "completed" | "cancelled" | "pending" |
-    /// "awaiting_payment" — mesmo vocabulário de Order::STATUS_* no
-    /// Laravel. Pedido explícito 2026-08-15: a fila passou a trazer
-    /// qualquer status, não só pago — o app usa isto (não Status ==
-    /// "paid") pra decidir se mostra o botão "Em preparação" (só faz
-    /// sentido embalar um pedido pago, ver OrderQueueCardViewModel.
-    /// IsActionable) ou só o rótulo do status.
-    [JsonPropertyName("status")]
-    public required string Status { get; init; }
-
-    [JsonPropertyName("status_label")]
-    public required string StatusLabel { get; init; }
 }
 
 public sealed class OrderQueueProductDto
