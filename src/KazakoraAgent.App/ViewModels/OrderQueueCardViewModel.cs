@@ -64,13 +64,14 @@ public partial class OrderQueueCardViewModel : ObservableObject
     [ObservableProperty]
     private string _customerName = string.Empty;
 
-    /// Foto do produto (pedido explícito 2026-08-15) — mesma imagem já
-    /// publicada nos marketplaces (ver OrderImageArchiveService no
-    /// Laravel). Null enquanto ainda não chegou/pedido sem foto — mostra o
-    /// ícone placeholder (ver HasProductImageVisibility/MainWindow.xaml)
-    /// em vez de deixar um espaço em branco. Setada de fora (MainViewModel)
-    /// via SetProductImage, nunca direto por binding: baixar a imagem é
-    /// uma chamada de rede à parte de UpdateFrom(dto).
+    /// Foto do produto (pedido explícito 2026-08-15, em TODOS os cards —
+    /// destaque e lista compacta) — mesma imagem já publicada nos
+    /// marketplaces (ver OrderImageArchiveService no Laravel). Null
+    /// enquanto ainda não chegou/pedido sem foto — mostra o ícone
+    /// placeholder (ver HasProductImageVisibility/MainWindow.xaml) em vez
+    /// de deixar um espaço em branco. Setada de fora (MainViewModel) via
+    /// SetProductImage, nunca direto por binding: baixar a imagem é uma
+    /// chamada de rede à parte de UpdateFrom(dto).
     [ObservableProperty]
     private ImageSource? _productImage;
 

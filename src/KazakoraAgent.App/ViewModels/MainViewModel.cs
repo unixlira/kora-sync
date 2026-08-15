@@ -156,6 +156,14 @@ public partial class MainViewModel : ObservableObject
         ChannelOrdersCard.UpdateFrom(statuses);
     }
 
+    /// Cache de imagem por pedido (pedido explícito 2026-08-15: foto em
+    /// TODOS os cards, não só os 2 em destaque) — QueueRest é reconstruída
+    /// do zero a cada tick (ver UpdateOrderQueueAsync), então sem esse
+    /// cache o app rebaixaria a imagem de cada pedido da lista a cada 2s
+    /// pra sempre. null cacheado também conta ("já tentei, não tem
+    /// imagem") — não fica retentando pedido sem foto a cada tick.
+    private readonly Dictionary<long, byte[]?> _imageCache = new();
+
     /// <summary>
     /// items já vem do servidor em ordem decrescente (ver
     /// DashboardAgentController::queue, orderByDesc('id')). QueueCard1/
@@ -165,12 +173,11 @@ public partial class MainViewModel : ObservableObject
     /// reconstruída (mais simples, e a lista muda de tamanho a cada
     /// pedido novo/enviado de qualquer forma).
     ///
-    /// Async desde 2026-08-15 (pedido explícito, foto do produto): cada
-    /// card em destaque baixa a imagem só quando o PEDIDO daquele slot
-    /// muda (comparação feita ANTES de UpdateFrom sobrescrever OrderId) —
-    /// sem isso, o app rebaixaria a mesma imagem a cada tick de 2s pra
-    /// sempre, puro desperdício de banda/tempo pro mesmo pedido parado no
-    /// mesmo card.
+    /// Async desde 2026-08-15 (pedido explícito, foto do produto em todo
+    /// card): busca a imagem de cada pedido visível (destaque + lista
+    /// compacta), sempre passando por _imageCache — primeira vez que um
+    /// pedido aparece custa 1 chamada de rede, depois é só leitura do
+    /// dicionário, mesmo QueueRest sendo recriada a cada tick.
     /// </summary>
     public async Task UpdateOrderQueueAsync(IReadOnlyList<OrderQueueItemDto> items)
     {
@@ -182,6 +189,7 @@ public partial class MainViewModel : ObservableObject
         {
             var item = new OrderQueueCardViewModel { PackRequested = PackOrderAsync };
             item.UpdateFrom(dto);
+            item.SetProductImage(await GetOrFetchImageAsync(dto.Id));
             QueueRest.Add(item);
         }
     }
@@ -195,36 +203,38 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        var orderChanged = card.OrderId != dto.Id;
-
         card.UpdateFrom(dto);
+        card.SetProductImage(await GetOrFetchImageAsync(dto.Id));
+    }
 
-        if (!orderChanged)
+    private async Task<byte[]?> GetOrFetchImageAsync(long orderId)
+    {
+        if (_imageCache.TryGetValue(orderId, out var cached))
         {
-            return;
+            return cached;
         }
-
-        // Limpa a foto antiga NA HORA (não espera o download terminar) —
-        // sem isso, o card mostraria a foto do pedido anterior colada no
-        // pedido novo por alguns instantes.
-        card.SetProductImage(null);
 
         if (_api is null)
         {
-            return;
+            return null;
         }
+
+        byte[]? bytes = null;
 
         try
         {
-            var bytes = await _api.DownloadOrderImageAsync(dto.Id);
-            card.SetProductImage(bytes);
+            bytes = await _api.DownloadOrderImageAsync(orderId);
         }
         catch (Exception ex)
         {
             // Imagem é só apoio visual — falha de rede aqui não pode virar
             // LastDashboardError nem derrubar o resto do tick.
-            AppLog.Error($"Falha ao baixar a imagem do pedido #{dto.Id}: {ex.Message}");
+            AppLog.Error($"Falha ao baixar a imagem do pedido #{orderId}: {ex.Message}");
         }
+
+        _imageCache[orderId] = bytes; // cacheia mesmo null, pra não retentar todo tick
+
+        return bytes;
     }
 
     /// Callback por trás do botão "Em preparação" de todo card da fila
