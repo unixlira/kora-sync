@@ -61,6 +61,31 @@ public partial class OrderQueueCardViewModel : ObservableObject
 
     public Brush ChannelAccentBrush => Channel is null ? System.Windows.Media.Brushes.Gray : ChannelBrandColors.BrushFor(Channel);
 
+    /// "paid" | "shipped" | "completed" | "cancelled" | "pending" |
+    /// "awaiting_payment" (ver OrderQueueItemDto.Status). Pedido explícito
+    /// 2026-08-15: a fila passou a trazer todo pedido de hoje, não só
+    /// pago — precisa disso pra decidir se o botão "Em preparação" faz
+    /// sentido (só pago, ver IsActionable; embalar um já enviado/cancelado
+    /// dá 409 no servidor — era a causa real do botão "não funcionar").
+    [ObservableProperty]
+    private string _status = string.Empty;
+
+    [ObservableProperty]
+    private string _statusLabel = string.Empty;
+
+    public bool IsActionable => Status == "paid";
+
+    public Visibility PackButtonVisibility => IsActionable ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility StatusBadgeVisibility => IsActionable ? Visibility.Collapsed : Visibility.Visible;
+
+    partial void OnStatusChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsActionable));
+        OnPropertyChanged(nameof(PackButtonVisibility));
+        OnPropertyChanged(nameof(StatusBadgeVisibility));
+    }
+
     [ObservableProperty]
     private string _customerName = string.Empty;
 
@@ -233,6 +258,8 @@ public partial class OrderQueueCardViewModel : ObservableObject
         OrderId = 0;
         ExternalOrderId = null;
         Channel = null;
+        Status = string.Empty;
+        StatusLabel = string.Empty;
         CustomerName = string.Empty;
         UnitsCount = 0;
         CreatedAt = default;
@@ -249,6 +276,8 @@ public partial class OrderQueueCardViewModel : ObservableObject
         OrderId = dto.Id;
         ExternalOrderId = dto.ExternalOrderId;
         Channel = dto.Channel;
+        Status = dto.Status;
+        StatusLabel = dto.StatusLabel;
         CustomerName = string.IsNullOrWhiteSpace(dto.CustomerName) ? "Cliente não informado" : dto.CustomerName;
         UnitsCount = dto.UnitsCount;
         CreatedAt = dto.CreatedAt;

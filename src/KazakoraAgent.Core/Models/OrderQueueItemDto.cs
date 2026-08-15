@@ -38,6 +38,21 @@ public sealed class OrderQueueItemDto
     /// botão do card pra "Embalado" (ver OrderQueueCardViewModel.IsPacked).
     [JsonPropertyName("packed_at")]
     public DateTimeOffset? PackedAt { get; init; }
+
+    /// "paid" | "shipped" | "completed" | "cancelled" | "pending" |
+    /// "awaiting_payment" (Order::STATUS_* no Laravel). Pedido explícito
+    /// 2026-08-15: a fila passou a trazer todo pedido de hoje, não só
+    /// pago (DashboardAgentController::queue() não filtra mais por
+    /// status) — BUG REAL achado em seguida: sem isto, o app deixava
+    /// clicar "Em preparação" em pedido já enviado/cancelado, e o servidor
+    /// rejeitava (409) tentando embalar — "o botão não funciona". Usado
+    /// em OrderQueueCardViewModel.IsActionable pra só mostrar o botão em
+    /// pedido pago.
+    [JsonPropertyName("status")]
+    public required string Status { get; init; }
+
+    [JsonPropertyName("status_label")]
+    public required string StatusLabel { get; init; }
 }
 
 public sealed class OrderQueueProductDto

@@ -6,6 +6,7 @@
         Title="KoraSync" Height="820" Width="1360"
         Background="{DynamicResource WindowBackgroundBrush}"
         WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         ResizeMode="CanResize"
         KeyDown="MainWindow_KeyDown">
     <Window.Resources>
@@ -272,9 +273,15 @@
                              (IsPacked) — pedido explícito 2026-08-13: o
                              pedido NÃO sai do card/da fila, o botão é só um
                              indicador de status pra conferência visual.
-                             ToolTip mostra o erro se a chamada falhar. -->
+                             ToolTip mostra o erro se a chamada falhar.
+                             Visível só pra pedido PAGO (IsActionable) — BUG
+                             REAL 2026-08-15: a fila passou a trazer todo
+                             pedido do dia, e clicar "embalar" num já
+                             enviado/cancelado sempre dava 409 no servidor
+                             ("o botão não funciona"). -->
                         <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
                                 ToolTip="{Binding PackErrorMessage}"
+                                Visibility="{Binding PackButtonVisibility}"
                                 Foreground="White" FontSize="12" FontWeight="Bold" Padding="12,6" VerticalAlignment="Bottom">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -287,6 +294,14 @@
                                 </Style>
                             </Button.Style>
                         </Button>
+
+                        <!-- Pedido não-acionável (já enviado, cancelado,
+                             aguardando pagamento) — mostra só o rótulo do
+                             status no lugar do botão. -->
+                        <Border Grid.Column="1" Background="{DynamicResource TextSecondaryBrush}" Opacity="0.85" CornerRadius="6"
+                                Padding="10,6" VerticalAlignment="Bottom" Visibility="{Binding StatusBadgeVisibility}">
+                            <TextBlock Text="{Binding StatusLabel}" FontSize="12" FontWeight="Bold" Foreground="White" />
+                        </Border>
                     </Grid>
                 </Grid>
                 </Grid>
@@ -383,6 +398,7 @@
 
                             <Button Grid.Column="1" Command="{Binding PackCommand}" Content="{Binding PackButtonText}"
                                     ToolTip="{Binding PackErrorMessage}"
+                                    Visibility="{Binding PackButtonVisibility}"
                                     Foreground="White" FontSize="10" FontWeight="Bold" Padding="8,4">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -395,6 +411,11 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
+
+                            <Border Grid.Column="1" Background="{DynamicResource TextSecondaryBrush}" Opacity="0.85" CornerRadius="6"
+                                    Padding="8,4" Visibility="{Binding StatusBadgeVisibility}">
+                                <TextBlock Text="{Binding StatusLabel}" FontSize="10" FontWeight="Bold" Foreground="White" />
+                            </Border>
                         </Grid>
                     </StackPanel>
                 </Grid>
