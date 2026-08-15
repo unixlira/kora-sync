@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using KazakoraAgent.Core;
 using KazakoraAgent.Core.Api;
 using KazakoraAgent.Core.Models;
 using MahApps.Metro.IconPacks;
@@ -163,26 +164,18 @@ public partial class MainViewModel : ObservableObject
     /// nada que dependa de identidade de objeto no futuro; QueueRest é
     /// reconstruída (mais simples, e a lista muda de tamanho a cada
     /// pedido novo/enviado de qualquer forma).
+    ///
+    /// Async desde 2026-08-15 (pedido explícito, foto do produto): cada
+    /// card em destaque baixa a imagem só quando o PEDIDO daquele slot
+    /// muda (comparação feita ANTES de UpdateFrom sobrescrever OrderId) —
+    /// sem isso, o app rebaixaria a mesma imagem a cada tick de 2s pra
+    /// sempre, puro desperdício de banda/tempo pro mesmo pedido parado no
+    /// mesmo card.
     /// </summary>
-    public void UpdateOrderQueue(IReadOnlyList<OrderQueueItemDto> items)
+    public async Task UpdateOrderQueueAsync(IReadOnlyList<OrderQueueItemDto> items)
     {
-        if (items.Count > 0)
-        {
-            QueueCard1.UpdateFrom(items[0]);
-        }
-        else
-        {
-            QueueCard1.Clear();
-        }
-
-        if (items.Count > 1)
-        {
-            QueueCard2.UpdateFrom(items[1]);
-        }
-        else
-        {
-            QueueCard2.Clear();
-        }
+        await UpdateFeaturedCardAsync(QueueCard1, items.Count > 0 ? items[0] : null);
+        await UpdateFeaturedCardAsync(QueueCard2, items.Count > 1 ? items[1] : null);
 
         QueueRest.Clear();
         foreach (var dto in items.Skip(2))
@@ -190,6 +183,47 @@ public partial class MainViewModel : ObservableObject
             var item = new OrderQueueCardViewModel { PackRequested = PackOrderAsync };
             item.UpdateFrom(dto);
             QueueRest.Add(item);
+        }
+    }
+
+    private async Task UpdateFeaturedCardAsync(OrderQueueCardViewModel card, OrderQueueItemDto? dto)
+    {
+        if (dto is null)
+        {
+            card.Clear();
+
+            return;
+        }
+
+        var orderChanged = card.OrderId != dto.Id;
+
+        card.UpdateFrom(dto);
+
+        if (!orderChanged)
+        {
+            return;
+        }
+
+        // Limpa a foto antiga NA HORA (não espera o download terminar) —
+        // sem isso, o card mostraria a foto do pedido anterior colada no
+        // pedido novo por alguns instantes.
+        card.SetProductImage(null);
+
+        if (_api is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var bytes = await _api.DownloadOrderImageAsync(dto.Id);
+            card.SetProductImage(bytes);
+        }
+        catch (Exception ex)
+        {
+            // Imagem é só apoio visual — falha de rede aqui não pode virar
+            // LastDashboardError nem derrubar o resto do tick.
+            AppLog.Error($"Falha ao baixar a imagem do pedido #{dto.Id}: {ex.Message}");
         }
     }
 

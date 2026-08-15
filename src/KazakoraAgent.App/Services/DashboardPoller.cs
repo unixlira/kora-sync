@@ -172,7 +172,7 @@ public sealed class DashboardPoller : IDisposable
                 // do QueueTickAsync (que é sobre PROCESSAR/imprimir, não
                 // sobre o que aparece na tela).
                 var queue = await _api.GetOrderQueueAsync();
-                _viewModel.UpdateOrderQueue(queue);
+                await _viewModel.UpdateOrderQueueAsync(queue);
             }
             catch (Exception ex)
             {

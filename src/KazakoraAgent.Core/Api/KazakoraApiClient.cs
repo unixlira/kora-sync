@@ -109,6 +109,20 @@ public sealed class KazakoraApiClient : IKazakoraApiClient
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task<byte[]?> DownloadOrderImageAsync(long orderId, CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"dashboard/queue/{orderId}/image", ct);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
     public async Task<DailyTextDto?> GetDailyTextAsync(CancellationToken ct = default)
     {
         var response = await _http.GetFromJsonAsync<DailyTextResponse>("dashboard/daily-text", JsonOptions, ct)
